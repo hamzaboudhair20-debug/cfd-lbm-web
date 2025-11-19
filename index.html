@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>LBM D2Q9 – GPU Web CFD Prototype</title>
+  <title>2D GPU CFD Prototype – Joukowsky Airfoil + WebGL Field</title>
 
   <style>
     * { box-sizing: border-box; }
@@ -48,7 +48,6 @@
       justify-content: center;
       align-items: center;
       border-right: 1px solid #1f2937;
-      position: relative;
     }
 
     .canvas-stack {
@@ -74,7 +73,7 @@
 
     #airfoil-canvas {
       z-index: 2;
-      pointer-events: none; /* la souris passe à travers */
+      pointer-events: none;
     }
 
     #controls {
@@ -160,9 +159,7 @@
     <!-- Zone de simulation -->
     <section id="sim-container">
       <div class="canvas-stack">
-        <!-- Canvas utilisé par WebGL (GPU) -->
         <canvas id="fluid-canvas" width="900" height="450"></canvas>
-        <!-- Canvas 2D au-dessus pour dessiner le profil -->
         <canvas id="airfoil-canvas" width="900" height="450"></canvas>
       </div>
     </section>
@@ -225,10 +222,10 @@
       </div>
 
       <p style="margin-top:16px; font-size:11px; color:#9ca3af;">
-        Le champ coloré est calculé sur GPU via WebGL2 (ping-pong textures).
-        Il simule un champ transporté/diffusé stylisé contrôlé par Mach, τ et C<sub>s</sub>.
+        Le champ coloré est calculé sur GPU via WebGL2 (textures RGBA8 + ping-pong).
+        Il simule un champ advecté/diffusé stylisé contrôlé par Mach, τ et C<sub>s</sub>.
         Le profil blanc est un airfoil de Joukowsky paramétrique (camber, épaisseur, AoA).
-        Plus tard tu pourras remplacer le shader par un vrai noyau LBM D2Q9/LES.
+        Plus tard tu pourras remplacer le shader de simulation par un noyau LBM D2Q9/LES.
       </p>
     </aside>
   </main>
@@ -239,13 +236,13 @@
 
   <script>
     // -----------------------
-    // 1) Utilitaires WebGL2
+    // 1) Setup WebGL2
     // -----------------------
     const fluidCanvas = document.getElementById("fluid-canvas");
     const gl = fluidCanvas.getContext("webgl2");
 
     if (!gl) {
-      alert("WebGL2 n'est pas supporté par ce navigateur. Essaie avec Chrome/Edge/Firefox récents.");
+      alert("WebGL2 n'est pas supporté. Essaie avec Chrome/Edge/Firefox récents.");
     }
 
     const W = fluidCanvas.width;
@@ -292,7 +289,7 @@
     gl.bufferData(gl.ARRAY_BUFFER, quadVerts, gl.STATIC_DRAW);
 
     // -----------------------
-    // 2) Shaders (simulation + display)
+    // 2) Shaders
     // -----------------------
     const vsSource = `#version 300 es
       precision highp float;
@@ -304,7 +301,18 @@
       }
     `;
 
-    // Shader de simulation : diffusion + léger "forcing" sinus → similaire à une étape LBM lissée
+    // Reset shader : initialise le champ avec une onde
+    const resetFS = `#version 300 es
+      precision highp float;
+      in vec2 v_uv;
+      out vec4 outColor;
+      void main() {
+        float v = 0.5 + 0.25 * sin(20.0 * v_uv.x + 15.0 * v_uv.y);
+        outColor = vec4(v, 0.0, 0.0, 1.0);
+      }
+    `;
+
+    // Simulation shader : diffusion + advection stylisée
     const simFS = `#version 300 es
       precision highp float;
       in vec2 v_uv;
@@ -326,24 +334,24 @@
         float rt = texture(u_prev, v_uv + vec2( texel.x, 0.0)).r;
         float lt = texture(u_prev, v_uv + vec2(-texel.x, 0.0)).r;
 
-        // Laplacien (diffusion)
         float lap = (up + dn + rt + lt - 4.0 * c);
 
-        // "advection" / forcing stylisé (onde se déplaçant avec Mach)
+        // onde "advectée" par Mach (purement visuelle)
         float wave = sin(12.0 * (v_uv.x + u_mach * u_time * 0.3) +
                          8.0  * (v_uv.y) -
-                         0.5  * u_time);
+                         0.6  * u_time);
 
-        float next = c + u_diffusion * lap + 0.02 * wave * (0.5 + 2.0 * u_cs);
+        float next = c + u_diffusion * lap + 0.03 * wave * (0.5 + 2.0 * u_cs);
 
-        // Légère dissipation numérique pour éviter les explosions
+        // clamp & blend léger vers 0.5 pour la stabilité
         next = mix(next, 0.5, 0.002);
+        next = clamp(next, 0.0, 1.0);
 
         outColor = vec4(next, 0.0, 0.0, 1.0);
       }
     `;
 
-    // Shader d'affichage : mapping scalaire → colormap
+    // Display shader : colormap
     const displayFS = `#version 300 es
       precision highp float;
       in vec2 v_uv;
@@ -351,12 +359,10 @@
       uniform sampler2D u_field;
 
       vec3 colormap(float x) {
-        // clamp
         x = clamp(x, 0.0, 1.0);
-        // bleu → cyan → vert → jaune → rouge
-        vec3 c1 = vec3(0.231, 0.298, 0.753); // bleu
-        vec3 c2 = vec3(0.865, 0.865, 0.865); // clair
-        vec3 c3 = vec3(0.706, 0.016, 0.150); // rouge
+        vec3 c1 = vec3(0.231, 0.298, 0.753);
+        vec3 c2 = vec3(0.865, 0.865, 0.865);
+        vec3 c3 = vec3(0.706, 0.016, 0.150);
         if (x < 0.5) {
           float t = x / 0.5;
           return mix(c1, c2, t);
@@ -368,18 +374,18 @@
 
       void main() {
         float v = texture(u_field, v_uv).r;
-        // recentrer autour de 0.5
-        v = 0.5 + 0.5 * (v - 0.5) * 1.4;
+        v = 0.5 + 0.8 * (v - 0.5);
         vec3 col = colormap(v);
         outColor = vec4(col, 1.0);
       }
     `;
 
-    const simProgram = createProgram(gl, vsSource, simFS);
+    const resetProgram   = createProgram(gl, vsSource, resetFS);
+    const simProgram     = createProgram(gl, vsSource, simFS);
     const displayProgram = createProgram(gl, vsSource, displayFS);
 
     // -----------------------
-    // 3) Textures ping-pong
+    // 3) Textures RGBA8 + FBOs
     // -----------------------
     function createFieldTexture() {
       const tex = gl.createTexture();
@@ -388,23 +394,8 @@
       gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
       gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
       gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-
-      // init champ avec bruit doux autour de 0.5
-      const data = new Float32Array(W * H * 4);
-      for (let i = 0; i < W * H; i++) {
-        const v = 0.5 + 0.05 * (Math.random() - 0.5);
-        data[4 * i + 0] = v;
-        data[4 * i + 1] = 0.0;
-        data[4 * i + 2] = 0.0;
-        data[4 * i + 3] = 1.0;
-      }
-      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA32F, W, H, 0, gl.RGBA, gl.FLOAT, data);
+      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, W, H, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
       return tex;
-    }
-
-    // Vérifier support des textures float
-    if (!gl.getExtension("EXT_color_buffer_float")) {
-      console.warn("EXT_color_buffer_float non disponible, le rendu peut être moins bon.");
     }
 
     const fieldTexA = createFieldTexture();
@@ -427,11 +418,11 @@
     let writeFBO = fboB;
 
     // -----------------------
-    // 4) Gestion sliders & états
+    // 4) Sliders & état
     // -----------------------
     let paused = false;
     let startTime = performance.now();
-    let resetRequested = false;
+    let resetRequested = true; // reset au démarrage
 
     function bindSlider(sliderId, valueId, formatter) {
       const slider = document.getElementById(sliderId);
@@ -463,16 +454,16 @@
     });
 
     // -----------------------
-    // 5) Airfoil Joukowsky (canvas 2D overlay)
+    // 5) Airfoil Joukowsky (canvas 2D)
     // -----------------------
     const airfoilCanvas = document.getElementById("airfoil-canvas");
     const airCtx = airfoilCanvas.getContext("2d");
     let airfoilPoints = [];
 
     function recomputeAirfoil() {
-      const aoaDeg = parseFloat(document.getElementById("aoa").value);
+      const aoaDeg   = parseFloat(document.getElementById("aoa").value);
       const thickness = parseFloat(document.getElementById("thickness").value);
-      const camber = parseFloat(document.getElementById("camber").value);
+      const camber    = parseFloat(document.getElementById("camber").value);
 
       const angle = aoaDeg * Math.PI / 180.0;
       const cosA = Math.cos(angle);
@@ -485,7 +476,7 @@
 
       let pts = [];
       for (let k = 0; k < N; k++) {
-        const theta = 2 * Math.PI * k / N;
+        const theta = 2.0 * Math.PI * k / N;
         const zx = circleOffset + radius * Math.cos(theta);
         const zy = radius * Math.sin(theta);
 
@@ -552,35 +543,41 @@
     }
 
     ["aoa", "thickness", "camber"].forEach(id => {
-      document.getElementById(id).addEventListener("input", () => {
-        recomputeAirfoil();
-      });
+      document.getElementById(id).addEventListener("input", recomputeAirfoil);
     });
 
     recomputeAirfoil();
 
     // -----------------------
-    // 6) Boucle principale GPU
+    // 6) Reset du champ via resetProgram
     // -----------------------
-    function resetFieldTexture(tex) {
-      gl.bindTexture(gl.TEXTURE_2D, tex);
-      const data = new Float32Array(W * H * 4);
-      for (let i = 0; i < W * H; i++) {
-        const v = 0.5 + 0.05 * (Math.random() - 0.5);
-        data[4 * i + 0] = v;
-        data[4 * i + 1] = 0.0;
-        data[4 * i + 2] = 0.0;
-        data[4 * i + 3] = 1.0;
-      }
-      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA32F, W, H, 0, gl.RGBA, gl.FLOAT, data);
+    function resetField(tex, fbo) {
+      gl.bindFramebuffer(gl.FRAMEBUFFER, fbo);
+      gl.viewport(0, 0, W, H);
+      gl.useProgram(resetProgram);
+
+      const posLoc = gl.getAttribLocation(resetProgram, "a_position");
+      gl.bindBuffer(gl.ARRAY_BUFFER, quadVBO);
+      gl.enableVertexAttribArray(posLoc);
+      gl.vertexAttribPointer(posLoc, 2, gl.FLOAT, false, 0, 0);
+
+      gl.drawArrays(gl.TRIANGLES, 0, 6);
+      gl.bindFramebuffer(gl.FRAMEBUFFER, null);
     }
 
+    function resetBothTextures() {
+      resetField(fieldTexA, fboA);
+      resetField(fieldTexB, fboB);
+    }
+
+    // -----------------------
+    // 7) Boucle GPU principale
+    // -----------------------
     function stepGPU(now) {
       const time = (now - startTime) * 0.001;
 
       if (resetRequested) {
-        resetFieldTexture(fieldTexA);
-        resetFieldTexture(fieldTexB);
+        resetBothTextures();
         resetRequested = false;
       }
 
@@ -593,15 +590,15 @@
       gl.viewport(0, 0, W, H);
       gl.bindBuffer(gl.ARRAY_BUFFER, quadVBO);
 
-      // 1) Étape simulation : render vers writeFBO
+      // 1) Simulation step (write to writeFBO)
       if (!paused) {
+        gl.bindFramebuffer(gl.FRAMEBUFFER, writeFBO);
         gl.useProgram(simProgram);
 
         const posLoc = gl.getAttribLocation(simProgram, "a_position");
         gl.enableVertexAttribArray(posLoc);
         gl.vertexAttribPointer(posLoc, 2, gl.FLOAT, false, 0, 0);
 
-        gl.bindFramebuffer(gl.FRAMEBUFFER, writeFBO);
         gl.activeTexture(gl.TEXTURE0);
         gl.bindTexture(gl.TEXTURE_2D, readTex);
         gl.uniform1i(gl.getUniformLocation(simProgram, "u_prev"), 0);
@@ -620,7 +617,7 @@
         writeFBO = (writeFBO === fboA) ? fboB : fboA;
       }
 
-      // 2) Étape display : vers l'écran
+      // 2) Display step
       gl.bindFramebuffer(gl.FRAMEBUFFER, null);
       gl.useProgram(displayProgram);
 
