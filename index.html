@@ -1,77 +1,51 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <title>LBM D2Q9 – Web CFD Simulation</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      margin: 0;
-      padding: 0;
-      display: flex;
-      height: 100vh;
-    }
-    #sim-container {
-      flex: 3;
-      background: #111;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-    }
-    canvas {
-      border: 1px solid #444;
-    }
-    #controls {
-      flex: 1;
-      padding: 20px;
-      background: #222;
-      color: white;
-    }
-    label {
-      display: block;
-      margin-bottom: 15px;
-    }
-    input[type=range] {
-      width: 100%;
-    }
-  </style>
-</head>
-
-<body>
-  <div id="sim-container">
-    <canvas id="lbm-canvas" width="800" height="400"></canvas>
-  </div>
-
   <div id="controls">
-    <h2>Simulation Parameters</h2>
-
-    <label>
-      Flow Speed (Mach)
-      <input type="range" min="0.02" max="0.4" value="0.2" step="0.01">
-    </label>
-
-    <label>
-      Viscosity (tau)
-      <input type="range" min="0.51" max="1.2" value="0.8" step="0.01">
-    </label>
-
-    <label>
-      Angle of Attack
-      <input type="range" min="-15" max="25" value="5" step="1">
-    </label>
-
-    <label>
-      Thickness
-      <input type="range" min="0.06" max="0.2" value="0.12" step="0.01">
-    </label>
-
-    <label>
-      Camber
-      <input type="range" min="0" max="0.2" value="0.08" step="0.01">
-    </label>
-
-    <button onclick="alert('LBM not implemented yet')">Start</button>
+    ...
   </div>
+
+  <!-- Petit script JS pour dessiner quelque chose dans le canvas -->
+  <script>
+    const canvas = document.getElementById('lbm-canvas');
+    const ctx = canvas.getContext('2d');
+
+    let t = 0; // temps pour animer
+
+    function drawFrame() {
+      const width = canvas.width;
+      const height = canvas.height;
+
+      // Parcourt l'écran et dessine un champ de couleur (fausse "vitesse")
+      const imageData = ctx.createImageData(width, height);
+      const data = imageData.data;
+
+      for (let y = 0; y < height; y++) {
+        for (let x = 0; x < width; x++) {
+          const i = (y * width + x) * 4;
+
+          // Exemple simple : onde sinus + temps
+          const fx = x / width;
+          const fy = y / height;
+          const value = 0.5 + 0.5 * Math.sin(10 * fx + 8 * fy + t);
+
+          // Convertir value en couleur (bleu → vert → jaune)
+          const r = 255 * value;
+          const g = 255 * (1 - value);
+          const b = 255 * (1 - value * 0.5);
+
+          data[i] = r;
+          data[i + 1] = g;
+          data[i + 2] = b;
+          data[i + 3] = 255; // alpha
+        }
+      }
+
+      ctx.putImageData(imageData, 0, 0);
+      t += 0.05; // avance le temps
+      requestAnimationFrame(drawFrame);
+    }
+
+    // Lancer l'animation
+    drawFrame();
+  </script>
 
 </body>
 </html>
