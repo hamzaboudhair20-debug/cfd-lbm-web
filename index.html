@@ -65,6 +65,7 @@
       background: #000;
       box-shadow: 0 8px 32px rgba(0,0,0,0.5);
       border-radius: 4px;
+      image-rendering: pixelated;
     }
 
     .canvas-controls {
@@ -171,15 +172,6 @@
     input[type="range"]::-webkit-slider-thumb:hover {
       background: #93c5fd;
       transform: scale(1.1);
-    }
-
-    input[type="range"]::-moz-range-thumb {
-      width: 16px;
-      height: 16px;
-      border-radius: 50%;
-      background: #60a5fa;
-      cursor: pointer;
-      border: none;
     }
 
     .buttons {
@@ -684,7 +676,7 @@
       mask[x + (Ny - 1) * Nx] = 1;
     }
 
-    const aoaDeg   = parseFloat(document.getElementById("aoa").value);
+    const aoaDeg    = parseFloat(document.getElementById("aoa").value);
     const thickness = parseFloat(document.getElementById("thickness").value);
     const camber    = parseFloat(document.getElementById("camber").value);
 
@@ -1054,7 +1046,7 @@
         const di  = 4*idx;
 
         if (mask[idx]) {
-          pixels[di]   = 241;
+          pixels[di]    = 241;
           pixels[di+1] = 245;
           pixels[di+2] = 249;
           pixels[di+3] = 255;
@@ -1074,7 +1066,7 @@
             rgb = colormapDiverging(val);
           }
 
-          pixels[di]   = rgb[0];
+          pixels[di]    = rgb[0];
           pixels[di+1] = rgb[1];
           pixels[di+2] = rgb[2];
           pixels[di+3] = 255;
@@ -1182,85 +1174,67 @@
 
     document.getElementById("viz-mode").addEventListener("change", e=>{
       vizMode = e.target.value;
+      // Reset visual max to adapt quickly
+      displayMax = 0.1; 
+      displayMin = 0.0;
     });
 
-    document.getElementById("pause-btn").addEventListener("click", ()=>{
+    // Boutons d'action
+    document.getElementById("screenshot-btn").addEventListener("click", () => {
+      const a = document.createElement("a");
+      a.download = "simulation_lbm.png";
+      a.href = canvas.toDataURL("image/png");
+      a.click();
+    });
+
+    document.getElementById("reset-btn").addEventListener("click", () => {
+      initLBM();
+      displayMax = 1.0; 
+      displayMin = 0.0;
+    });
+
+    document.getElementById("pause-btn").addEventListener("click", () => {
       paused = !paused;
       document.getElementById("pause-btn").textContent = paused ? "Reprendre" : "Pause";
     });
 
-    document.getElementById("reset-btn").addEventListener("click", ()=>{
-      initLBM();
+    document.getElementById("export-btn").addEventListener("click", () => {
+       alert("Export de données non disponible dans cette démo.");
     });
 
-    document.getElementById("screenshot-btn").addEventListener("click", ()=>{
-      const a = document.createElement("a");
-      a.download = `lbm-${new Date().toISOString().slice(0,19)}.png`;
-      a.href = canvas.toDataURL();
-      a.click();
-    });
-
-    document.getElementById("export-btn").addEventListener("click", ()=>{
-      const aoa = parseFloat(document.getElementById("aoa").value);
-      const data = {
-        parameters: {
-          mach, tau, aoa,
-          thickness: parseFloat(document.getElementById("thickness").value),
-          camber:    parseFloat(document.getElementById("camber").value),
-          resolution: resolutionMode
-        },
-        results: {
-          CL: parseFloat(document.getElementById("res-cl").textContent),
-          CD: parseFloat(document.getElementById("res-cd").textContent),
-          LD: parseFloat(document.getElementById("res-ld").textContent),
-          Re: document.getElementById("reynolds").textContent,
-          steps
-        }
-      };
-      const blob = new Blob([JSON.stringify(data,null,2)], {type:"application/json"});
-      const url  = URL.createObjectURL(blob);
-      const a    = document.createElement("a");
-      a.href = url;
-      a.download = `lbm-data-${new Date().toISOString().slice(0,19)}.json`;
-      a.click();
-      URL.revokeObjectURL(url);
-    });
-
-    document.querySelectorAll(".quality-btn").forEach(btn=>{
-      btn.addEventListener("click", ()=>{
-        document.querySelectorAll(".quality-btn").forEach(b=>b.classList.remove("active"));
+    // Qualité / Résolution
+    const qBtns = document.querySelectorAll(".quality-btn");
+    qBtns.forEach(btn => {
+      btn.addEventListener("click", () => {
+        qBtns.forEach(b => b.classList.remove("active"));
         btn.classList.add("active");
-        resolutionMode = btn.getAttribute("data-res");
-        document.getElementById("resolution-value").textContent =
-          resolutionMode==="low" ? "Basse" :
-          resolutionMode==="high" ? "Haute" : "Moyenne";
+        resolutionMode = btn.dataset.res;
         updateGridSize();
         updateAero();
       });
     });
 
-    document.getElementById("start-btn").addEventListener("click", ()=>{
-      document.getElementById("startup-modal").style.display = "none";
+    // Modal de démarrage
+    document.getElementById("start-btn").addEventListener("click", () => {
+       document.getElementById("startup-modal").style.display = "none";
+       if(frames === 0) loop();
     });
 
-    document.getElementById("quality-low-btn").addEventListener("click", ()=>{
-      resolutionMode = "low";
-      document.querySelectorAll(".quality-btn").forEach(b=>b.classList.remove("active"));
-      document.querySelector('.quality-btn[data-res="low"]').classList.add("active");
-      document.getElementById("resolution-value").textContent = "Basse";
-      updateGridSize();
-      updateAero();
-      document.getElementById("startup-modal").style.display = "none";
+    document.getElementById("quality-low-btn").addEventListener("click", () => {
+       document.getElementById("startup-modal").style.display = "none";
+       resolutionMode = "low";
+       qBtns.forEach(b => b.classList.remove("active"));
+       document.querySelector('[data-res="low"]').classList.add("active");
+       updateGridSize();
+       if(frames === 0) loop();
     });
   }
 
-  // === INITIALISATION ===
-  initDataArrays();
-  updateGridSize();
+  // === BOOTSTRAP ===
   setupEventListeners();
+  updateGridSize(); // Initialise arrays & grid & LBM
   updateAero();
-  lastTime = performance.now();
-  requestAnimationFrame(loop);
+  render(); // Affiche une première frame statique
 </script>
 </body>
 </html>
