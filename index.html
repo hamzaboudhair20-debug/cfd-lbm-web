@@ -1,51 +1,299 @@
-  <div id="controls">
-    ...
-  </div>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>LBM D2Q9 – Web CFD Simulation</title>
 
-  <!-- Petit script JS pour dessiner quelque chose dans le canvas -->
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #0b1120;          /* bleu très sombre */
+      color: #e5e7eb;               /* texte gris clair */
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    header {
+      padding: 12px 20px;
+      border-bottom: 1px solid #1f2937;
+      background: #020617;
+    }
+
+    header h1 {
+      font-size: 20px;
+      margin: 0;
+    }
+
+    header p {
+      margin: 4px 0 0;
+      font-size: 13px;
+      color: #9ca3af;
+    }
+
+    main.layout {
+      flex: 1;
+      display: flex;
+      min-height: 0;
+    }
+
+    #sim-container {
+      flex: 3;
+      background: #020617;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      border-right: 1px solid #1f2937;
+    }
+
+    canvas {
+      border: 1px solid #4b5563;
+      background: #000;   /* fond noir, mais l’animation colorée sera visible */
+    }
+
+    #controls {
+      flex: 1;
+      padding: 20px;
+      background: #030712;
+      color: #e5e7eb;
+      overflow-y: auto;
+    }
+
+    #controls h2 {
+      margin-top: 0;
+      margin-bottom: 12px;
+      font-size: 18px;
+    }
+
+    .control {
+      margin-bottom: 16px;
+      font-size: 13px;
+    }
+
+    .control span.label {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 4px;
+    }
+
+    .control span.value {
+      color: #93c5fd;
+      font-variant-numeric: tabular-nums;
+      margin-left: 8px;
+    }
+
+    input[type="range"] {
+      width: 100%;
+    }
+
+    .buttons {
+      display: flex;
+      gap: 8px;
+      margin-top: 12px;
+    }
+
+    button {
+      flex: 1;
+      padding: 8px 10px;
+      border-radius: 6px;
+      border: 1px solid #1d4ed8;
+      background: #1d4ed8;
+      color: white;
+      font-size: 13px;
+      cursor: pointer;
+    }
+
+    button.secondary {
+      background: transparent;
+      border-color: #4b5563;
+    }
+
+    button:hover {
+      filter: brightness(1.1);
+    }
+
+    footer {
+      padding: 6px 16px;
+      font-size: 11px;
+      color: #6b7280;
+      border-top: 1px solid #1f2937;
+      background: #020617;
+      text-align: right;
+    }
+  </style>
+</head>
+
+<body>
+  <header>
+    <h1>2D LBM D2Q9 – Channel Flow over a Joukowsky Airfoil</h1>
+    <p>Prototype Web CFD solver – JavaScript + HTML canvas (démo visuelle, pas encore le vrai modèle LBM)</p>
+  </header>
+
+  <main class="layout">
+    <!-- Zone de simulation -->
+    <section id="sim-container">
+      <canvas id="lbm-canvas" width="900" height="450"></canvas>
+    </section>
+
+    <!-- Panneau de contrôle -->
+    <aside id="controls">
+      <h2>Simulation Parameters</h2>
+
+      <div class="control">
+        <span class="label">
+          <span>Flow Speed (Mach)</span>
+          <span class="value" id="mach-value">0.20</span>
+        </span>
+        <input type="range" id="mach" min="0.02" max="0.40" step="0.01" value="0.20">
+      </div>
+
+      <div class="control">
+        <span class="label">
+          <span>Relaxation Time τ (viscosity)</span>
+          <span class="value" id="tau-value">0.80</span>
+        </span>
+        <input type="range" id="tau" min="0.51" max="1.20" step="0.01" value="0.80">
+      </div>
+
+      <div class="control">
+        <span class="label">
+          <span>Smagorinsky Constant C<sub>s</sub></span>
+          <span class="value" id="cs-value">0.16</span>
+        </span>
+        <input type="range" id="cs" min="0.05" max="0.25" step="0.01" value="0.16">
+      </div>
+
+      <div class="control">
+        <span class="label">
+          <span>Angle of Attack (deg)</span>
+          <span class="value" id="aoa-value">5°</span>
+        </span>
+        <input type="range" id="aoa" min="-10" max="25" step="1" value="5">
+      </div>
+
+      <div class="control">
+        <span class="label">
+          <span>Airfoil Thickness (t/c)</span>
+          <span class="value" id="thickness-value">0.12</span>
+        </span>
+        <input type="range" id="thickness" min="0.06" max="0.18" step="0.01" value="0.12">
+      </div>
+
+      <div class="control">
+        <span class="label">
+          <span>Camber</span>
+          <span class="value" id="camber-value">0.08</span>
+        </span>
+        <input type="range" id="camber" min="0.00" max="0.20" step="0.01" value="0.08">
+      </div>
+
+      <div class="buttons">
+        <button id="reset-btn" class="secondary">Reset</button>
+        <button id="pause-btn">Pause</button>
+      </div>
+
+      <p style="margin-top:16px; font-size:11px; color:#9ca3af;">
+        Pour l’instant, l’animation représente un champ scalaire synthétique (onde sinusoïdale) pour tester l’affichage.
+        On remplacera plus tard par le vrai champ LBM (ρ, u, v, vorticité, etc.).
+      </p>
+    </aside>
+  </main>
+
+  <footer>
+    Prototype by Hamza – hosted on GitHub Pages
+  </footer>
+
+  <!-- Script JS : animation de test + mise à jour des valeurs de sliders -->
   <script>
-    const canvas = document.getElementById('lbm-canvas');
-    const ctx = canvas.getContext('2d');
+    // --- Récupération du canvas et contexte 2D ---
+    const canvas = document.getElementById("lbm-canvas");
+    const ctx = canvas.getContext("2d");
 
-    let t = 0; // temps pour animer
+    // Taille
+    const width = canvas.width;
+    const height = canvas.height;
 
+    let t = 0;          // temps pour animation
+    let paused = false; // état pause
+
+    // --- Animation type "champ de vitesse" synthétique ---
     function drawFrame() {
-      const width = canvas.width;
-      const height = canvas.height;
+      if (!paused) {
+        const imageData = ctx.createImageData(width, height);
+        const data = imageData.data;
 
-      // Parcourt l'écran et dessine un champ de couleur (fausse "vitesse")
-      const imageData = ctx.createImageData(width, height);
-      const data = imageData.data;
+        for (let y = 0; y < height; y++) {
+          for (let x = 0; x < width; x++) {
+            const i = (y * width + x) * 4;
 
-      for (let y = 0; y < height; y++) {
-        for (let x = 0; x < width; x++) {
-          const i = (y * width + x) * 4;
+            // Coordonnées normalisées
+            const fx = x / width;
+            const fy = y / height;
 
-          // Exemple simple : onde sinus + temps
-          const fx = x / width;
-          const fy = y / height;
-          const value = 0.5 + 0.5 * Math.sin(10 * fx + 8 * fy + t);
+            // Champ artificiel : somme de sinusoïdes dépendant du temps
+            const v =
+              0.5 +
+              0.5 * Math.sin(8 * fx - 4 * fy + t) *
+              Math.cos(6 * fy + 3 * fx - 0.5 * t);
 
-          // Convertir value en couleur (bleu → vert → jaune)
-          const r = 255 * value;
-          const g = 255 * (1 - value);
-          const b = 255 * (1 - value * 0.5);
+            // Palette simple (bleu → cyan → vert → jaune)
+            const r = 255 * v;
+            const g = 255 * (1 - Math.abs(v - 0.5) * 2);
+            const b = 255 * (1 - v);
 
-          data[i] = r;
-          data[i + 1] = g;
-          data[i + 2] = b;
-          data[i + 3] = 255; // alpha
+            data[i] = r;
+            data[i + 1] = g;
+            data[i + 2] = b;
+            data[i + 3] = 255; // alpha
+          }
         }
+
+        ctx.putImageData(imageData, 0, 0);
+        t += 0.03; // vitesse d'évolution
       }
 
-      ctx.putImageData(imageData, 0, 0);
-      t += 0.05; // avance le temps
       requestAnimationFrame(drawFrame);
     }
 
-    // Lancer l'animation
-    drawFrame();
-  </script>
+    requestAnimationFrame(drawFrame);
 
+    // --- Gestion des sliders : afficher les valeurs numériques ---
+    function bindSlider(sliderId, valueId, formatter) {
+      const slider = document.getElementById(sliderId);
+      const valueSpan = document.getElementById(valueId);
+      if (!slider || !valueSpan) return;
+
+      function update() {
+        const v = parseFloat(slider.value);
+        valueSpan.textContent = formatter ? formatter(v) : v.toFixed(2);
+      }
+
+      slider.addEventListener("input", update);
+      update();
+    }
+
+    bindSlider("mach", "mach-value", v => v.toFixed(2));
+    bindSlider("tau", "tau-value", v => v.toFixed(2));
+    bindSlider("cs", "cs-value", v => v.toFixed(2));
+    bindSlider("aoa", "aoa-value", v => v.toFixed(0) + "°");
+    bindSlider("thickness", "thickness-value", v => v.toFixed(2));
+    bindSlider("camber", "camber-value", v => v.toFixed(2));
+
+    // --- Boutons Reset / Pause (pour l'instant, très simples) ---
+    document.getElementById("pause-btn").addEventListener("click", () => {
+      paused = !paused;
+      document.getElementById("pause-btn").textContent = paused ? "Resume" : "Pause";
+    });
+
+    document.getElementById("reset-btn").addEventListener("click", () => {
+      t = 0;
+    });
+  </script>
 </body>
 </html>
