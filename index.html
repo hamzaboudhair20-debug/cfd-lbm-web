@@ -2,10 +2,76 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>CFD LBM Web Demo</title>
+  <title>LBM D2Q9 – Web CFD Simulation</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      height: 100vh;
+    }
+    #sim-container {
+      flex: 3;
+      background: #111;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+    canvas {
+      border: 1px solid #444;
+    }
+    #controls {
+      flex: 1;
+      padding: 20px;
+      background: #222;
+      color: white;
+    }
+    label {
+      display: block;
+      margin-bottom: 15px;
+    }
+    input[type=range] {
+      width: 100%;
+    }
+  </style>
 </head>
+
 <body>
-  <h1>LBM D2Q9 – Airfoil Channel Flow</h1>
-  <p>Ma première version du simulateur CFD en JavaScript...</p>
+  <div id="sim-container">
+    <canvas id="lbm-canvas" width="800" height="400"></canvas>
+  </div>
+
+  <div id="controls">
+    <h2>Simulation Parameters</h2>
+
+    <label>
+      Flow Speed (Mach)
+      <input type="range" min="0.02" max="0.4" value="0.2" step="0.01">
+    </label>
+
+    <label>
+      Viscosity (tau)
+      <input type="range" min="0.51" max="1.2" value="0.8" step="0.01">
+    </label>
+
+    <label>
+      Angle of Attack
+      <input type="range" min="-15" max="25" value="5" step="1">
+    </label>
+
+    <label>
+      Thickness
+      <input type="range" min="0.06" max="0.2" value="0.12" step="0.01">
+    </label>
+
+    <label>
+      Camber
+      <input type="range" min="0" max="0.2" value="0.08" step="0.01">
+    </label>
+
+    <button onclick="alert('LBM not implemented yet')">Start</button>
+  </div>
+
 </body>
 </html>
