@@ -76,7 +76,9 @@
       justify-content: center;
     }
 
-    .canvas-controls select, .canvas-controls button {
+    .canvas-controls select,
+    .canvas-controls button,
+    .canvas-controls input {
       padding: 8px 12px;
       background: #1e293b;
       border: 1px solid #334155;
@@ -86,7 +88,9 @@
       cursor: pointer;
     }
 
-    .canvas-controls select:hover, .canvas-controls button:hover {
+    .canvas-controls select:hover,
+    .canvas-controls button:hover,
+    .canvas-controls input:hover {
       border-color: #475569;
       background: #2d3748;
     }
@@ -305,6 +309,81 @@
       color: #e5e7eb;
     }
 
+    .slider-with-indicator {
+      position: relative;
+      margin-bottom: 20px;
+    }
+
+    .slider-indicator {
+      height: 6px;
+      border-radius: 3px;
+      position: absolute;
+      top: 20px;
+      left: 0;
+      background: linear-gradient(90deg, #2563eb 0%, #a78bfa 50%, #ef4444 100%);
+    }
+
+    .quality-selector {
+      display: flex;
+      gap: 8px;
+      margin-top: 12px;
+    }
+
+    .quality-btn {
+      flex: 1;
+      padding: 6px 10px;
+      font-size: 12px;
+      text-align: center;
+      border-radius: 4px;
+      background: #1e293b;
+      border: 1px solid #334155;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .quality-btn.active {
+      background: #2563eb;
+      border-color: #3b82f6;
+    }
+
+    .quality-btn:hover:not(.active) {
+      background: #2d3748;
+    }
+
+    .startup-modal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(10, 14, 39, 0.9);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+    }
+
+    .modal-content {
+      background: #0f172a;
+      padding: 30px;
+      border-radius: 12px;
+      max-width: 500px;
+      width: 90%;
+      border: 1px solid #334155;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+    }
+
+    .modal-content h2 {
+      margin-top: 0;
+      color: #60a5fa;
+    }
+
+    .modal-buttons {
+      display: flex;
+      gap: 12px;
+      margin-top: 20px;
+    }
+
     @media (max-width: 1000px) {
       main.layout { flex-direction: column; }
       #sim-container { border-right: none; border-bottom: 1px solid #1e293b; }
@@ -324,14 +403,16 @@
     <canvas id="sim-canvas" width="600" height="240"></canvas>
     <div class="colorbar"></div>
     <div class="colorbar-labels">
-      <span id="max-value">1.0</span>
+      <span id="max-value">1.00</span>
       <span>0.75</span>
       <span>0.50</span>
       <span>0.25</span>
-      <span id="min-value">0.0</span>
+      <span id="min-value">0.00</span>
     </div>
     <div class="performance-panel">
-      FPS: <span id="fps-counter">0</span> | MS/Frame: <span id="ms-counter">0</span>
+      FPS: <span id="fps-counter">0</span> |
+      MS/Frame: <span id="ms-counter">0</span> |
+      Itérations: <span id="steps-count">0</span>
     </div>
     <div class="canvas-controls">
       <label style="font-size: 13px;">Mode de visualisation&nbsp;:</label>
@@ -357,7 +438,10 @@
           <span>Nombre de Mach</span>
           <span class="value" id="mach-value">0.10</span>
         </span>
-        <input type="range" id="mach" min="0.02" max="0.18" step="0.01" value="0.10">
+        <div class="slider-with-indicator">
+          <div class="slider-indicator" id="mach-indicator" style="width:50%;"></div>
+          <input type="range" id="mach" min="0.02" max="0.18" step="0.01" value="0.10">
+        </div>
       </div>
 
       <div class="control">
@@ -365,7 +449,10 @@
           <span>Temps de relaxation τ</span>
           <span class="value" id="tau-value">0.80</span>
         </span>
-        <input type="range" id="tau" min="0.52" max="1.50" step="0.01" value="0.80">
+        <div class="slider-with-indicator">
+          <div class="slider-indicator" id="tau-indicator" style="width:30%;"></div>
+          <input type="range" id="tau" min="0.52" max="1.50" step="0.01" value="0.80">
+        </div>
       </div>
 
       <div class="results-block">
@@ -388,7 +475,10 @@
           <span>Angle d'attaque α</span>
           <span class="value" id="aoa-value">5°</span>
         </span>
-        <input type="range" id="aoa" min="-10" max="20" step="1" value="5">
+        <div class="slider-with-indicator">
+          <div class="slider-indicator" id="aoa-indicator" style="width:50%;"></div>
+          <input type="range" id="aoa" min="-10" max="20" step="1" value="5">
+        </div>
       </div>
 
       <div class="control">
@@ -396,7 +486,10 @@
           <span>Épaisseur relative t/c</span>
           <span class="value" id="thickness-value">0.12</span>
         </span>
-        <input type="range" id="thickness" min="0.06" max="0.20" step="0.01" value="0.12">
+        <div class="slider-with-indicator">
+          <div class="slider-indicator" id="thickness-indicator" style="width:40%;"></div>
+          <input type="range" id="thickness" min="0.06" max="0.20" step="0.01" value="0.12">
+        </div>
       </div>
 
       <div class="control">
@@ -404,7 +497,40 @@
           <span>Cambrure</span>
           <span class="value" id="camber-value">0.08</span>
         </span>
-        <input type="range" id="camber" min="0.00" max="0.20" step="0.01" value="0.08">
+        <div class="slider-with-indicator">
+          <div class="slider-indicator" id="camber-indicator" style="width:40%;"></div>
+          <input type="range" id="camber" min="0.00" max="0.20" step="0.01" value="0.08">
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <h3>Paramètres de performance</h3>
+
+      <div class="control">
+        <span class="label">
+          <span>Résolution</span>
+          <span class="value" id="resolution-value">Moyenne</span>
+        </span>
+        <div class="quality-selector">
+          <div class="quality-btn" data-res="low">Basse</div>
+          <div class="quality-btn active" data-res="medium">Moyenne</div>
+          <div class="quality-btn" data-res="high">Haute</div>
+        </div>
+        <p class="info-text">
+          Réduisez la résolution pour améliorer les performances sur appareils lents.
+        </p>
+      </div>
+
+      <div class="control">
+        <span class="label">
+          <span>Itérations par frame</span>
+          <span class="value" id="iterations-value">2</span>
+        </span>
+        <input type="range" id="iterations" min="1" max="10" step="1" value="2">
+        <p class="info-text">
+          Plus d'itérations accélèrent le transitoire mais réduisent le FPS.
+        </p>
       </div>
     </div>
 
@@ -431,7 +557,7 @@
 
       <p class="info-text">
         <strong>Théorie du profil mince :</strong> CL ≈ 2π·α (α en radians).<br>
-        CD est estimé par un modèle simple (traînée de profil + induite) à partir de CL.
+        CD = CD₀ + CDᵢ avec CDᵢ ≈ CL²/(π·AR·e).
       </p>
     </div>
 
@@ -444,7 +570,7 @@
     <p class="info-text" style="margin-top: 16px;">
       Grille : <span id="grid-size">600×240</span> nœuds • D2Q9 BGK • Parois no-slip • Profil de Joukowsky en bounce-back
       <br><br>
-      <span class="metric-badge">Itérations : <span id="steps-count">0</span></span>
+      <span class="metric-badge">Version optimisée</span>
     </p>
   </aside>
 </main>
@@ -453,456 +579,687 @@
   Prototype LBM – Hamza Boudhair • JavaScript + Canvas 2D
 </footer>
 
-<script>
-  const canvas = document.getElementById("sim-canvas");
-  const ctx    = canvas.getContext("2d");
-  const Nx = canvas.width;
-  const Ny = canvas.height;
-  document.getElementById("grid-size").textContent = Nx + "×" + Ny;
+<div id="startup-modal" class="startup-modal">
+  <div class="modal-content">
+    <h2>Simulation d'écoulement LBM D2Q9</h2>
+    <p>Cette simulation montre l'écoulement d'un fluide autour d'un profil de Joukowsky en utilisant la méthode Lattice Boltzmann (D2Q9).</p>
+    <h3>Instructions :</h3>
+    <ul>
+      <li>Ajustez les paramètres d'écoulement et de géométrie dans le panneau de droite.</li>
+      <li>Choisissez le mode de visualisation (vitesse, pression, vorticité, etc.).</li>
+      <li>Adaptez la résolution/les itérations selon les performances de votre GPU/CPU.</li>
+      <li>Utilisez « Pause » pour figer le champ.</li>
+    </ul>
+    <div class="modal-buttons">
+      <button id="start-btn" style="flex:2;">Démarrer la simulation</button>
+      <button id="quality-low-btn" class="secondary">Faible résolution</button>
+    </div>
+  </div>
+</div>
 
-  const Q  = 9;
-  const w  = [4/9,1/9,1/9,1/9,1/9,1/36,1/36,1/36,1/36];
+<script>
+  // === CONFIG GLOBALE ===
+  let canvas = document.getElementById("sim-canvas");
+  let ctx = canvas.getContext("2d");
+
+  let Nx = canvas.width;
+  let Ny = canvas.height;
+  let size = Nx * Ny;
+
+  const Q = 9;
+  const w = [4/9,1/9,1/9,1/9,1/9,1/36,1/36,1/36,1/36];
   const cx = [0,1,0,-1,0,1,-1,-1,1];
   const cy = [0,0,1,0,-1,1,1,-1,-1];
-  const opp= [0,3,4,1,2,7,8,5,6];
-  const cs2= 1/3;
+  const opp = [0,3,4,1,2,7,8,5,6];
+  const cs2 = 1/3;
 
-  const size = Nx*Ny;
-  const f   = new Float32Array(Q*size);
-  const fTmp= new Float32Array(Q*size);
-  const rho = new Float32Array(size);
-  const ux  = new Float32Array(size);
-  const uy  = new Float32Array(size);
-  const mask= new Uint8Array(size);
-  const vort= new Float32Array(size);
+  let f, fTmp, rho, ux, uy, mask, vort;
 
   let mach = 0.10;
-  let tau  = 0.80;
+  let tau = 0.80;
   let paused = false;
-  let steps  = 0;
+  let steps = 0;
   let vizMode = "velocity";
   let contrastVal = 1.5;
+  let iterationsPerFrame = 2;
+  let resolutionMode = "medium";
 
   let lastTime = performance.now();
   let frames = 0;
 
+  let imgData = ctx.createImageData(Nx, Ny);
+  let pixels = imgData.data;
+
   let airfoilPoly = [];
 
+  // Colorbar stabilisée
+  let displayMax = 1.0;
+  let displayMin = 0.0;
+  const MAX_CAP = {
+    velocity: 1.0,
+    pressure: 0.5,
+    vorticity: 10.0
+  };
+
+  // === ALLOCATION TABLEAUX ===
+  function initDataArrays() {
+    f    = new Float32Array(Q * size);
+    fTmp = new Float32Array(Q * size);
+    rho  = new Float32Array(size);
+    ux   = new Float32Array(size);
+    uy   = new Float32Array(size);
+    mask = new Uint8Array(size);
+    vort = new Float32Array(size);
+  }
+
+  // === MAJ TAILLE GRILLE ===
+  function updateGridSize() {
+    if (resolutionMode === "low") {
+      Nx = 400; Ny = 160;
+    } else if (resolutionMode === "high") {
+      Nx = 800; Ny = 320;
+    } else {
+      Nx = 600; Ny = 240;
+    }
+    canvas.width = Nx;
+    canvas.height = Ny;
+    size = Nx * Ny;
+
+    imgData = ctx.createImageData(Nx, Ny);
+    pixels = imgData.data;
+
+    document.getElementById("grid-size").textContent = Nx + "×" + Ny;
+
+    initDataArrays();
+    initLBM();
+  }
+
+  // === Géométrie Joukowsky + masque ===
   function buildAirfoilMask() {
     mask.fill(0);
 
-    // parois haut / bas
-    for (let x=0;x<Nx;x++) {
+    // murs haut/bas
+    for (let x = 0; x < Nx; x++) {
       mask[x] = 1;
-      mask[x + (Ny-1)*Nx] = 1;
+      mask[x + (Ny - 1) * Nx] = 1;
     }
 
     const aoaDeg   = parseFloat(document.getElementById("aoa").value);
-    const thickness= parseFloat(document.getElementById("thickness").value);
-    const camber   = parseFloat(document.getElementById("camber").value);
+    const thickness = parseFloat(document.getElementById("thickness").value);
+    const camber    = parseFloat(document.getElementById("camber").value);
 
-    const angle = aoaDeg*Math.PI/180;
-    const cosA  = Math.cos(angle), sinA=Math.sin(angle);
+    const angle = aoaDeg * Math.PI / 180;
+    const cosA = Math.cos(angle), sinA = Math.sin(angle);
 
     const Npts = 500;
-    const circleOffset = 0.08 + camber*0.35;
-    let radius = 1.0 - thickness*0.6;
+    const circleOffset = 0.08 + camber * 0.35;
+    let radius = 1.0 - thickness * 0.6;
     if (radius < 0.25) radius = 0.25;
 
     const pts = [];
-    for (let k=0;k<Npts;k++) {
-      const theta = 2*Math.PI*k/Npts;
-      const zx = circleOffset + radius*Math.cos(theta);
-      const zy = radius*Math.sin(theta);
+    for (let k = 0; k < Npts; k++) {
+      const theta = 2 * Math.PI * k / Npts;
+      const zx = circleOffset + radius * Math.cos(theta);
+      const zy = radius * Math.sin(theta);
 
       const denom = zx*zx + zy*zy;
-      const invx = zx/denom;
-      const invy = -zy/denom;
+      const invx = zx / denom;
+      const invy = -zy / denom;
 
       let x = zx + invx;
       let y = zy + invy;
 
-      const xr = x*cosA - y*sinA;
-      const yr = x*sinA + y*cosA;
-      pts.push({x:xr,y:yr});
+      const xr = x * cosA - y * sinA;
+      const yr = x * sinA + y * cosA;
+      pts.push({x:xr, y:yr});
     }
 
-    let minX=Infinity,maxX=-Infinity,minY=Infinity,maxY=-Infinity;
+    let minX = Infinity, maxX = -Infinity;
+    let minY = Infinity, maxY = -Infinity;
     for (const p of pts) {
-      if (p.x<minX)minX=p.x; if(p.x>maxX)maxX=p.x;
-      if (p.y<minY)minY=p.y; if(p.y>maxY)maxY=p.y;
+      if (p.x < minX) minX = p.x;
+      if (p.x > maxX) maxX = p.x;
+      if (p.y < minY) minY = p.y;
+      if (p.y > maxY) maxY = p.y;
     }
-    const spanX=maxX-minX, spanY=maxY-minY;
-    const midX=0.5*(maxX+minX), midY=0.5*(maxY+minY);
+    const spanX = maxX - minX, spanY = maxY - minY;
+    const midX  = 0.5 * (maxX + minX), midY = 0.5 * (maxY + minY);
 
-    const scale=0.4*Math.min(Nx/spanX,Ny/spanY);
-    const centerX=Nx*0.28, centerY=Ny*0.5;
+    const scale   = 0.4 * Math.min(Nx/spanX, Ny/spanY);
+    const centerX = Nx * 0.28;
+    const centerY = Ny * 0.5;
 
-    airfoilPoly=pts.map(p=>({
-      x:centerX + (p.x-midX)*scale,
-      y:centerY - (p.y-midY)*scale
+    airfoilPoly = pts.map(p => ({
+      x: centerX + (p.x - midX) * scale,
+      y: centerY - (p.y - midY) * scale
     }));
 
-    function inside(px,py){
-      let inPoly=false;
-      for(let i=0,j=airfoilPoly.length-1;i<airfoilPoly.length;j=i++){
-        const xi=airfoilPoly[i].x, yi=airfoilPoly[i].y;
-        const xj=airfoilPoly[j].x, yj=airfoilPoly[j].y;
-        const inter=((yi>py)!==(yj>py)) &&
-          (px < (xj-xi)*(py-yi)/(yj-yi+1e-9)+xi);
-        if(inter) inPoly=!inPoly;
+    function inside(px, py) {
+      let inPoly = false;
+      for (let i = 0, j = airfoilPoly.length-1; i < airfoilPoly.length; j = i++) {
+        const xi = airfoilPoly[i].x, yi = airfoilPoly[i].y;
+        const xj = airfoilPoly[j].x, yj = airfoilPoly[j].y;
+        const inter = ((yi > py) !== (yj > py)) &&
+                      (px < (xj-xi)*(py-yi)/(yj-yi+1e-9)+xi);
+        if (inter) inPoly = !inPoly;
       }
       return inPoly;
     }
 
-    for(let y=1;y<Ny-1;y++){
-      for(let x=0;x<Nx;x++){
-        const idx=x+y*Nx;
-        if(inside(x+0.5,y+0.5)) mask[idx]=1;
+    for (let y = 1; y < Ny-1; y++) {
+      for (let x = 0; x < Nx; x++) {
+        const idx = x + y*Nx;
+        if (inside(x+0.5, y+0.5)) mask[idx] = 1;
       }
     }
   }
 
-  function initLBM(){
+  // === Initialisation LBM ===
+  function initLBM() {
     buildAirfoilMask();
-    const u0 = mach*Math.sqrt(cs2);
-    for(let y=0;y<Ny;y++){
-      for(let x=0;x<Nx;x++){
-        const idx=x+y*Nx;
-        rho[idx]=1.0;
-        ux[idx]=mask[idx]?0:u0;
-        uy[idx]=0;
-        const u2=ux[idx]*ux[idx]+uy[idx]*uy[idx];
-        for(let k=0;k<Q;k++){
-          const cu=3*(cx[k]*ux[idx]+cy[k]*uy[idx]);
-          f[k*size+idx]=w[k]*rho[idx]*(1+cu+0.5*cu*cu-1.5*u2);
+    const u0 = mach * Math.sqrt(cs2);
+
+    for (let y = 0; y < Ny; y++) {
+      for (let x = 0; x < Nx; x++) {
+        const idx = x + y*Nx;
+        rho[idx] = 1.0;
+        ux[idx]  = mask[idx] ? 0 : u0;
+        uy[idx]  = 0;
+        const u2 = ux[idx]*ux[idx] + uy[idx]*uy[idx];
+
+        for (let k = 0; k < Q; k++) {
+          const cu = 3*(cx[k]*ux[idx] + cy[k]*uy[idx]);
+          f[k*size + idx] = w[k]*rho[idx]*(1 + cu + 0.5*cu*cu - 1.5*u2);
         }
       }
     }
-    steps=0;
+    steps = 0;
   }
 
-  function bindSlider(id,labelId,fmt,cb){
-    const s=document.getElementById(id);
-    const lab=labelId?document.getElementById(labelId):null;
-    function upd(){
-      const v=parseFloat(s.value);
-      if(lab) lab.textContent=fmt(v);
-      if(cb) cb(v);
+  // === Sliders + labels ===
+  function bindSlider(id, labelId, fmt, cb) {
+    const s   = document.getElementById(id);
+    const lab = labelId ? document.getElementById(labelId) : null;
+
+    function upd() {
+      const v = parseFloat(s.value);
+      if (lab) lab.textContent = fmt(v);
+
+      const min = parseFloat(s.min);
+      const max = parseFloat(s.max);
+      const percent = ((v-min)/(max-min))*100;
+      const ind = document.getElementById(id+"-indicator");
+      if (ind) ind.style.width = percent + "%";
+
+      if (cb) cb(v);
     }
-    s.addEventListener("input",upd);
+    s.addEventListener("input", upd);
     upd();
   }
 
-  function updateAero(){
-    const aoaDeg=parseFloat(document.getElementById("aoa").value);
-    const alpha = aoaDeg*Math.PI/180;
+  // === CL/CD analytiques + Re ===
+  function updateAero() {
+    const aoaDeg = parseFloat(document.getElementById("aoa").value);
+    const alpha  = aoaDeg * Math.PI/180;
     document.getElementById("res-alpha").textContent =
       `${aoaDeg.toFixed(1)}° (${alpha.toFixed(3)} rad)`;
 
-    const nu=(tau-0.5)/3;
-    const u0=mach*Math.sqrt(cs2);
-    const L =Nx*0.15;
-    const Re=u0*L/nu;
-    document.getElementById("reynolds").textContent=`~${Math.round(Re)}`;
-    document.getElementById("viscosity").textContent=nu.toFixed(4);
+    const nu = (tau - 0.5)/3;
+    const u0 = mach * Math.sqrt(cs2);
+    const L  = Nx * 0.15;
+    const Re = u0 * L / nu;
+    document.getElementById("reynolds").textContent  = `~${Math.round(Re)}`;
+    document.getElementById("viscosity").textContent = nu.toFixed(4);
 
-    // CL/CD analytiques
     let CL = 2*Math.PI*alpha;
-    if(CL>2.5) CL=2.5;
-    if(CL<-2.5) CL=-2.5;
-    const CD0=0.01;
-    const AR=6.0, e=0.9;
-    const CDi=CL*CL/(Math.PI*AR*e);
-    const CD = CD0+CDi;
-    const LD = CL/CD;
+    if (CL > 2.5)  CL = 2.5;
+    if (CL < -2.5) CL = -2.5;
 
-    document.getElementById("res-cl").textContent=CL.toFixed(3);
-    document.getElementById("res-cd").textContent=CD.toFixed(3);
-    document.getElementById("res-ld").textContent=LD.toFixed(1);
+    const CD0 = 0.01;
+    const AR  = 6.0;
+    const e   = 0.9;
+    const CDi = CL*CL/(Math.PI*AR*e);
+    const CD  = CD0 + CDi;
+    const LD  = CD !== 0 ? CL/CD : 0;
+
+    document.getElementById("res-cl").textContent = CL.toFixed(3);
+    document.getElementById("res-cd").textContent = CD.toFixed(3);
+    document.getElementById("res-ld").textContent = LD.toFixed(1);
   }
 
-  bindSlider("mach","mach-value",v=>v.toFixed(2), v=>{mach=v; initLBM(); updateAero();});
-  bindSlider("tau","tau-value", v=>v.toFixed(2), v=>{tau=v; updateAero();});
-  bindSlider("aoa","aoa-value",v=>v.toFixed(0)+"°", ()=>{initLBM(); updateAero();});
-  bindSlider("thickness","thickness-value",v=>v.toFixed(2), ()=>{initLBM();});
-  bindSlider("camber","camber-value",v=>v.toFixed(2), ()=>{initLBM();});
-  bindSlider("contrast",null,v=>v.toFixed(1), v=>{contrastVal=v;});
-
-  document.getElementById("viz-mode").addEventListener("change",e=>{
-    vizMode=e.target.value;
-  });
-
-  document.getElementById("pause-btn").addEventListener("click",()=>{
-    paused=!paused;
-    document.getElementById("pause-btn").textContent=paused?"Reprendre":"Pause";
-  });
-
-  document.getElementById("reset-btn").addEventListener("click",()=>{initLBM();});
-
-  document.getElementById("screenshot-btn").addEventListener("click",()=>{
-    const link=document.createElement("a");
-    link.download=`lbm-${new Date().toISOString().slice(0,19)}.png`;
-    link.href=canvas.toDataURL();
-    link.click();
-  });
-
-  document.getElementById("export-btn").addEventListener("click",()=>{
-    const aoa=parseFloat(document.getElementById("aoa").value);
-    const data={
-      parameters:{mach,tau,aoa,
-        thickness:parseFloat(document.getElementById("thickness").value),
-        camber:parseFloat(document.getElementById("camber").value)},
-      results:{
-        CL:parseFloat(document.getElementById("res-cl").textContent),
-        CD:parseFloat(document.getElementById("res-cd").textContent),
-        LD:parseFloat(document.getElementById("res-ld").textContent),
-        Re:document.getElementById("reynolds").textContent,
-        steps
-      }
-    };
-    const blob=new Blob([JSON.stringify(data,null,2)],{type:"application/json"});
-    const url=URL.createObjectURL(blob);
-    const a=document.createElement("a");
-    a.href=url;
-    a.download=`lbm-data-${new Date().toISOString().slice(0,19)}.json`;
-    a.click();
-    URL.revokeObjectURL(url);
-  });
-
-  function computeVorticity(){
-    for(let y=1;y<Ny-1;y++){
-      for(let x=1;x<Nx-1;x++){
-        const idx=x+y*Nx;
-        const idxL=(x-1)+y*Nx;
-        const idxR=(x+1)+y*Nx;
-        const idxD=x+(y-1)*Nx;
-        const idxU=x+(y+1)*Nx;
-        const du_dy=0.5*(ux[idxU]-ux[idxD]);
-        const dv_dx=0.5*(uy[idxR]-uy[idxL]);
-        vort[idx]=dv_dx-du_dy;
+  // === Strain / vorticité ===
+  function computeVorticity() {
+    for (let y = 1; y < Ny-1; y++) {
+      for (let x = 1; x < Nx-1; x++) {
+        const idx  = x + y*Nx;
+        const idxL = (x-1) + y*Nx;
+        const idxR = (x+1) + y*Nx;
+        const idxD = x + (y-1)*Nx;
+        const idxU = x + (y+1)*Nx;
+        const dvy_dx = 0.5*(uy[idxR] - uy[idxL]);
+        const dux_dy = 0.5*(ux[idxU] - ux[idxD]);
+        vort[idx] = dvy_dx - dux_dy;
       }
     }
   }
 
-  function lbmStep(){
-    const omega=1.0/tau;
-
+  // === STEP LBM ===
+  function lbmStep() {
     // macros
-    for(let y=0;y<Ny;y++){
-      for(let x=0;x<Nx;x++){
-        const idx=x+y*Nx;
-        let r=0,jx=0,jy=0;
-        for(let k=0;k<Q;k++){
-          const fi=f[k*size+idx];
-          r+=fi; jx+=fi*cx[k]; jy+=fi*cy[k];
+    for (let y = 0; y < Ny; y++) {
+      for (let x = 0; x < Nx; x++) {
+        const idx = x + y*Nx;
+        let r = 0, uxLoc = 0, uyLoc = 0;
+        for (let k = 0; k < Q; k++) {
+          const fi = f[k*size + idx];
+          r     += fi;
+          uxLoc += fi*cx[k];
+          uyLoc += fi*cy[k];
         }
-        if(mask[idx]||r<1e-12){rho[idx]=1;ux[idx]=0;uy[idx]=0;}
-        else {rho[idx]=r;ux[idx]=jx/r;uy[idx]=jy/r;}
+        rho[idx] = r;
+        if (mask[idx]) {
+          ux[idx] = 0; uy[idx] = 0;
+        } else {
+          ux[idx] = uxLoc/r;
+          uy[idx] = uyLoc/r;
+        }
+
+        // entrée : vitesse imposée
+        if (x === 0 && !mask[idx]) {
+          const uIn = mach * Math.sqrt(cs2);
+          ux[idx] = uIn;
+          uy[idx] = 0;
+        }
+
+        // sortie : extrapolation simple
+        if (x === Nx-1 && !mask[idx]) {
+          const idxL = (x-1) + y*Nx;
+          ux[idx] = ux[idxL];
+          uy[idx] = uy[idxL];
+        }
       }
     }
 
-    // collision
-    for(let y=0;y<Ny;y++){
-      for(let x=0;x<Nx;x++){
-        const idx=x+y*Nx;
-        if(mask[idx]){
-          for(let k=0;k<Q;k++) fTmp[k*size+idx]=f[k*size+idx];
+    computeVorticity();
+
+    // collision BGK
+    for (let y = 0; y < Ny; y++) {
+      for (let x = 0; x < Nx; x++) {
+        const idx = x + y*Nx;
+        if (mask[idx]) {
+          for (let k = 0; k < Q; k++) {
+            fTmp[k*size + idx] = f[k*size + idx];
+          }
           continue;
         }
-        let r=rho[idx], uxLoc=ux[idx], uyLoc=uy[idx];
 
-        // entrée
-        if(x===0 && !mask[idx]){uxLoc=mach*Math.sqrt(cs2); uyLoc=0; r=1.0;}
-        // sortie
-        if(x===Nx-1 && !mask[idx]){
-          const idxL=(x-1)+y*Nx;
-          uxLoc=ux[idxL]; uyLoc=uy[idxL]; r=rho[idxL];
-        }
+        const r   = rho[idx];
+        const uxL = ux[idx];
+        const uyL = uy[idx];
+        const u2  = uxL*uxL + uyL*uyL;
 
-        const u2=uxLoc*uxLoc+uyLoc*uyLoc;
-        for(let k=0;k<Q;k++){
-          const cu=(cx[k]*uxLoc+cy[k]*uyLoc)/cs2;
-          const feq=w[k]*r*(1+cu+0.5*cu*cu-1.5*u2/cs2);
-          const id=k*size+idx;
-          fTmp[id]=f[id]-omega*(f[id]-feq);
+        for (let k = 0; k < Q; k++) {
+          const cu  = (cx[k]*uxL + cy[k]*uyL)/cs2;
+          const feq = w[k]*r*(1 + cu + 0.5*cu*cu - 1.5*u2/cs2);
+          const idF = k*size + idx;
+          fTmp[idF] = f[idF] - (f[idF] - feq)/tau;
         }
       }
     }
 
     // streaming + bounce-back
-    for(let y=0;y<Ny;y++){
-      for(let x=0;x<Nx;x++){
-        const idx=x+y*Nx;
-        for(let k=0;k<Q;k++){
-          const xn=x+cx[k], yn=y+cy[k];
-          if(xn<0||xn>=Nx||yn<0||yn>=Ny){
-            f[opp[k]*size+idx]=fTmp[k*size+idx];
+    for (let y = 0; y < Ny; y++) {
+      for (let x = 0; x < Nx; x++) {
+        const idx = x + y*Nx;
+        for (let k = 0; k < Q; k++) {
+          const xn = x + cx[k];
+          const yn = y + cy[k];
+          const src = k*size + idx;
+
+          if (xn < 0 || xn >= Nx || yn < 0 || yn >= Ny) {
+            const dest = opp[k]*size + idx;
+            f[dest] = fTmp[src];
           } else {
-            const nIdx=xn+yn*Nx;
-            if(mask[nIdx]) f[opp[k]*size+idx]=fTmp[k*size+idx];
-            else f[k*size+nIdx]=fTmp[k*size+idx];
+            const nIdx = xn + yn*Nx;
+            if (mask[nIdx]) {
+              const dest = opp[k]*size + idx;
+              f[dest] = fTmp[src];
+            } else {
+              const dest = k*size + nIdx;
+              f[dest] = fTmp[src];
+            }
           }
         }
       }
     }
+
     steps++;
   }
 
-  const imgData=ctx.createImageData(Nx,Ny);
-  const data=imgData.data;
-
-  function colormap(v){
-    v=Math.max(0,Math.min(1,v));
-    const c1=[15,23,42], c2=[59,130,246], c3=[251,191,36], c4=[239,68,68];
+  // === COLOR MAPS ===
+  function colormap(v) {
+    v = Math.max(0, Math.min(1, v));
+    const c1 = [15,23,42];
+    const c2 = [59,130,246];
+    const c3 = [251,191,36];
+    const c4 = [239,68,68];
     let r,g,b;
-    if(v<0.33){const t=v/0.33; r=c1[0]+t*(c2[0]-c1[0]); g=c1[1]+t*(c2[1]-c1[1]); b=c1[2]+t*(c2[2]-c1[2]);}
-    else if(v<0.66){const t=(v-0.33)/0.33; r=c2[0]+t*(c3[0]-c2[0]); g=c2[1]+t*(c3[1]-c2[1]); b=c2[2]+t*(c3[2]-c2[2]);}
-    else {const t=(v-0.66)/0.34; r=c3[0]+t*(c4[0]-c3[0]); g=c3[1]+t*(c4[1]-c3[1]); b=c3[2]+t*(c4[2]-c3[2]);}
-    return [r|0,g|0,b|0];
+    if (v < 0.33) {
+      const t = v/0.33;
+      r = c1[0] + t*(c2[0]-c1[0]);
+      g = c1[1] + t*(c2[1]-c1[1]);
+      b = c1[2] + t*(c2[2]-c1[2]);
+    } else if (v < 0.66) {
+      const t = (v-0.33)/0.33;
+      r = c2[0] + t*(c3[0]-c2[0]);
+      g = c2[1] + t*(c3[1]-c2[1]);
+      b = c2[2] + t*(c3[2]-c2[2]);
+    } else {
+      const t = (v-0.66)/0.34;
+      r = c3[0] + t*(c4[0]-c3[0]);
+      g = c3[1] + t*(c4[1]-c3[1]);
+      b = c3[2] + t*(c4[2]-c3[2]);
+    }
+    return [r|0, g|0, b|0];
   }
 
-  function colormapDiverging(v){
-    v=Math.max(-1,Math.min(1,v));
-    const c1=[59,130,246],c2=[241,245,249],c3=[239,68,68];
+  function colormapDiverging(v) {
+    v = Math.max(-1, Math.min(1, v));
+    const c1 = [59,130,246];
+    const c2 = [241,245,249];
+    const c3 = [239,68,68];
     let r,g,b;
-    if(v<0){const t=v+1; r=c1[0]+t*(c2[0]-c1[0]); g=c1[1]+t*(c2[1]-c1[1]); b=c1[2]+t*(c2[2]-c1[2]);}
-    else {const t=v; r=c2[0]+t*(c3[0]-c2[0]); g=c2[1]+t*(c3[1]-c2[1]); b=c2[2]+t*(c3[2]-c2[2]);}
-    return [r|0,g|0,b|0];
+    if (v < 0) {
+      const t = v + 1.0;
+      r = c1[0] + t*(c2[0]-c1[0]);
+      g = c1[1] + t*(c2[1]-c1[1]);
+      b = c1[2] + t*(c2[2]-c1[2]);
+    } else {
+      const t = v;
+      r = c2[0] + t*(c3[0]-c2[0]);
+      g = c2[1] + t*(c3[1]-c2[1]);
+      b = c2[2] + t*(c3[2]-c2[2]);
+    }
+    return [r|0, g|0, b|0];
   }
 
-  function render(){
-    computeVorticity();
-
-    // FPS
+  // === RENDER ===
+  function render() {
+    const now = performance.now();
     frames++;
-    const now=performance.now();
-    const dt=now-lastTime;
-    if(dt>1000){
-      const fps=Math.round(frames*1000/dt);
-      const ms=(dt/frames).toFixed(1);
-      document.getElementById("fps-counter").textContent=fps;
-      document.getElementById("ms-counter").textContent=ms;
-      lastTime=now; frames=0;
+    if (now - lastTime >= 1000) {
+      const dt = now - lastTime;
+      const fps = (frames*1000/dt);
+      const ms  = dt/frames;
+      document.getElementById("fps-counter").textContent = fps.toFixed(0);
+      document.getElementById("ms-counter").textContent  = ms.toFixed(1);
+      frames = 0;
+      lastTime = now;
     }
 
-    let maxVal=0,minVal=Infinity;
+    let maxVal = 0;
+    let minVal = Infinity;
 
-    if(vizMode==="velocity" || vizMode==="streamlines" || vizMode==="vectors"){
-      for(let i=0;i<size;i++){
-        if(mask[i])continue;
-        const uMag=Math.hypot(ux[i],uy[i]);
-        if(uMag>maxVal)maxVal=uMag;
-        if(uMag<minVal)minVal=uMag;
+    if (vizMode === "velocity" || vizMode === "streamlines" || vizMode === "vectors") {
+      for (let i = 0; i < size; i++) {
+        if (!mask[i]) {
+          const uMag = Math.hypot(ux[i], uy[i]);
+          if (uMag > maxVal) maxVal = uMag;
+          if (uMag < minVal) minVal = uMag;
+        }
       }
-    } else if(vizMode==="pressure"){
-      for(let i=0;i<size;i++){
-        if(mask[i])continue;
-        const p=Math.abs((rho[i]-1)*cs2);
-        if(p>maxVal)maxVal=p;
-        if(p<minVal)minVal=p;
+    } else if (vizMode === "pressure") {
+      for (let i = 0; i < size; i++) {
+        if (!mask[i]) {
+          const p = Math.abs((rho[i]-1)*cs2);
+          if (p > maxVal) maxVal = p;
+          if (p < minVal) minVal = p;
+        }
       }
-    } else if(vizMode==="vorticity"){
-      for(let i=0;i<size;i++){
-        if(mask[i])continue;
-        const v=Math.abs(vort[i]);
-        if(v>maxVal)maxVal=v;
-        if(v<minVal)minVal=v;
+    } else if (vizMode === "vorticity") {
+      for (let i = 0; i < size; i++) {
+        if (!mask[i]) {
+          const v = Math.abs(vort[i]);
+          if (v > maxVal) maxVal = v;
+          if (v < minVal) minVal = v;
+        }
       }
     }
 
-    if(!isFinite(minVal)) minVal=0;
-    if(!isFinite(maxVal)||maxVal===0) maxVal=1;
+    // bornes physiques + lissage
+    if (!isFinite(maxVal) || maxVal <= 0) maxVal = 1.0;
+    if (!isFinite(minVal) || minVal < 0)   minVal = 0.0;
 
-    document.getElementById("max-value").textContent=maxVal.toFixed(2);
-    document.getElementById("min-value").textContent=minVal.toFixed(2);
+    if (vizMode === "velocity" || vizMode === "streamlines" || vizMode === "vectors") {
+      maxVal = Math.min(maxVal, MAX_CAP.velocity);
+    } else if (vizMode === "pressure") {
+      maxVal = Math.min(maxVal, MAX_CAP.pressure);
+    } else if (vizMode === "vorticity") {
+      maxVal = Math.min(maxVal, MAX_CAP.vorticity);
+    }
 
-    const scale=contrastVal/maxVal;
+    const alpha = 0.15;
+    displayMax = (1-alpha)*displayMax + alpha*maxVal;
+    displayMin = (1-alpha)*displayMin + alpha*minVal;
 
-    for(let y=0;y<Ny;y++){
-      for(let x=0;x<Nx;x++){
-        const idx=x+y*Nx, di=4*idx;
-        if(mask[idx]){
-          data[di]=241; data[di+1]=245; data[di+2]=249; data[di+3]=255;
+    document.getElementById("max-value").textContent = displayMax.toFixed(2);
+    document.getElementById("min-value").textContent = displayMin.toFixed(2);
+
+    const scale = displayMax > 0 ? contrastVal/displayMax : 1.0;
+
+    // champs couleur
+    for (let y = 0; y < Ny; y++) {
+      for (let x = 0; x < Nx; x++) {
+        const idx = x + y*Nx;
+        const di  = 4*idx;
+
+        if (mask[idx]) {
+          pixels[di]   = 241;
+          pixels[di+1] = 245;
+          pixels[di+2] = 249;
+          pixels[di+3] = 255;
         } else {
-          let rgb;
-          if(vizMode==="velocity" || vizMode==="streamlines" || vizMode==="vectors"){
-            const uMag=Math.hypot(ux[idx],uy[idx]);
-            rgb=colormap(uMag*scale);
-          } else if(vizMode==="pressure"){
-            const p=(rho[idx]-1)*cs2;
-            rgb=colormapDiverging(p*scale*5);
-          } else {
-            rgb=colormapDiverging(vort[idx]*scale*0.5);
+          let val, rgb;
+
+          if (vizMode === "velocity" || vizMode === "streamlines" || vizMode === "vectors") {
+            const uMag = Math.hypot(ux[idx], uy[idx]);
+            val = uMag * scale;
+            rgb = colormap(val);
+          } else if (vizMode === "pressure") {
+            const p = (rho[idx]-1)*cs2;
+            val = p * scale * 5;
+            rgb = colormapDiverging(val);
+          } else { // vorticity
+            val = vort[idx] * scale * 0.5;
+            rgb = colormapDiverging(val);
           }
-          data[di]=rgb[0]; data[di+1]=rgb[1]; data[di+2]=rgb[2]; data[di+3]=255;
+
+          pixels[di]   = rgb[0];
+          pixels[di+1] = rgb[1];
+          pixels[di+2] = rgb[2];
+          pixels[di+3] = 255;
         }
       }
     }
 
-    ctx.putImageData(imgData,0,0);
+    ctx.putImageData(imgData, 0, 0);
 
-    // streamlines
-    if(vizMode==="streamlines"){
-      ctx.strokeStyle="rgba(255,255,255,0.7)";
-      ctx.lineWidth=1;
-      const seedStep=20, maxLen=40, dtS=1.0;
-      for(let sy=seedStep;sy<Ny-seedStep;sy+=seedStep){
-        for(let sx=seedStep;sx<Nx-seedStep;sx+=seedStep){
-          if(mask[sx+sy*Nx])continue;
-          let px=sx,py=sy;
-          ctx.beginPath(); ctx.moveTo(px,py);
-          for(let n=0;n<maxLen;n++){
-            const ix=px|0, iy=py|0;
-            if(ix<0||ix>=Nx||iy<0||iy>=Ny)break;
-            const idx=ix+iy*Nx;
-            if(mask[idx])break;
-            const vx=ux[idx], vy=uy[idx];
-            const sp=Math.hypot(vx,vy);
-            if(sp<1e-4)break;
-            px+=vx/sp*dtS;
-            py+=vy/sp*dtS;
-            ctx.lineTo(px,py);
-          }
-          ctx.stroke();
-        }
-      }
-    } else if(vizMode==="vectors"){
-      ctx.strokeStyle="rgba(255,255,255,0.8)";
-      ctx.lineWidth=1;
-      const step=24, vecScale=6;
-      for(let y=step;y<Ny-step;y+=step){
-        for(let x=step;x<Nx-step;x+=step){
-          const idx=x+y*Nx;
-          if(mask[idx])continue;
-          const vx=ux[idx], vy=uy[idx];
-          const sp=Math.hypot(vx,vy);
-          if(sp<1e-3)continue;
-          const ex=x+vx*vecScale;
-          const ey=y+vy*vecScale;
+    // surcouches
+    if (vizMode === "streamlines") {
+      ctx.strokeStyle = "rgba(255,255,255,0.6)";
+      ctx.lineWidth = 1;
+      const step = 15;
+      const maxLen = 80;
+      const dtLine = 0.8;
+
+      for (let sy = step; sy < Ny-step; sy += step) {
+        for (let sx = step; sx < Nx-step; sx += step) {
+          if (mask[sx + sy*Nx]) continue;
+
+          let px = sx, py = sy;
           ctx.beginPath();
-          ctx.moveTo(x,y);
-          ctx.lineTo(ex,ey);
+          ctx.moveTo(px, py);
+
+          for (let n = 0; n < maxLen; n++) {
+            const ix = px|0, iy = py|0;
+            if (ix < 0 || ix >= Nx || iy < 0 || iy >= Ny) break;
+            const idx = ix + iy*Nx;
+            if (mask[idx]) break;
+
+            const vx = ux[idx], vy = uy[idx];
+            const vmag = Math.hypot(vx, vy);
+            if (vmag < 1e-3) break;
+
+            px += vx * dtLine / vmag;
+            py += vy * dtLine / vmag;
+            ctx.lineTo(px, py);
+          }
+          ctx.stroke();
+        }
+      }
+    } else if (vizMode === "vectors") {
+      ctx.strokeStyle = "rgba(255,255,255,0.85)";
+      ctx.lineWidth = 1;
+      const step = 20;
+      const scaleVec = 6;
+
+      for (let y = step; y < Ny-step; y += step) {
+        for (let x = step; x < Nx-step; x += step) {
+          const idx = x + y*Nx;
+          if (mask[idx]) continue;
+          const vx = ux[idx], vy = uy[idx];
+          const vmag = Math.hypot(vx, vy);
+          if (vmag < 0.01) continue;
+
+          const ex = vx*scaleVec;
+          const ey = vy*scaleVec;
+          const ang = Math.atan2(ey, ex);
+
+          ctx.beginPath();
+          ctx.moveTo(x, y);
+          ctx.lineTo(x+ex, y+ey);
+          ctx.stroke();
+
+          ctx.beginPath();
+          ctx.moveTo(x+ex, y+ey);
+          ctx.lineTo(x+ex-5*Math.cos(ang-Math.PI/6), y+ey-5*Math.sin(ang-Math.PI/6));
+          ctx.moveTo(x+ex, y+ey);
+          ctx.lineTo(x+ex-5*Math.cos(ang+Math.PI/6), y+ey-5*Math.sin(ang+Math.PI/6));
           ctx.stroke();
         }
       }
     }
 
-    document.getElementById("steps-count").textContent=steps;
+    document.getElementById("steps-count").textContent = steps;
   }
 
-  function loop(){
-    if(!paused){
-      // 1–2 itérations par frame → fluide mais léger
-      lbmStep();
-      lbmStep();
+  // === LOOP ===
+  function loop() {
+    if (!paused) {
+      for (let i = 0; i < iterationsPerFrame; i++) {
+        lbmStep();
+      }
     }
     render();
     requestAnimationFrame(loop);
   }
 
-  initLBM();
+  // === EVENTS / UI ===
+  function setupEventListeners() {
+    bindSlider("mach","mach-value",v=>v.toFixed(2), v=>{
+      mach = v; initLBM(); updateAero();
+    });
+    bindSlider("tau","tau-value",v=>v.toFixed(2), v=>{
+      tau = v; updateAero();
+    });
+    bindSlider("aoa","aoa-value",v=>v.toFixed(0)+"°", ()=>{
+      initLBM(); updateAero();
+    });
+    bindSlider("thickness","thickness-value",v=>v.toFixed(2), ()=>{ initLBM(); });
+    bindSlider("camber","camber-value",v=>v.toFixed(2), ()=>{ initLBM(); });
+    bindSlider("contrast",null,v=>v.toFixed(1), v=>{ contrastVal = v; });
+    bindSlider("iterations","iterations-value",v=>v.toFixed(0), v=>{ iterationsPerFrame = v; });
+
+    document.getElementById("viz-mode").addEventListener("change", e=>{
+      vizMode = e.target.value;
+    });
+
+    document.getElementById("pause-btn").addEventListener("click", ()=>{
+      paused = !paused;
+      document.getElementById("pause-btn").textContent = paused ? "Reprendre" : "Pause";
+    });
+
+    document.getElementById("reset-btn").addEventListener("click", ()=>{
+      initLBM();
+    });
+
+    document.getElementById("screenshot-btn").addEventListener("click", ()=>{
+      const a = document.createElement("a");
+      a.download = `lbm-${new Date().toISOString().slice(0,19)}.png`;
+      a.href = canvas.toDataURL();
+      a.click();
+    });
+
+    document.getElementById("export-btn").addEventListener("click", ()=>{
+      const aoa = parseFloat(document.getElementById("aoa").value);
+      const data = {
+        parameters: {
+          mach, tau, aoa,
+          thickness: parseFloat(document.getElementById("thickness").value),
+          camber:    parseFloat(document.getElementById("camber").value),
+          resolution: resolutionMode
+        },
+        results: {
+          CL: parseFloat(document.getElementById("res-cl").textContent),
+          CD: parseFloat(document.getElementById("res-cd").textContent),
+          LD: parseFloat(document.getElementById("res-ld").textContent),
+          Re: document.getElementById("reynolds").textContent,
+          steps
+        }
+      };
+      const blob = new Blob([JSON.stringify(data,null,2)], {type:"application/json"});
+      const url  = URL.createObjectURL(blob);
+      const a    = document.createElement("a");
+      a.href = url;
+      a.download = `lbm-data-${new Date().toISOString().slice(0,19)}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+    });
+
+    document.querySelectorAll(".quality-btn").forEach(btn=>{
+      btn.addEventListener("click", ()=>{
+        document.querySelectorAll(".quality-btn").forEach(b=>b.classList.remove("active"));
+        btn.classList.add("active");
+        resolutionMode = btn.getAttribute("data-res");
+        document.getElementById("resolution-value").textContent =
+          resolutionMode==="low" ? "Basse" :
+          resolutionMode==="high" ? "Haute" : "Moyenne";
+        updateGridSize();
+        updateAero();
+      });
+    });
+
+    document.getElementById("start-btn").addEventListener("click", ()=>{
+      document.getElementById("startup-modal").style.display = "none";
+    });
+
+    document.getElementById("quality-low-btn").addEventListener("click", ()=>{
+      resolutionMode = "low";
+      document.querySelectorAll(".quality-btn").forEach(b=>b.classList.remove("active"));
+      document.querySelector('.quality-btn[data-res="low"]').classList.add("active");
+      document.getElementById("resolution-value").textContent = "Basse";
+      updateGridSize();
+      updateAero();
+      document.getElementById("startup-modal").style.display = "none";
+    });
+  }
+
+  // === INITIALISATION ===
+  initDataArrays();
+  updateGridSize();
+  setupEventListeners();
   updateAero();
+  lastTime = performance.now();
   requestAnimationFrame(loop);
 </script>
 </body>
