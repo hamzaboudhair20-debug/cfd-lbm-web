@@ -135,6 +135,25 @@
 
     button:hover { filter: brightness(1.1); }
 
+    .results-block {
+      margin-top: 20px;
+      padding-top: 12px;
+      border-top: 1px solid #1f2937;
+      font-size: 13px;
+    }
+
+    .results-block h3 {
+      margin: 0 0 8px 0;
+      font-size: 15px;
+    }
+
+    .results-block .row {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 4px;
+      font-variant-numeric: tabular-nums;
+    }
+
     footer {
       padding: 6px 16px;
       font-size: 11px;
@@ -151,7 +170,7 @@
     <h1>2D GPU CFD Prototype – Joukowsky Airfoil + WebGL Field</h1>
     <p>
       WebGL2 ping-pong shader field (GPU) + parametric Joukowsky airfoil overlay.
-      Sliders control both geometry and shader dynamics (préfiguration LBM/LES).
+      Sliders control geometry, shader dynamics and simple aerodynamic estimates.
     </p>
   </header>
 
@@ -221,11 +240,27 @@
         <button id="pause-btn">Pause</button>
       </div>
 
+      <div class="results-block">
+        <h3>Aerodynamic Estimates (Thin-Airfoil Theory)</h3>
+        <div class="row">
+          <span>Angle of attack α</span>
+          <span id="res-alpha">5° (0.087 rad)</span>
+        </div>
+        <div class="row">
+          <span>Lift coefficient C<sub>L</sub> ≈ 2π α</span>
+          <span id="res-cl">0.55</span>
+        </div>
+        <p style="margin-top:8px; font-size:11px; color:#9ca3af;">
+          C<sub>L</sub> is estimated using the classical thin-airfoil theory
+          (incompressible, small angles, attached flow). This is an analytical
+          first-order estimate, not yet computed from the GPU field.
+        </p>
+      </div>
+
       <p style="margin-top:16px; font-size:11px; color:#9ca3af;">
-        Le champ coloré est calculé sur GPU via WebGL2 (textures RGBA8 + ping-pong).
-        Il simule un champ advecté/diffusé stylisé contrôlé par Mach, τ et C<sub>s</sub>.
-        Le profil blanc est un airfoil de Joukowsky paramétrique (camber, épaisseur, AoA).
-        Plus tard tu pourras remplacer le shader de simulation par un noyau LBM D2Q9/LES.
+        The coloured field is a stylised advected/diffused scalar computed on the GPU
+        (RGBA8 textures + ping-pong). It serves as a visual placeholder for future
+        LBM/LES velocity/vorticity fields.
       </p>
     </aside>
   </main>
@@ -275,7 +310,6 @@
       return prog;
     }
 
-    // Fullscreen quad
     const quadVBO = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, quadVBO);
     const quadVerts = new Float32Array([
@@ -301,7 +335,6 @@
       }
     `;
 
-    // Reset shader : initialise le champ avec une onde
     const resetFS = `#version 300 es
       precision highp float;
       in vec2 v_uv;
@@ -312,7 +345,6 @@
       }
     `;
 
-    // Simulation shader : diffusion + advection stylisée
     const simFS = `#version 300 es
       precision highp float;
       in vec2 v_uv;
@@ -336,14 +368,12 @@
 
         float lap = (up + dn + rt + lt - 4.0 * c);
 
-        // onde "advectée" par Mach (purement visuelle)
         float wave = sin(12.0 * (v_uv.x + u_mach * u_time * 0.3) +
                          8.0  * (v_uv.y) -
                          0.6  * u_time);
 
         float next = c + u_diffusion * lap + 0.03 * wave * (0.5 + 2.0 * u_cs);
 
-        // clamp & blend léger vers 0.5 pour la stabilité
         next = mix(next, 0.5, 0.002);
         next = clamp(next, 0.0, 1.0);
 
@@ -351,7 +381,6 @@
       }
     `;
 
-    // Display shader : colormap
     const displayFS = `#version 300 es
       precision highp float;
       in vec2 v_uv;
@@ -385,7 +414,7 @@
     const displayProgram = createProgram(gl, vsSource, displayFS);
 
     // -----------------------
-    // 3) Textures RGBA8 + FBOs
+    // 3) Textures & FBOs
     // -----------------------
     function createFieldTexture() {
       const tex = gl.createTexture();
@@ -418,13 +447,13 @@
     let writeFBO = fboB;
 
     // -----------------------
-    // 4) Sliders & état
+    // 4) Sliders & résultats
     // -----------------------
     let paused = false;
     let startTime = performance.now();
     let resetRequested = true; // reset au démarrage
 
-    function bindSlider(sliderId, valueId, formatter) {
+    function bindSlider(sliderId, valueId, formatter, onChangeExtra) {
       const slider = document.getElementById(sliderId);
       const valueSpan = document.getElementById(valueId);
       if (!slider || !valueSpan) return;
@@ -432,17 +461,31 @@
       function update() {
         const v = parseFloat(slider.value);
         valueSpan.textContent = formatter ? formatter(v) : v.toFixed(2);
+        if (onChangeExtra) onChangeExtra();
       }
       slider.addEventListener("input", update);
       update();
     }
 
+    function updateAeroResults() {
+      const aoaDeg = parseFloat(document.getElementById("aoa").value);
+      const alphaRad = aoaDeg * Math.PI / 180.0;
+      const cl = 2.0 * Math.PI * alphaRad;
+
+      const alphaSpan = document.getElementById("res-alpha");
+      const clSpan    = document.getElementById("res-cl");
+
+      alphaSpan.textContent = `${aoaDeg.toFixed(1)}° (${alphaRad.toFixed(3)} rad)`;
+      clSpan.textContent    = cl.toFixed(3);
+    }
+
     bindSlider("mach", "mach-value", v => v.toFixed(2));
     bindSlider("tau", "tau-value", v => v.toFixed(2));
     bindSlider("cs", "cs-value", v => v.toFixed(2));
-    bindSlider("aoa", "aoa-value", v => v.toFixed(0) + "°");
+    bindSlider("aoa", "aoa-value", v => v.toFixed(0) + "°", updateAeroResults);
     bindSlider("thickness", "thickness-value", v => v.toFixed(2));
     bindSlider("camber", "camber-value", v => v.toFixed(2));
+    updateAeroResults();
 
     document.getElementById("pause-btn").addEventListener("click", () => {
       paused = !paused;
@@ -454,14 +497,14 @@
     });
 
     // -----------------------
-    // 5) Airfoil Joukowsky (canvas 2D)
+    // 5) Airfoil Joukowsky
     // -----------------------
     const airfoilCanvas = document.getElementById("airfoil-canvas");
     const airCtx = airfoilCanvas.getContext("2d");
     let airfoilPoints = [];
 
     function recomputeAirfoil() {
-      const aoaDeg   = parseFloat(document.getElementById("aoa").value);
+      const aoaDeg    = parseFloat(document.getElementById("aoa").value);
       const thickness = parseFloat(document.getElementById("thickness").value);
       const camber    = parseFloat(document.getElementById("camber").value);
 
@@ -543,13 +586,15 @@
     }
 
     ["aoa", "thickness", "camber"].forEach(id => {
-      document.getElementById(id).addEventListener("input", recomputeAirfoil);
+      document.getElementById(id).addEventListener("input", () => {
+        recomputeAirfoil();
+      });
     });
 
     recomputeAirfoil();
 
     // -----------------------
-    // 6) Reset du champ via resetProgram
+    // 6) Reset du champ
     // -----------------------
     function resetField(tex, fbo) {
       gl.bindFramebuffer(gl.FRAMEBUFFER, fbo);
@@ -590,7 +635,7 @@
       gl.viewport(0, 0, W, H);
       gl.bindBuffer(gl.ARRAY_BUFFER, quadVBO);
 
-      // 1) Simulation step (write to writeFBO)
+      // 1) Simulation step
       if (!paused) {
         gl.bindFramebuffer(gl.FRAMEBUFFER, writeFBO);
         gl.useProgram(simProgram);
