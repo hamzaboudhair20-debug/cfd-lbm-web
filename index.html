@@ -6,320 +6,1261 @@
   <title>LBM D2Q9 – Profil de Joukowsky</title>
   <style>
     * { box-sizing: border-box; }
-    body { margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; background: #0a0e27; color: #e5e7eb; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
-    header { padding: 10px 20px; background: #0f172a; border-bottom: 1px solid #1e293b; }
-    header h1 { font-size: 18px; margin: 0; color: #60a5fa; }
-    main { flex: 1; display: flex; min-height: 0; }
-    #sim-container { flex: 1; background: #020617; position: relative; display: flex; justify-content: center; align-items: center; overflow: hidden; }
-    canvas { image-rendering: pixelated; max-width: 100%; max-height: 100%; box-shadow: 0 0 20px rgba(0,0,0,0.5); }
-    #controls { width: 320px; background: #0f172a; border-left: 1px solid #1e293b; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 20px; }
-    .control-group { display: flex; flex-direction: column; gap: 5px; }
-    label { font-size: 12px; color: #94a3b8; display: flex; justify-content: space-between; }
-    span.val { color: #60a5fa; font-weight: bold; }
-    input[type=range] { width: 100%; cursor: pointer; }
-    button { padding: 10px; background: #2563eb; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; }
-    button:hover { background: #1d4ed8; }
-    button.secondary { background: #334155; }
-    .stats { background: #1e293b; padding: 10px; border-radius: 6px; font-size: 12px; display: flex; flex-direction: column; gap: 5px; }
-    .row { display: flex; justify-content: space-between; }
-    .startup-modal { position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.9); z-index:999; display:flex; justify-content:center; align-items:center; }
-    .modal-box { background:#1e293b; padding:30px; border-radius:12px; text-align:center; max-width:400px; border:1px solid #334155; }
-    select { padding: 5px; background: #1e293b; color: white; border: 1px solid #334155; border-radius: 4px; width: 100%; margin-top: 5px; }
+
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      background: #0a0e27;
+      color: #e5e7eb;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    header {
+      padding: 16px 24px;
+      border-bottom: 1px solid #1e293b;
+      background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+      box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+    }
+
+    header h1 {
+      font-size: 22px;
+      margin: 0;
+      background: linear-gradient(135deg, #60a5fa 0%, #a78bfa 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      font-weight: 700;
+    }
+
+    header p {
+      margin: 6px 0 0;
+      font-size: 13px;
+      color: #94a3b8;
+    }
+
+    main.layout {
+      flex: 1;
+      display: flex;
+      min-height: 0;
+    }
+
+    #sim-container {
+      flex: 3;
+      background: #020617;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      border-right: 1px solid #1e293b;
+      padding: 20px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    #sim-canvas {
+      border: 2px solid #334155;
+      background: #000;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+      border-radius: 4px;
+    }
+
+    .canvas-controls {
+      margin-top: 16px;
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .canvas-controls select,
+    .canvas-controls button,
+    .canvas-controls input {
+      padding: 8px 12px;
+      background: #1e293b;
+      border: 1px solid #334155;
+      color: #e5e7eb;
+      border-radius: 6px;
+      font-size: 13px;
+      cursor: pointer;
+    }
+
+    .canvas-controls select:hover,
+    .canvas-controls button:hover,
+    .canvas-controls input:hover {
+      border-color: #475569;
+      background: #2d3748;
+    }
+
+    #controls {
+      flex: 1;
+      padding: 24px;
+      background: #0f172a;
+      color: #e5e7eb;
+      overflow-y: auto;
+      min-width: 320px;
+    }
+
+    #controls h2 {
+      margin-top: 0;
+      margin-bottom: 16px;
+      font-size: 18px;
+      color: #60a5fa;
+      font-weight: 600;
+    }
+
+    .section {
+      margin-bottom: 24px;
+      padding-bottom: 20px;
+      border-bottom: 1px solid #1e293b;
+    }
+
+    .section:last-child {
+      border-bottom: none;
+    }
+
+    .section h3 {
+      font-size: 15px;
+      margin: 0 0 12px 0;
+      color: #a78bfa;
+      font-weight: 600;
+    }
+
+    .control {
+      margin-bottom: 16px;
+      font-size: 13px;
+    }
+
+    .control span.label {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 6px;
+      align-items: center;
+    }
+
+    .control span.value {
+      color: #60a5fa;
+      font-variant-numeric: tabular-nums;
+      font-weight: 600;
+      margin-left: 8px;
+    }
+
+    input[type="range"] {
+      width: 100%;
+      height: 6px;
+      border-radius: 3px;
+      background: #1e293b;
+      outline: none;
+      -webkit-appearance: none;
+    }
+
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: #60a5fa;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    input[type="range"]::-webkit-slider-thumb:hover {
+      background: #93c5fd;
+      transform: scale(1.1);
+    }
+
+    input[type="range"]::-moz-range-thumb {
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: #60a5fa;
+      cursor: pointer;
+      border: none;
+    }
+
+    .buttons {
+      display: flex;
+      gap: 8px;
+      margin-top: 12px;
+    }
+
+    button {
+      flex: 1;
+      padding: 10px 14px;
+      border-radius: 6px;
+      border: none;
+      background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+      color: white;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      box-shadow: 0 2px 4px rgba(37,99,235,0.3);
+    }
+
+    button:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 8px rgba(37,99,235,0.4);
+    }
+
+    button:active {
+      transform: translateY(0);
+    }
+
+    button.secondary {
+      background: linear-gradient(135deg, #374151 0%, #1f2937 100%);
+      box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+    }
+
+    .results-block {
+      background: #1e293b;
+      padding: 16px;
+      border-radius: 8px;
+      font-size: 13px;
+      margin-top: 8px;
+    }
+
+    .results-block .row {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 8px;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .results-block .row:last-child {
+      margin-bottom: 0;
+    }
+
+    .results-block .row span:first-child {
+      color: #94a3b8;
+    }
+
+    .results-block .row span:last-child {
+      color: #60a5fa;
+      font-weight: 600;
+    }
+
+    .info-text {
+      margin-top: 12px;
+      font-size: 11px;
+      color: #64748b;
+      line-height: 1.5;
+    }
+
+    footer {
+      padding: 10px 20px;
+      font-size: 11px;
+      color: #64748b;
+      border-top: 1px solid #1e293b;
+      background: #0f172a;
+      text-align: center;
+    }
+
+    .metric-badge {
+      display: inline-block;
+      padding: 4px 8px;
+      background: #1e293b;
+      border-radius: 4px;
+      font-size: 11px;
+      color: #60a5fa;
+      margin-top: 4px;
+    }
+
+    .colorbar {
+      position: absolute;
+      right: 30px;
+      top: 30px;
+      width: 20px;
+      height: 200px;
+      background: linear-gradient(to top,
+        rgba(15,23,42,1) 0%,
+        rgba(59,130,246,1) 33%,
+        rgba(251,191,36,1) 66%,
+        rgba(239,68,68,1) 100%);
+      border: 1px solid #334155;
+      border-radius: 4px;
+      display: block;
+    }
+
+    .colorbar-labels {
+      position: absolute;
+      right: 55px;
+      top: 30px;
+      height: 200px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      font-size: 10px;
+      color: #94a3b8;
+    }
+
+    .performance-panel {
+      position: absolute;
+      bottom: 10px;
+      left: 10px;
+      background: rgba(15, 23, 42, 0.8);
+      padding: 8px 12px;
+      border-radius: 6px;
+      font-size: 11px;
+      color: #e5e7eb;
+    }
+
+    .slider-with-indicator {
+      position: relative;
+      margin-bottom: 20px;
+    }
+
+    .slider-indicator {
+      height: 6px;
+      border-radius: 3px;
+      position: absolute;
+      top: 20px;
+      left: 0;
+      background: linear-gradient(90deg, #2563eb 0%, #a78bfa 50%, #ef4444 100%);
+    }
+
+    .quality-selector {
+      display: flex;
+      gap: 8px;
+      margin-top: 12px;
+    }
+
+    .quality-btn {
+      flex: 1;
+      padding: 6px 10px;
+      font-size: 12px;
+      text-align: center;
+      border-radius: 4px;
+      background: #1e293b;
+      border: 1px solid #334155;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .quality-btn.active {
+      background: #2563eb;
+      border-color: #3b82f6;
+    }
+
+    .quality-btn:hover:not(.active) {
+      background: #2d3748;
+    }
+
+    .startup-modal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(10, 14, 39, 0.9);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+    }
+
+    .modal-content {
+      background: #0f172a;
+      padding: 30px;
+      border-radius: 12px;
+      max-width: 500px;
+      width: 90%;
+      border: 1px solid #334155;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+    }
+
+    .modal-content h2 {
+      margin-top: 0;
+      color: #60a5fa;
+    }
+
+    .modal-buttons {
+      display: flex;
+      gap: 12px;
+      margin-top: 20px;
+    }
+
+    @media (max-width: 1000px) {
+      main.layout { flex-direction: column; }
+      #sim-container { border-right: none; border-bottom: 1px solid #1e293b; }
+      #controls { max-height: 40vh; }
+    }
   </style>
 </head>
+
 <body>
-
-<div id="startup-modal" class="startup-modal">
-  <div class="modal-box">
-    <h2 style="color:#60a5fa; margin-top:0;">Simulateur LBM D2Q9</h2>
-    <p>Solveur de Navier-Stokes en JavaScript (CPU).</p>
-    <button id="start-btn" style="width:100%;">Démarrer</button>
-  </div>
-</div>
-
 <header>
-  <h1>Virtual Wind Tunnel (LBM)</h1>
+  <h1>LBM D2Q9 – Écoulement autour d'un profil de Joukowsky</h1>
+  <p>Version web légère • LBM D2Q9 BGK • Visualisations vitesse / pression / vorticité / lignes de courant / vecteurs</p>
 </header>
 
-<main>
-  <div id="sim-container">
-    <canvas id="sim-canvas"></canvas>
-  </div>
+<main class="layout">
+  <section id="sim-container">
+    <canvas id="sim-canvas" width="600" height="240"></canvas>
+    <div class="colorbar"></div>
+    <div class="colorbar-labels">
+      <span id="max-value">1.00</span>
+      <span>0.75</span>
+      <span>0.50</span>
+      <span>0.25</span>
+      <span id="min-value">0.00</span>
+    </div>
+    <div class="performance-panel">
+      FPS: <span id="fps-counter">0</span> |
+      MS/Frame: <span id="ms-counter">0</span> |
+      Itérations: <span id="steps-count">0</span>
+    </div>
+    <div class="canvas-controls">
+      <label style="font-size: 13px;">Mode de visualisation&nbsp;:</label>
+      <select id="viz-mode">
+        <option value="velocity">Magnitude de vitesse</option>
+        <option value="pressure">Champ de pression</option>
+        <option value="vorticity">Vorticité</option>
+        <option value="streamlines">Lignes de courant</option>
+        <option value="vectors">Vecteurs vitesse</option>
+      </select>
+      <label style="font-size: 13px;">Contraste&nbsp;:</label>
+      <input type="range" id="contrast" min="0.5" max="3.0" step="0.1" value="1.5" style="width: 80px;">
+      <button id="screenshot-btn">Capture</button>
+    </div>
+  </section>
 
   <aside id="controls">
-    <div class="control-group">
-      <label>Visualisation</label>
-      <select id="viz-mode">
-        <option value="vorticity">Vorticité (Tourbillons)</option>
-        <option value="velocity">Vitesse</option>
-        <option value="pressure">Pression</option>
-        <option value="vectors">Vecteurs</option>
-      </select>
+    <div class="section">
+      <h2>Paramètres d'écoulement</h2>
+
+      <div class="control">
+        <span class="label">
+          <span>Nombre de Mach</span>
+          <span class="value" id="mach-value">0.10</span>
+        </span>
+        <div class="slider-with-indicator">
+          <div class="slider-indicator" id="mach-indicator" style="width:50%;"></div>
+          <input type="range" id="mach" min="0.02" max="0.18" step="0.01" value="0.10">
+        </div>
+      </div>
+
+      <div class="control">
+        <span class="label">
+          <span>Temps de relaxation τ</span>
+          <span class="value" id="tau-value">0.80</span>
+        </span>
+        <div class="slider-with-indicator">
+          <div class="slider-indicator" id="tau-indicator" style="width:30%;"></div>
+          <input type="range" id="tau" min="0.52" max="1.50" step="0.01" value="0.80">
+        </div>
+      </div>
+
+      <div class="results-block">
+        <div class="row">
+          <span>Nombre de Reynolds (approx.)</span>
+          <span id="reynolds">~2000</span>
+        </div>
+        <div class="row">
+          <span>Viscosité cinématique ν</span>
+          <span id="viscosity">0.10</span>
+        </div>
+      </div>
     </div>
 
-    <div class="control-group">
-      <label>Vitesse (Mach) <span id="val-mach" class="val">0.10</span></label>
-      <input type="range" id="mach" min="0.01" max="0.2" step="0.01" value="0.10">
+    <div class="section">
+      <h3>Géométrie du profil</h3>
+
+      <div class="control">
+        <span class="label">
+          <span>Angle d'attaque α</span>
+          <span class="value" id="aoa-value">5°</span>
+        </span>
+        <div class="slider-with-indicator">
+          <div class="slider-indicator" id="aoa-indicator" style="width:50%;"></div>
+          <input type="range" id="aoa" min="-10" max="20" step="1" value="5">
+        </div>
+      </div>
+
+      <div class="control">
+        <span class="label">
+          <span>Épaisseur relative t/c</span>
+          <span class="value" id="thickness-value">0.12</span>
+        </span>
+        <div class="slider-with-indicator">
+          <div class="slider-indicator" id="thickness-indicator" style="width:40%;"></div>
+          <input type="range" id="thickness" min="0.06" max="0.20" step="0.01" value="0.12">
+        </div>
+      </div>
+
+      <div class="control">
+        <span class="label">
+          <span>Cambrure</span>
+          <span class="value" id="camber-value">0.08</span>
+        </span>
+        <div class="slider-with-indicator">
+          <div class="slider-indicator" id="camber-indicator" style="width:40%;"></div>
+          <input type="range" id="camber" min="0.00" max="0.20" step="0.01" value="0.08">
+        </div>
+      </div>
     </div>
 
-    <div class="control-group">
-      <label>Viscosité (Tau) <span id="val-tau" class="val">0.60</span></label>
-      <input type="range" id="tau" min="0.51" max="1.0" step="0.01" value="0.60">
+    <div class="section">
+      <h3>Paramètres de performance</h3>
+
+      <div class="control">
+        <span class="label">
+          <span>Résolution</span>
+          <span class="value" id="resolution-value">Moyenne</span>
+        </span>
+        <div class="quality-selector">
+          <div class="quality-btn" data-res="low">Basse</div>
+          <div class="quality-btn active" data-res="medium">Moyenne</div>
+          <div class="quality-btn" data-res="high">Haute</div>
+        </div>
+        <p class="info-text">
+          Réduisez la résolution pour améliorer les performances sur appareils lents.
+        </p>
+      </div>
+
+      <div class="control">
+        <span class="label">
+          <span>Itérations par frame</span>
+          <span class="value" id="iterations-value">2</span>
+        </span>
+        <input type="range" id="iterations" min="1" max="10" step="1" value="2">
+        <p class="info-text">
+          Plus d'itérations accélèrent le transitoire mais réduisent le FPS.
+        </p>
+      </div>
     </div>
 
-    <div class="control-group">
-      <label>Angle d'Attaque <span id="val-aoa" class="val">15°</span></label>
-      <input type="range" id="aoa" min="-20" max="40" step="1" value="15">
-    </div>
-    
-    <div class="stats">
-      <div class="row"><span>Reynolds</span><span id="reynolds">0</span></div>
-      <div class="row"><span>FPS</span><span id="fps">0</span></div>
+    <div class="section">
+      <h3>Coefficients aérodynamiques (thin-airfoil)</h3>
+      <div class="results-block">
+        <div class="row">
+          <span>Coefficient de portance CL</span>
+          <span id="res-cl">0.000</span>
+        </div>
+        <div class="row">
+          <span>Coefficient de traînée CD</span>
+          <span id="res-cd">0.000</span>
+        </div>
+        <div class="row">
+          <span>Finesse L/D</span>
+          <span id="res-ld">0.0</span>
+        </div>
+        <div class="row">
+          <span>Angle d'attaque α</span>
+          <span id="res-alpha">5.0° (0.087 rad)</span>
+        </div>
+      </div>
+
+      <p class="info-text">
+        <strong>Théorie du profil mince :</strong> CL ≈ 2π·α (α en radians).<br>
+        CD = CD₀ + CDᵢ avec CDᵢ ≈ CL²/(π·AR·e).
+      </p>
     </div>
 
-    <button id="reset-btn" class="secondary">Réinitialiser Simulation</button>
+    <div class="buttons">
+      <button id="reset-btn" class="secondary">Réinitialiser</button>
+      <button id="pause-btn">Pause</button>
+      <button id="export-btn">Exporter données</button>
+    </div>
+
+    <p class="info-text" style="margin-top: 16px;">
+      Grille : <span id="grid-size">600×240</span> nœuds • D2Q9 BGK • Parois no-slip • Profil de Joukowsky en bounce-back
+      <br><br>
+      <span class="metric-badge">Version optimisée</span>
+    </p>
   </aside>
 </main>
 
+<footer>
+  Prototype LBM – Hamza Boudhair • JavaScript + Canvas 2D
+</footer>
+
+<div id="startup-modal" class="startup-modal">
+  <div class="modal-content">
+    <h2>Simulation d'écoulement LBM D2Q9</h2>
+    <p>Cette simulation montre l'écoulement d'un fluide autour d'un profil de Joukowsky en utilisant la méthode Lattice Boltzmann (D2Q9).</p>
+    <h3>Instructions :</h3>
+    <ul>
+      <li>Ajustez les paramètres d'écoulement et de géométrie dans le panneau de droite.</li>
+      <li>Choisissez le mode de visualisation (vitesse, pression, vorticité, etc.).</li>
+      <li>Adaptez la résolution/les itérations selon les performances de votre GPU/CPU.</li>
+      <li>Utilisez « Pause » pour figer le champ.</li>
+    </ul>
+    <div class="modal-buttons">
+      <button id="start-btn" style="flex:2;">Démarrer la simulation</button>
+      <button id="quality-low-btn" class="secondary">Faible résolution</button>
+    </div>
+  </div>
+</div>
+
 <script>
-const canvas = document.getElementById('sim-canvas');
-const ctx = canvas.getContext('2d', { willReadFrequently: true });
+  // === CONFIG GLOBALE ===
+  let canvas = document.getElementById("sim-canvas");
+  let ctx = canvas.getContext("2d");
 
-// Paramètres LBM D2Q9
-let Nx = 400, Ny = 160;
-const Q = 9;
-// Poids et vecteurs D2Q9
-const w = [4/9, 1/9, 1/9, 1/9, 1/9, 1/36, 1/36, 1/36, 1/36];
-const cx = [0, 1, 0, -1, 0, 1, -1, -1, 1];
-const cy = [0, 0, 1, 0, -1, 1, 1, -1, -1];
-const opp = [0, 3, 4, 1, 2, 7, 8, 5, 6];
+  let Nx = canvas.width;
+  let Ny = canvas.height;
+  let size = Nx * Ny;
 
-let f, fTmp, rho, ux, uy, mask, vort, imgData, pixels;
-let running = false;
-let mach = 0.1, tau = 0.60;
-let vizMode = 'vorticity';
+  const Q = 9;
+  const w = [4/9,1/9,1/9,1/9,1/9,1/36,1/36,1/36,1/36];
+  const cx = [0,1,0,-1,0,1,-1,-1,1];
+  const cy = [0,0,1,0,-1,1,1,-1,-1];
+  const opp = [0,3,4,1,2,7,8,5,6];
+  const cs2 = 1/3;
 
-function initMemory() {
-  canvas.width = Nx; canvas.height = Ny;
-  const size = Nx * Ny;
-  f = new Float32Array(Q * size);
-  fTmp = new Float32Array(Q * size);
-  rho = new Float32Array(size);
-  ux = new Float32Array(size);
-  uy = new Float32Array(size);
-  mask = new Uint8Array(size);
-  vort = new Float32Array(size);
-  imgData = ctx.createImageData(Nx, Ny);
-  pixels = imgData.data;
-}
+  let f, fTmp, rho, ux, uy, mask, vort;
 
-function createAirfoil() {
-  const size = Nx * Ny;
-  for(let i=0; i<size; i++) mask[i] = 0;
-  // Murs haut/bas
-  for(let x=0; x<Nx; x++) { mask[x]=1; mask[x+(Ny-1)*Nx]=1; }
-  
-  // Joukowsky
-  const aoaDeg = parseFloat(document.getElementById('aoa').value);
-  const aoa = aoaDeg * Math.PI / 180;
-  const R = Ny/6; // Rayon approx
-  const cx_foil = Nx/4, cy_foil = Ny/2;
-  
-  // Scan simple pour remplir la forme
-  for(let y=0; y<Ny; y++) {
-    for(let x=0; x<Nx; x++) {
-       // Forme goutte simple rotative pour robustesse
-       let dx = x - cx_foil;
-       let dy = y - cy_foil;
-       // Rotation inverse
-       let rx = dx*Math.cos(-aoa) - dy*Math.sin(-aoa);
-       let ry = dx*Math.sin(-aoa) + dy*Math.cos(-aoa);
-       
-       // Forme Joukowsky approx (goutte)
-       // Equation implicite grossière pour la démo
-       let d = Math.sqrt(rx*rx + ry*ry*4.0); // écrasé en Y
-       if(rx > 0) d += rx * 0.1; // queue
-       if (d < R) mask[x + y*Nx] = 1;
-    }
-  }
-}
+  let mach = 0.10;
+  let tau = 0.80;
+  let paused = false;
+  let steps = 0;
+  let vizMode = "velocity";
+  let contrastVal = 1.5;
+  let iterationsPerFrame = 2;
+  let resolutionMode = "medium";
 
-function initSim() {
-  const size = Nx * Ny;
-  const u0 = mach * 0.577;
-  for(let i=0; i<size; i++) {
-    rho[i] = 1.0;
-    ux[i] = mask[i] ? 0 : u0;
-    uy[i] = 0;
-    // Equilibre
-    const u2 = ux[i]*ux[i] + uy[i]*uy[i];
-    for(let k=0; k<Q; k++) {
-      const cu = 3*(cx[k]*ux[i] + cy[k]*uy[i]);
-      f[k*size+i] = w[k]*rho[i]*(1 + cu + 0.5*cu*cu - 1.5*u2);
-    }
-  }
-}
+  let lastTime = performance.now();
+  let frames = 0;
 
-function lbmStep() {
-  const size = Nx * Ny;
-  const uIn = mach * 0.577;
+  let imgData = ctx.createImageData(Nx, Ny);
+  let pixels = imgData.data;
 
-  // 1. Collision
-  for(let i=0; i<size; i++) {
-    if(mask[i]) continue;
-    
-    // Macros
-    let r=0, u=0, v=0;
-    for(let k=0; k<Q; k++) {
-      const val = f[k*size+i];
-      r += val;
-      u += val*cx[k];
-      v += val*cy[k];
-    }
-    
-    // Inlet gauche
-    const x = i % Nx;
-    if(x===0) { r=1.0; u=uIn; v=0; }
-    
-    rho[i] = r;
-    if(r>0) { ux[i] = u/r; uy[i] = v/r; }
+  let airfoilPoly = [];
 
-    // Relax
-    const u2 = ux[i]*ux[i] + uy[i]*uy[i];
-    for(let k=0; k<Q; k++) {
-       const cu = 3*(cx[k]*ux[i] + cy[k]*uy[i]);
-       const feq = w[k]*r*(1 + cu + 0.5*cu*cu - 1.5*u2);
-       fTmp[k*size+i] = f[k*size+i] - (f[k*size+i] - feq)/tau;
-    }
+  // Colorbar stabilisée
+  let displayMax = 1.0;
+  let displayMin = 0.0;
+  const MAX_CAP = {
+    velocity: 1.0,
+    pressure: 0.5,
+    vorticity: 10.0
+  };
+
+  // === ALLOCATION TABLEAUX ===
+  function initDataArrays() {
+    f    = new Float32Array(Q * size);
+    fTmp = new Float32Array(Q * size);
+    rho  = new Float32Array(size);
+    ux   = new Float32Array(size);
+    uy   = new Float32Array(size);
+    mask = new Uint8Array(size);
+    vort = new Float32Array(size);
   }
 
-  // 2. Streaming + BounceBack
-  for(let y=0; y<Ny; y++) {
-    for(let x=0; x<Nx; x++) {
-      const i = x + y*Nx;
-      for(let k=0; k<Q; k++) {
-        const xp = x - cx[k];
-        const yp = y - cy[k];
-        if(xp>=0 && xp<Nx && yp>=0 && yp<Ny) {
-           const ip = xp + yp*Nx;
-           if(mask[i]) { 
-             // Rien (mur)
-           } else if(mask[ip]) {
-             f[k*size+i] = fTmp[opp[k]*size+i]; // Rebond
-           } else {
-             f[k*size+i] = fTmp[k*size+ip]; // Transport
-           }
+  // === MAJ TAILLE GRILLE ===
+  function updateGridSize() {
+    if (resolutionMode === "low") {
+      Nx = 400; Ny = 160;
+    } else if (resolutionMode === "high") {
+      Nx = 800; Ny = 320;
+    } else {
+      Nx = 600; Ny = 240;
+    }
+    canvas.width = Nx;
+    canvas.height = Ny;
+    size = Nx * Ny;
+
+    imgData = ctx.createImageData(Nx, Ny);
+    pixels = imgData.data;
+
+    document.getElementById("grid-size").textContent = Nx + "×" + Ny;
+
+    initDataArrays();
+    initLBM();
+  }
+
+  // === Géométrie Joukowsky + masque ===
+  function buildAirfoilMask() {
+    mask.fill(0);
+
+    // murs haut/bas
+    for (let x = 0; x < Nx; x++) {
+      mask[x] = 1;
+      mask[x + (Ny - 1) * Nx] = 1;
+    }
+
+    const aoaDeg   = parseFloat(document.getElementById("aoa").value);
+    const thickness = parseFloat(document.getElementById("thickness").value);
+    const camber    = parseFloat(document.getElementById("camber").value);
+
+    const angle = aoaDeg * Math.PI / 180;
+    const cosA = Math.cos(angle), sinA = Math.sin(angle);
+
+    const Npts = 500;
+    const circleOffset = 0.08 + camber * 0.35;
+    let radius = 1.0 - thickness * 0.6;
+    if (radius < 0.25) radius = 0.25;
+
+    const pts = [];
+    for (let k = 0; k < Npts; k++) {
+      const theta = 2 * Math.PI * k / Npts;
+      const zx = circleOffset + radius * Math.cos(theta);
+      const zy = radius * Math.sin(theta);
+
+      const denom = zx*zx + zy*zy;
+      const invx = zx / denom;
+      const invy = -zy / denom;
+
+      let x = zx + invx;
+      let y = zy + invy;
+
+      const xr = x * cosA - y * sinA;
+      const yr = x * sinA + y * cosA;
+      pts.push({x:xr, y:yr});
+    }
+
+    let minX = Infinity, maxX = -Infinity;
+    let minY = Infinity, maxY = -Infinity;
+    for (const p of pts) {
+      if (p.x < minX) minX = p.x;
+      if (p.x > maxX) maxX = p.x;
+      if (p.y < minY) minY = p.y;
+      if (p.y > maxY) maxY = p.y;
+    }
+    const spanX = maxX - minX, spanY = maxY - minY;
+    const midX  = 0.5 * (maxX + minX), midY = 0.5 * (maxY + minY);
+
+    const scale   = 0.4 * Math.min(Nx/spanX, Ny/spanY);
+    const centerX = Nx * 0.28;
+    const centerY = Ny * 0.5;
+
+    airfoilPoly = pts.map(p => ({
+      x: centerX + (p.x - midX) * scale,
+      y: centerY - (p.y - midY) * scale
+    }));
+
+    function inside(px, py) {
+      let inPoly = false;
+      for (let i = 0, j = airfoilPoly.length-1; i < airfoilPoly.length; j = i++) {
+        const xi = airfoilPoly[i].x, yi = airfoilPoly[i].y;
+        const xj = airfoilPoly[j].x, yj = airfoilPoly[j].y;
+        const inter = ((yi > py) !== (yj > py)) &&
+                      (px < (xj-xi)*(py-yi)/(yj-yi+1e-9)+xi);
+        if (inter) inPoly = !inPoly;
+      }
+      return inPoly;
+    }
+
+    for (let y = 1; y < Ny-1; y++) {
+      for (let x = 0; x < Nx; x++) {
+        const idx = x + y*Nx;
+        if (inside(x+0.5, y+0.5)) mask[idx] = 1;
+      }
+    }
+  }
+
+  // === Initialisation LBM ===
+  function initLBM() {
+    buildAirfoilMask();
+    const u0 = mach * Math.sqrt(cs2);
+
+    for (let y = 0; y < Ny; y++) {
+      for (let x = 0; x < Nx; x++) {
+        const idx = x + y*Nx;
+        rho[idx] = 1.0;
+        ux[idx]  = mask[idx] ? 0 : u0;
+        uy[idx]  = 0;
+        const u2 = ux[idx]*ux[idx] + uy[idx]*uy[idx];
+
+        for (let k = 0; k < Q; k++) {
+          const cu = 3*(cx[k]*ux[idx] + cy[k]*uy[idx]);
+          f[k*size + idx] = w[k]*rho[idx]*(1 + cu + 0.5*cu*cu - 1.5*u2);
         }
       }
     }
+    steps = 0;
   }
-  
-  // Vorticité
-  for(let y=1; y<Ny-1; y++) {
-      for(let x=1; x<Nx-1; x++) {
-          const i = x + y*Nx;
-          if(!mask[i]) vort[i] = (uy[i+1] - uy[i-1]) - (ux[i+Nx] - ux[i-Nx]);
-          else vort[i] = 0;
-      }
-  }
-}
 
-function draw() {
-  const size = Nx * Ny;
-  for(let i=0; i<size; i++) {
-     const p = i*4;
-     if(mask[i]) {
-        pixels[p]=100; pixels[p+1]=100; pixels[p+2]=100; pixels[p+3]=255;
-     } else {
-        let val = 0;
-        let r=0, g=0, b=0;
-        
-        if(vizMode === 'vorticity') {
-           val = vort[i] * 150; // scale
-           // Diverging Blue-White-Red
-           r = val > 0 ? 255 : 255 + val;
-           b = val < 0 ? 255 : 255 - val;
-           g = 255 - Math.abs(val);
-        } else if(vizMode === 'velocity') {
-           val = Math.sqrt(ux[i]**2 + uy[i]**2) * 1000;
-           r = val; g = val/2; b = 255-val; // Heatmap simple
+  // === Sliders + labels ===
+  function bindSlider(id, labelId, fmt, cb) {
+    const s   = document.getElementById(id);
+    const lab = labelId ? document.getElementById(labelId) : null;
+
+    function upd() {
+      const v = parseFloat(s.value);
+      if (lab) lab.textContent = fmt(v);
+
+      const min = parseFloat(s.min);
+      const max = parseFloat(s.max);
+      const percent = ((v-min)/(max-min))*100;
+      const ind = document.getElementById(id+"-indicator");
+      if (ind) ind.style.width = percent + "%";
+
+      if (cb) cb(v);
+    }
+    s.addEventListener("input", upd);
+    upd();
+  }
+
+  // === CL/CD analytiques + Re ===
+  function updateAero() {
+    const aoaDeg = parseFloat(document.getElementById("aoa").value);
+    const alpha  = aoaDeg * Math.PI/180;
+    document.getElementById("res-alpha").textContent =
+      `${aoaDeg.toFixed(1)}° (${alpha.toFixed(3)} rad)`;
+
+    const nu = (tau - 0.5)/3;
+    const u0 = mach * Math.sqrt(cs2);
+    const L  = Nx * 0.15;
+    const Re = u0 * L / nu;
+    document.getElementById("reynolds").textContent  = `~${Math.round(Re)}`;
+    document.getElementById("viscosity").textContent = nu.toFixed(4);
+
+    let CL = 2*Math.PI*alpha;
+    if (CL > 2.5)  CL = 2.5;
+    if (CL < -2.5) CL = -2.5;
+
+    const CD0 = 0.01;
+    const AR  = 6.0;
+    const e   = 0.9;
+    const CDi = CL*CL/(Math.PI*AR*e);
+    const CD  = CD0 + CDi;
+    const LD  = CD !== 0 ? CL/CD : 0;
+
+    document.getElementById("res-cl").textContent = CL.toFixed(3);
+    document.getElementById("res-cd").textContent = CD.toFixed(3);
+    document.getElementById("res-ld").textContent = LD.toFixed(1);
+  }
+
+  // === Strain / vorticité ===
+  function computeVorticity() {
+    for (let y = 1; y < Ny-1; y++) {
+      for (let x = 1; x < Nx-1; x++) {
+        const idx  = x + y*Nx;
+        const idxL = (x-1) + y*Nx;
+        const idxR = (x+1) + y*Nx;
+        const idxD = x + (y-1)*Nx;
+        const idxU = x + (y+1)*Nx;
+        const dvy_dx = 0.5*(uy[idxR] - uy[idxL]);
+        const dux_dy = 0.5*(ux[idxU] - ux[idxD]);
+        vort[idx] = dvy_dx - dux_dy;
+      }
+    }
+  }
+
+  // === STEP LBM ===
+  function lbmStep() {
+    // macros
+    for (let y = 0; y < Ny; y++) {
+      for (let x = 0; x < Nx; x++) {
+        const idx = x + y*Nx;
+        let r = 0, uxLoc = 0, uyLoc = 0;
+        for (let k = 0; k < Q; k++) {
+          const fi = f[k*size + idx];
+          r     += fi;
+          uxLoc += fi*cx[k];
+          uyLoc += fi*cy[k];
+        }
+        rho[idx] = r;
+        if (mask[idx]) {
+          ux[idx] = 0; uy[idx] = 0;
         } else {
-           // Pressure
-           val = (rho[i]-1.0) * 2000;
-           r = val > 0 ? 255 : 0;
-           b = val < 0 ? 255 : 0;
-           g = 100;
+          ux[idx] = uxLoc/r;
+          uy[idx] = uyLoc/r;
         }
-        
-        pixels[p] = Math.min(255, Math.max(0, r));
-        pixels[p+1] = Math.min(255, Math.max(0, g));
-        pixels[p+2] = Math.min(255, Math.max(0, b));
-        pixels[p+3] = 255;
-     }
-  }
-  ctx.putImageData(imgData, 0, 0);
-  
-  // Overlay Vecteurs (Optionnel)
-  if(vizMode === 'vectors') {
-    ctx.strokeStyle = 'rgba(255,255,255,0.3)';
-    ctx.beginPath();
-    for(let y=0; y<Ny; y+=10) {
-       for(let x=0; x<Nx; x+=10) {
-          const i = x+y*Nx;
-          if(!mask[i]) {
-             ctx.moveTo(x,y);
-             ctx.lineTo(x+ux[i]*100, y+uy[i]*100);
-          }
-       }
+
+        // entrée : vitesse imposée
+        if (x === 0 && !mask[idx]) {
+          const uIn = mach * Math.sqrt(cs2);
+          ux[idx] = uIn;
+          uy[idx] = 0;
+        }
+
+        // sortie : extrapolation simple
+        if (x === Nx-1 && !mask[idx]) {
+          const idxL = (x-1) + y*Nx;
+          ux[idx] = ux[idxL];
+          uy[idx] = uy[idxL];
+        }
+      }
     }
-    ctx.stroke();
-  }
-}
 
-let lastT = 0;
-function loop(t) {
-  if(!running) return;
-  // Multi-step
-  for(let k=0; k<4; k++) lbmStep();
-  draw();
-  
-  // Stats
-  if(t - lastT > 500) {
-     document.getElementById('fps').innerText = (1000/(t-lastT)*4).toFixed(0);
-     const Re = (mach * 0.577 * Ny/6) / ((tau-0.5)/3);
-     document.getElementById('reynolds').innerText = Re.toFixed(0);
-     lastT = t;
+    computeVorticity();
+
+    // collision BGK
+    for (let y = 0; y < Ny; y++) {
+      for (let x = 0; x < Nx; x++) {
+        const idx = x + y*Nx;
+        if (mask[idx]) {
+          for (let k = 0; k < Q; k++) {
+            fTmp[k*size + idx] = f[k*size + idx];
+          }
+          continue;
+        }
+
+        const r   = rho[idx];
+        const uxL = ux[idx];
+        const uyL = uy[idx];
+        const u2  = uxL*uxL + uyL*uyL;
+
+        for (let k = 0; k < Q; k++) {
+          const cu  = (cx[k]*uxL + cy[k]*uyL)/cs2;
+          const feq = w[k]*r*(1 + cu + 0.5*cu*cu - 1.5*u2/cs2);
+          const idF = k*size + idx;
+          fTmp[idF] = f[idF] - (f[idF] - feq)/tau;
+        }
+      }
+    }
+
+    // streaming + bounce-back
+    for (let y = 0; y < Ny; y++) {
+      for (let x = 0; x < Nx; x++) {
+        const idx = x + y*Nx;
+        for (let k = 0; k < Q; k++) {
+          const xn = x + cx[k];
+          const yn = y + cy[k];
+          const src = k*size + idx;
+
+          if (xn < 0 || xn >= Nx || yn < 0 || yn >= Ny) {
+            const dest = opp[k]*size + idx;
+            f[dest] = fTmp[src];
+          } else {
+            const nIdx = xn + yn*Nx;
+            if (mask[nIdx]) {
+              const dest = opp[k]*size + idx;
+              f[dest] = fTmp[src];
+            } else {
+              const dest = k*size + nIdx;
+              f[dest] = fTmp[src];
+            }
+          }
+        }
+      }
+    }
+
+    steps++;
   }
+
+  // === COLOR MAPS ===
+  function colormap(v) {
+    v = Math.max(0, Math.min(1, v));
+    const c1 = [15,23,42];
+    const c2 = [59,130,246];
+    const c3 = [251,191,36];
+    const c4 = [239,68,68];
+    let r,g,b;
+    if (v < 0.33) {
+      const t = v/0.33;
+      r = c1[0] + t*(c2[0]-c1[0]);
+      g = c1[1] + t*(c2[1]-c1[1]);
+      b = c1[2] + t*(c2[2]-c1[2]);
+    } else if (v < 0.66) {
+      const t = (v-0.33)/0.33;
+      r = c2[0] + t*(c3[0]-c2[0]);
+      g = c2[1] + t*(c3[1]-c2[1]);
+      b = c2[2] + t*(c3[2]-c2[2]);
+    } else {
+      const t = (v-0.66)/0.34;
+      r = c3[0] + t*(c4[0]-c3[0]);
+      g = c3[1] + t*(c4[1]-c3[1]);
+      b = c3[2] + t*(c4[2]-c3[2]);
+    }
+    return [r|0, g|0, b|0];
+  }
+
+  function colormapDiverging(v) {
+    v = Math.max(-1, Math.min(1, v));
+    const c1 = [59,130,246];
+    const c2 = [241,245,249];
+    const c3 = [239,68,68];
+    let r,g,b;
+    if (v < 0) {
+      const t = v + 1.0;
+      r = c1[0] + t*(c2[0]-c1[0]);
+      g = c1[1] + t*(c2[1]-c1[1]);
+      b = c1[2] + t*(c2[2]-c1[2]);
+    } else {
+      const t = v;
+      r = c2[0] + t*(c3[0]-c2[0]);
+      g = c2[1] + t*(c3[1]-c2[1]);
+      b = c2[2] + t*(c3[2]-c2[2]);
+    }
+    return [r|0, g|0, b|0];
+  }
+
+  // === RENDER ===
+  function render() {
+    const now = performance.now();
+    frames++;
+    if (now - lastTime >= 1000) {
+      const dt = now - lastTime;
+      const fps = (frames*1000/dt);
+      const ms  = dt/frames;
+      document.getElementById("fps-counter").textContent = fps.toFixed(0);
+      document.getElementById("ms-counter").textContent  = ms.toFixed(1);
+      frames = 0;
+      lastTime = now;
+    }
+
+    let maxVal = 0;
+    let minVal = Infinity;
+
+    if (vizMode === "velocity" || vizMode === "streamlines" || vizMode === "vectors") {
+      for (let i = 0; i < size; i++) {
+        if (!mask[i]) {
+          const uMag = Math.hypot(ux[i], uy[i]);
+          if (uMag > maxVal) maxVal = uMag;
+          if (uMag < minVal) minVal = uMag;
+        }
+      }
+    } else if (vizMode === "pressure") {
+      for (let i = 0; i < size; i++) {
+        if (!mask[i]) {
+          const p = Math.abs((rho[i]-1)*cs2);
+          if (p > maxVal) maxVal = p;
+          if (p < minVal) minVal = p;
+        }
+      }
+    } else if (vizMode === "vorticity") {
+      for (let i = 0; i < size; i++) {
+        if (!mask[i]) {
+          const v = Math.abs(vort[i]);
+          if (v > maxVal) maxVal = v;
+          if (v < minVal) minVal = v;
+        }
+      }
+    }
+
+    // bornes physiques + lissage
+    if (!isFinite(maxVal) || maxVal <= 0) maxVal = 1.0;
+    if (!isFinite(minVal) || minVal < 0)   minVal = 0.0;
+
+    if (vizMode === "velocity" || vizMode === "streamlines" || vizMode === "vectors") {
+      maxVal = Math.min(maxVal, MAX_CAP.velocity);
+    } else if (vizMode === "pressure") {
+      maxVal = Math.min(maxVal, MAX_CAP.pressure);
+    } else if (vizMode === "vorticity") {
+      maxVal = Math.min(maxVal, MAX_CAP.vorticity);
+    }
+
+    const alpha = 0.15;
+    displayMax = (1-alpha)*displayMax + alpha*maxVal;
+    displayMin = (1-alpha)*displayMin + alpha*minVal;
+
+    document.getElementById("max-value").textContent = displayMax.toFixed(2);
+    document.getElementById("min-value").textContent = displayMin.toFixed(2);
+
+    const scale = displayMax > 0 ? contrastVal/displayMax : 1.0;
+
+    // champs couleur
+    for (let y = 0; y < Ny; y++) {
+      for (let x = 0; x < Nx; x++) {
+        const idx = x + y*Nx;
+        const di  = 4*idx;
+
+        if (mask[idx]) {
+          pixels[di]   = 241;
+          pixels[di+1] = 245;
+          pixels[di+2] = 249;
+          pixels[di+3] = 255;
+        } else {
+          let val, rgb;
+
+          if (vizMode === "velocity" || vizMode === "streamlines" || vizMode === "vectors") {
+            const uMag = Math.hypot(ux[idx], uy[idx]);
+            val = uMag * scale;
+            rgb = colormap(val);
+          } else if (vizMode === "pressure") {
+            const p = (rho[idx]-1)*cs2;
+            val = p * scale * 5;
+            rgb = colormapDiverging(val);
+          } else { // vorticity
+            val = vort[idx] * scale * 0.5;
+            rgb = colormapDiverging(val);
+          }
+
+          pixels[di]   = rgb[0];
+          pixels[di+1] = rgb[1];
+          pixels[di+2] = rgb[2];
+          pixels[di+3] = 255;
+        }
+      }
+    }
+
+    ctx.putImageData(imgData, 0, 0);
+
+    // surcouches
+    if (vizMode === "streamlines") {
+      ctx.strokeStyle = "rgba(255,255,255,0.6)";
+      ctx.lineWidth = 1;
+      const step = 15;
+      const maxLen = 80;
+      const dtLine = 0.8;
+
+      for (let sy = step; sy < Ny-step; sy += step) {
+        for (let sx = step; sx < Nx-step; sx += step) {
+          if (mask[sx + sy*Nx]) continue;
+
+          let px = sx, py = sy;
+          ctx.beginPath();
+          ctx.moveTo(px, py);
+
+          for (let n = 0; n < maxLen; n++) {
+            const ix = px|0, iy = py|0;
+            if (ix < 0 || ix >= Nx || iy < 0 || iy >= Ny) break;
+            const idx = ix + iy*Nx;
+            if (mask[idx]) break;
+
+            const vx = ux[idx], vy = uy[idx];
+            const vmag = Math.hypot(vx, vy);
+            if (vmag < 1e-3) break;
+
+            px += vx * dtLine / vmag;
+            py += vy * dtLine / vmag;
+            ctx.lineTo(px, py);
+          }
+          ctx.stroke();
+        }
+      }
+    } else if (vizMode === "vectors") {
+      ctx.strokeStyle = "rgba(255,255,255,0.85)";
+      ctx.lineWidth = 1;
+      const step = 20;
+      const scaleVec = 6;
+
+      for (let y = step; y < Ny-step; y += step) {
+        for (let x = step; x < Nx-step; x += step) {
+          const idx = x + y*Nx;
+          if (mask[idx]) continue;
+          const vx = ux[idx], vy = uy[idx];
+          const vmag = Math.hypot(vx, vy);
+          if (vmag < 0.01) continue;
+
+          const ex = vx*scaleVec;
+          const ey = vy*scaleVec;
+          const ang = Math.atan2(ey, ex);
+
+          ctx.beginPath();
+          ctx.moveTo(x, y);
+          ctx.lineTo(x+ex, y+ey);
+          ctx.stroke();
+
+          ctx.beginPath();
+          ctx.moveTo(x+ex, y+ey);
+          ctx.lineTo(x+ex-5*Math.cos(ang-Math.PI/6), y+ey-5*Math.sin(ang-Math.PI/6));
+          ctx.moveTo(x+ex, y+ey);
+          ctx.lineTo(x+ex-5*Math.cos(ang+Math.PI/6), y+ey-5*Math.sin(ang+Math.PI/6));
+          ctx.stroke();
+        }
+      }
+    }
+
+    document.getElementById("steps-count").textContent = steps;
+  }
+
+  // === LOOP ===
+  function loop() {
+    if (!paused) {
+      for (let i = 0; i < iterationsPerFrame; i++) {
+        lbmStep();
+      }
+    }
+    render();
+    requestAnimationFrame(loop);
+  }
+
+  // === EVENTS / UI ===
+  function setupEventListeners() {
+    bindSlider("mach","mach-value",v=>v.toFixed(2), v=>{
+      mach = v; initLBM(); updateAero();
+    });
+    bindSlider("tau","tau-value",v=>v.toFixed(2), v=>{
+      tau = v; updateAero();
+    });
+    bindSlider("aoa","aoa-value",v=>v.toFixed(0)+"°", ()=>{
+      initLBM(); updateAero();
+    });
+    bindSlider("thickness","thickness-value",v=>v.toFixed(2), ()=>{ initLBM(); });
+    bindSlider("camber","camber-value",v=>v.toFixed(2), ()=>{ initLBM(); });
+    bindSlider("contrast",null,v=>v.toFixed(1), v=>{ contrastVal = v; });
+    bindSlider("iterations","iterations-value",v=>v.toFixed(0), v=>{ iterationsPerFrame = v; });
+
+    document.getElementById("viz-mode").addEventListener("change", e=>{
+      vizMode = e.target.value;
+    });
+
+    document.getElementById("pause-btn").addEventListener("click", ()=>{
+      paused = !paused;
+      document.getElementById("pause-btn").textContent = paused ? "Reprendre" : "Pause";
+    });
+
+    document.getElementById("reset-btn").addEventListener("click", ()=>{
+      initLBM();
+    });
+
+    document.getElementById("screenshot-btn").addEventListener("click", ()=>{
+      const a = document.createElement("a");
+      a.download = `lbm-${new Date().toISOString().slice(0,19)}.png`;
+      a.href = canvas.toDataURL();
+      a.click();
+    });
+
+    document.getElementById("export-btn").addEventListener("click", ()=>{
+      const aoa = parseFloat(document.getElementById("aoa").value);
+      const data = {
+        parameters: {
+          mach, tau, aoa,
+          thickness: parseFloat(document.getElementById("thickness").value),
+          camber:    parseFloat(document.getElementById("camber").value),
+          resolution: resolutionMode
+        },
+        results: {
+          CL: parseFloat(document.getElementById("res-cl").textContent),
+          CD: parseFloat(document.getElementById("res-cd").textContent),
+          LD: parseFloat(document.getElementById("res-ld").textContent),
+          Re: document.getElementById("reynolds").textContent,
+          steps
+        }
+      };
+      const blob = new Blob([JSON.stringify(data,null,2)], {type:"application/json"});
+      const url  = URL.createObjectURL(blob);
+      const a    = document.createElement("a");
+      a.href = url;
+      a.download = `lbm-data-${new Date().toISOString().slice(0,19)}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+    });
+
+    document.querySelectorAll(".quality-btn").forEach(btn=>{
+      btn.addEventListener("click", ()=>{
+        document.querySelectorAll(".quality-btn").forEach(b=>b.classList.remove("active"));
+        btn.classList.add("active");
+        resolutionMode = btn.getAttribute("data-res");
+        document.getElementById("resolution-value").textContent =
+          resolutionMode==="low" ? "Basse" :
+          resolutionMode==="high" ? "Haute" : "Moyenne";
+        updateGridSize();
+        updateAero();
+      });
+    });
+
+    document.getElementById("start-btn").addEventListener("click", ()=>{
+      document.getElementById("startup-modal").style.display = "none";
+    });
+
+    document.getElementById("quality-low-btn").addEventListener("click", ()=>{
+      resolutionMode = "low";
+      document.querySelectorAll(".quality-btn").forEach(b=>b.classList.remove("active"));
+      document.querySelector('.quality-btn[data-res="low"]').classList.add("active");
+      document.getElementById("resolution-value").textContent = "Basse";
+      updateGridSize();
+      updateAero();
+      document.getElementById("startup-modal").style.display = "none";
+    });
+  }
+
+  // === INITIALISATION ===
+  initDataArrays();
+  updateGridSize();
+  setupEventListeners();
+  updateAero();
+  lastTime = performance.now();
   requestAnimationFrame(loop);
-}
-
-// UI Bindings
-document.getElementById('start-btn').onclick = () => {
-  document.getElementById('startup-modal').style.display = 'none';
-  initMemory();
-  createAirfoil();
-  initSim();
-  running = true;
-  loop(0);
-};
-
-document.getElementById('reset-btn').onclick = () => {
-  running = false;
-  initMemory();
-  createAirfoil();
-  initSim();
-  running = true;
-  loop(0);
-};
-
-document.getElementById('mach').oninput = (e) => { mach = parseFloat(e.target.value); document.getElementById('val-mach').innerText = mach; };
-document.getElementById('tau').oninput = (e) => { tau = parseFloat(e.target.value); document.getElementById('val-tau').innerText = tau; };
-document.getElementById('aoa').oninput = (e) => { 
-   document.getElementById('val-aoa').innerText = e.target.value + '°'; 
-   createAirfoil(); // Update geo en live
-};
-document.getElementById('viz-mode').onchange = (e) => { vizMode = e.target.value; };
-
 </script>
 </body>
 </html>
