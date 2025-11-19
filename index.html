@@ -5,16 +5,14 @@
   <title>LBM D2Q9 – Web CFD Simulation</title>
 
   <style>
-    * {
-      box-sizing: border-box;
-    }
+    * { box-sizing: border-box; }
 
     body {
       margin: 0;
       padding: 0;
       font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      background: #0b1120;          /* bleu très sombre */
-      color: #e5e7eb;               /* texte gris clair */
+      background: #0b1120;
+      color: #e5e7eb;
       height: 100vh;
       display: flex;
       flex-direction: column;
@@ -54,7 +52,7 @@
 
     canvas {
       border: 1px solid #4b5563;
-      background: #000;   /* fond noir, mais l’animation colorée sera visible */
+      background: #000;
     }
 
     #controls {
@@ -132,7 +130,7 @@
 <body>
   <header>
     <h1>2D LBM D2Q9 – Channel Flow over a Joukowsky Airfoil</h1>
-    <p>Prototype Web CFD solver – JavaScript + HTML canvas (démo visuelle, pas encore le vrai modèle LBM)</p>
+    <p>Prototype Web CFD solver – JavaScript + HTML canvas (visual demo, Joukowsky airfoil + scalar field)</p>
   </header>
 
   <main class="layout">
@@ -199,8 +197,9 @@
       </div>
 
       <p style="margin-top:16px; font-size:11px; color:#9ca3af;">
-        Pour l’instant, l’animation représente un champ scalaire synthétique (onde sinusoïdale) pour tester l’affichage.
-        On remplacera plus tard par le vrai champ LBM (ρ, u, v, vorticité, etc.).
+        Le champ coloré est synthétique (onde sinusoïdale) pour tester le rendu.
+        Le profil blanc correspond à un airfoil de Joukowsky paramétrique
+        (camber, épaisseur, angle d’attaque).
       </p>
     </aside>
   </main>
@@ -209,20 +208,21 @@
     Prototype by Hamza – hosted on GitHub Pages
   </footer>
 
-  <!-- Script JS : animation de test + mise à jour des valeurs de sliders -->
+  <!-- Script JS : champ scalaire + profil de Joukowsky -->
   <script>
-    // --- Récupération du canvas et contexte 2D ---
+    // --- Canvas & contexte ---
     const canvas = document.getElementById("lbm-canvas");
     const ctx = canvas.getContext("2d");
-
-    // Taille
     const width = canvas.width;
     const height = canvas.height;
 
-    let t = 0;          // temps pour animation
-    let paused = false; // état pause
+    let t = 0;
+    let paused = false;
 
-    // --- Animation type "champ de vitesse" synthétique ---
+    // Tableau de points (pixels) du profil
+    let airfoilPoints = [];
+
+    // --- Fonction d'animation (champ scalaire synthétique) ---
     function drawFrame() {
       if (!paused) {
         const imageData = ctx.createImageData(width, height);
@@ -232,17 +232,15 @@
           for (let x = 0; x < width; x++) {
             const i = (y * width + x) * 4;
 
-            // Coordonnées normalisées
             const fx = x / width;
             const fy = y / height;
 
-            // Champ artificiel : somme de sinusoïdes dépendant du temps
+            // Champ fictif (onde + temps) – ici ça représentera p.ex. vorticité/vitesse
             const v =
               0.5 +
               0.5 * Math.sin(8 * fx - 4 * fy + t) *
               Math.cos(6 * fy + 3 * fx - 0.5 * t);
 
-            // Palette simple (bleu → cyan → vert → jaune)
             const r = 255 * v;
             const g = 255 * (1 - Math.abs(v - 0.5) * 2);
             const b = 255 * (1 - v);
@@ -250,20 +248,109 @@
             data[i] = r;
             data[i + 1] = g;
             data[i + 2] = b;
-            data[i + 3] = 255; // alpha
+            data[i + 3] = 255;
           }
         }
 
         ctx.putImageData(imageData, 0, 0);
-        t += 0.03; // vitesse d'évolution
+
+        // Dessiner l'airfoil au-dessus du champ
+        drawAirfoilOverlay();
+
+        t += 0.03;
       }
 
       requestAnimationFrame(drawFrame);
     }
 
-    requestAnimationFrame(drawFrame);
+    // --- Dessin du profil dans le canvas ---
+    function drawAirfoilOverlay() {
+      if (airfoilPoints.length === 0) return;
 
-    // --- Gestion des sliders : afficher les valeurs numériques ---
+      ctx.save();
+      ctx.fillStyle = "#e5e7eb";       // blanc cassé
+      ctx.strokeStyle = "#000000";
+      ctx.lineWidth = 1;
+
+      ctx.beginPath();
+      ctx.moveTo(airfoilPoints[0].x, airfoilPoints[0].y);
+      for (let i = 1; i < airfoilPoints.length; i++) {
+        ctx.lineTo(airfoilPoints[i].x, airfoilPoints[i].y);
+      }
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    // --- Génération du profil de Joukowsky ---
+    function recomputeAirfoil() {
+      const aoaDeg = parseFloat(document.getElementById("aoa").value);
+      const thickness = parseFloat(document.getElementById("thickness").value);
+      const camber = parseFloat(document.getElementById("camber").value);
+
+      const angle = aoaDeg * Math.PI / 180.0;
+      const cosA = Math.cos(angle);
+      const sinA = Math.sin(angle);
+
+      const N = 400; // nombre de points sur le contour
+      const circleOffset = 0.08 + camber * 0.35; // décalage du cercle → cambrure
+      let radius = 1.0 - thickness * 0.6;        // "épaisseur" grossière
+      if (radius < 0.25) radius = 0.25;
+
+      // Points dans le plan z après transformation de Joukowsky
+      let pts = [];
+
+      for (let k = 0; k < N; k++) {
+        const theta = 2 * Math.PI * k / N;
+        const zx = circleOffset + radius * Math.cos(theta);
+        const zy = radius * Math.sin(theta);
+
+        // 1 / ζ = conj(ζ) / |ζ|^2
+        const denom = zx * zx + zy * zy;
+        const invx = zx / denom;
+        const invy = -zy / denom;
+
+        // z = ζ + 1/ζ
+        let x = zx + invx;
+        let y = zy + invy;
+
+        // Rotation angle d'attaque
+        const xr = x * cosA - y * sinA;
+        const yr = x * sinA + y * cosA;
+
+        pts.push({ x: xr, y: yr });
+      }
+
+      // Normalisation pour le canvas
+      let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+      for (const p of pts) {
+        if (p.x < minX) minX = p.x;
+        if (p.x > maxX) maxX = p.x;
+        if (p.y < minY) minY = p.y;
+        if (p.y > maxY) maxY = p.y;
+      }
+
+      const spanX = maxX - minX;
+      const spanY = maxY - minY;
+      const midX = 0.5 * (maxX + minX);
+      const midY = 0.5 * (maxY + minY);
+
+      const scale = 0.55 * Math.min(width / spanX, height / spanY);
+      const centerX = width * 0.30;  // position du profil dans le domaine
+      const centerY = height * 0.50;
+
+      airfoilPoints = pts.map(p => {
+        const sx = (p.x - midX) * scale;
+        const sy = (p.y - midY) * scale;
+        return {
+          x: centerX + sx,
+          y: centerY - sy  // inversion de l'axe vertical pour le canvas
+        };
+      });
+    }
+
+    // --- Helpers sliders texte ---
     function bindSlider(sliderId, valueId, formatter) {
       const slider = document.getElementById(sliderId);
       const valueSpan = document.getElementById(valueId);
@@ -278,6 +365,7 @@
       update();
     }
 
+    // Bind des sliders
     bindSlider("mach", "mach-value", v => v.toFixed(2));
     bindSlider("tau", "tau-value", v => v.toFixed(2));
     bindSlider("cs", "cs-value", v => v.toFixed(2));
@@ -285,7 +373,13 @@
     bindSlider("thickness", "thickness-value", v => v.toFixed(2));
     bindSlider("camber", "camber-value", v => v.toFixed(2));
 
-    // --- Boutons Reset / Pause (pour l'instant, très simples) ---
+    // Recalculer le profil à chaque changement de paramètre géométrique
+    ["aoa", "thickness", "camber"].forEach(id => {
+      const el = document.getElementById(id);
+      el.addEventListener("input", recomputeAirfoil);
+    });
+
+    // Boutons Reset / Pause
     document.getElementById("pause-btn").addEventListener("click", () => {
       paused = !paused;
       document.getElementById("pause-btn").textContent = paused ? "Resume" : "Pause";
@@ -294,6 +388,10 @@
     document.getElementById("reset-btn").addEventListener("click", () => {
       t = 0;
     });
+
+    // Initialisation
+    recomputeAirfoil();
+    requestAnimationFrame(drawFrame);
   </script>
 </body>
 </html>
