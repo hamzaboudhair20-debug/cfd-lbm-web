@@ -20,14 +20,15 @@
     }
 
     header {
-      padding: 16px 24px;
+      padding: 12px 24px;
       border-bottom: 1px solid #1e293b;
       background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
       box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+      flex-shrink: 0;
     }
 
     header h1 {
-      font-size: 22px;
+      font-size: 20px;
       margin: 0;
       background: linear-gradient(135deg, #60a5fa 0%, #a78bfa 100%);
       -webkit-background-clip: text;
@@ -36,8 +37,8 @@
     }
 
     header p {
-      margin: 6px 0 0;
-      font-size: 13px;
+      margin: 4px 0 0;
+      font-size: 12px;
       color: #94a3b8;
     }
 
@@ -65,6 +66,9 @@
       background: #000;
       box-shadow: 0 8px 32px rgba(0,0,0,0.5);
       border-radius: 4px;
+      image-rendering: pixelated; /* Important pour la netteté */
+      max-width: 100%;
+      max-height: 80vh;
     }
 
     .canvas-controls {
@@ -79,71 +83,66 @@
     .canvas-controls select,
     .canvas-controls button,
     .canvas-controls input {
-      padding: 8px 12px;
+      padding: 6px 12px;
       background: #1e293b;
       border: 1px solid #334155;
       color: #e5e7eb;
       border-radius: 6px;
-      font-size: 13px;
+      font-size: 12px;
       cursor: pointer;
     }
 
     .canvas-controls select:hover,
-    .canvas-controls button:hover,
-    .canvas-controls input:hover {
+    .canvas-controls button:hover {
       border-color: #475569;
       background: #2d3748;
     }
 
     #controls {
       flex: 1;
-      padding: 24px;
+      padding: 20px;
       background: #0f172a;
       color: #e5e7eb;
       overflow-y: auto;
-      min-width: 320px;
+      min-width: 300px;
+      max-width: 400px;
     }
 
     #controls h2 {
       margin-top: 0;
-      margin-bottom: 16px;
-      font-size: 18px;
+      margin-bottom: 12px;
+      font-size: 16px;
       color: #60a5fa;
       font-weight: 600;
     }
 
     .section {
-      margin-bottom: 24px;
-      padding-bottom: 20px;
+      margin-bottom: 20px;
+      padding-bottom: 15px;
       border-bottom: 1px solid #1e293b;
     }
 
-    .section:last-child {
-      border-bottom: none;
-    }
-
     .section h3 {
-      font-size: 15px;
-      margin: 0 0 12px 0;
+      font-size: 14px;
+      margin: 0 0 10px 0;
       color: #a78bfa;
       font-weight: 600;
     }
 
     .control {
-      margin-bottom: 16px;
-      font-size: 13px;
+      margin-bottom: 12px;
+      font-size: 12px;
     }
 
     .control span.label {
       display: flex;
       justify-content: space-between;
-      margin-bottom: 6px;
+      margin-bottom: 4px;
       align-items: center;
     }
 
     .control span.value {
       color: #60a5fa;
-      font-variant-numeric: tabular-nums;
       font-weight: 600;
       margin-left: 8px;
     }
@@ -155,31 +154,26 @@
       background: #1e293b;
       outline: none;
       -webkit-appearance: none;
+      display: block;
     }
 
     input[type="range"]::-webkit-slider-thumb {
       -webkit-appearance: none;
-      appearance: none;
-      width: 16px;
-      height: 16px;
+      width: 14px;
+      height: 14px;
       border-radius: 50%;
       background: #60a5fa;
       cursor: pointer;
-      transition: all 0.2s;
+      margin-top: -4px; /* Ajustement pour centrer */
     }
-
-    input[type="range"]::-webkit-slider-thumb:hover {
-      background: #93c5fd;
-      transform: scale(1.1);
-    }
-
-    input[type="range"]::-moz-range-thumb {
-      width: 16px;
-      height: 16px;
-      border-radius: 50%;
-      background: #60a5fa;
-      cursor: pointer;
-      border: none;
+    
+    /* Piste pour webkit pour aligner le thumb */
+    input[type="range"]::-webkit-slider-runnable-track {
+        width: 100%;
+        height: 6px;
+        cursor: pointer;
+        background: #1e293b;
+        border-radius: 3px;
     }
 
     .buttons {
@@ -190,1077 +184,638 @@
 
     button {
       flex: 1;
-      padding: 10px 14px;
+      padding: 8px 12px;
       border-radius: 6px;
       border: none;
       background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
       color: white;
-      font-size: 13px;
+      font-size: 12px;
       font-weight: 600;
       cursor: pointer;
       transition: all 0.2s;
-      box-shadow: 0 2px 4px rgba(37,99,235,0.3);
     }
 
-    button:hover {
-      transform: translateY(-1px);
-      box-shadow: 0 4px 8px rgba(37,99,235,0.4);
-    }
-
-    button:active {
-      transform: translateY(0);
-    }
-
-    button.secondary {
-      background: linear-gradient(135deg, #374151 0%, #1f2937 100%);
-      box-shadow: 0 2px 4px rgba(0,0,0,0.3);
-    }
+    button:hover { transform: translateY(-1px); }
+    button.secondary { background: #334155; }
 
     .results-block {
       background: #1e293b;
-      padding: 16px;
+      padding: 12px;
       border-radius: 8px;
-      font-size: 13px;
+      font-size: 12px;
       margin-top: 8px;
     }
 
     .results-block .row {
       display: flex;
       justify-content: space-between;
-      margin-bottom: 8px;
-      font-variant-numeric: tabular-nums;
+      margin-bottom: 6px;
     }
-
-    .results-block .row:last-child {
-      margin-bottom: 0;
-    }
-
-    .results-block .row span:first-child {
-      color: #94a3b8;
-    }
-
-    .results-block .row span:last-child {
-      color: #60a5fa;
-      font-weight: 600;
-    }
+    .results-block .row:last-child { margin-bottom: 0; }
+    .results-block .row span:last-child { color: #60a5fa; font-weight: bold; }
 
     .info-text {
-      margin-top: 12px;
-      font-size: 11px;
+      margin-top: 10px;
+      font-size: 10px;
       color: #64748b;
-      line-height: 1.5;
+      line-height: 1.4;
     }
 
     footer {
-      padding: 10px 20px;
-      font-size: 11px;
+      padding: 8px 20px;
+      font-size: 10px;
       color: #64748b;
       border-top: 1px solid #1e293b;
       background: #0f172a;
       text-align: center;
-    }
-
-    .metric-badge {
-      display: inline-block;
-      padding: 4px 8px;
-      background: #1e293b;
-      border-radius: 4px;
-      font-size: 11px;
-      color: #60a5fa;
-      margin-top: 4px;
+      flex-shrink: 0;
     }
 
     .colorbar {
       position: absolute;
-      right: 30px;
-      top: 30px;
-      width: 20px;
-      height: 200px;
-      background: linear-gradient(to top,
-        rgba(15,23,42,1) 0%,
-        rgba(59,130,246,1) 33%,
-        rgba(251,191,36,1) 66%,
-        rgba(239,68,68,1) 100%);
+      right: 20px; top: 20px;
+      width: 15px; height: 150px;
+      background: linear-gradient(to top, #0f172a 0%, #3b82f6 33%, #fbfb24 66%, #ef4444 100%);
       border: 1px solid #334155;
       border-radius: 4px;
-      display: block;
     }
 
     .colorbar-labels {
       position: absolute;
-      right: 55px;
-      top: 30px;
-      height: 200px;
+      right: 40px; top: 20px;
+      height: 150px;
       display: flex;
       flex-direction: column;
       justify-content: space-between;
       font-size: 10px;
       color: #94a3b8;
+      text-align: right;
     }
 
     .performance-panel {
       position: absolute;
-      bottom: 10px;
-      left: 10px;
+      bottom: 10px; left: 10px;
       background: rgba(15, 23, 42, 0.8);
-      padding: 8px 12px;
-      border-radius: 6px;
-      font-size: 11px;
-      color: #e5e7eb;
-    }
-
-    .slider-with-indicator {
-      position: relative;
-      margin-bottom: 20px;
-    }
-
-    .slider-indicator {
-      height: 6px;
-      border-radius: 3px;
-      position: absolute;
-      top: 20px;
-      left: 0;
-      background: linear-gradient(90deg, #2563eb 0%, #a78bfa 50%, #ef4444 100%);
-    }
-
-    .quality-selector {
-      display: flex;
-      gap: 8px;
-      margin-top: 12px;
-    }
-
-    .quality-btn {
-      flex: 1;
       padding: 6px 10px;
-      font-size: 12px;
-      text-align: center;
+      border-radius: 6px;
+      font-size: 10px;
+      color: #aaa;
+    }
+
+    .quality-selector { display: flex; gap: 5px; margin-top: 8px; }
+    .quality-btn {
+      flex: 1; padding: 5px; font-size: 11px; text-align: center;
+      background: #1e293b; border: 1px solid #334155; cursor: pointer; color: #ccc;
       border-radius: 4px;
-      background: #1e293b;
-      border: 1px solid #334155;
-      cursor: pointer;
-      transition: all 0.2s;
     }
+    .quality-btn.active { background: #2563eb; color: white; border-color: #3b82f6; }
 
-    .quality-btn.active {
-      background: #2563eb;
-      border-color: #3b82f6;
-    }
-
-    .quality-btn:hover:not(.active) {
-      background: #2d3748;
-    }
-
+    /* Startup Modal */
     .startup-modal {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: rgba(10, 14, 39, 0.9);
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      z-index: 1000;
+      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(5, 8, 20, 0.95);
+      display: flex; justify-content: center; align-items: center;
+      z-index: 9999;
     }
-
     .modal-content {
-      background: #0f172a;
-      padding: 30px;
-      border-radius: 12px;
-      max-width: 500px;
-      width: 90%;
-      border: 1px solid #334155;
-      box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+      background: #0f172a; padding: 30px; border-radius: 12px;
+      max-width: 450px; text-align: center; border: 1px solid #334155;
+      box-shadow: 0 0 30px rgba(37, 99, 235, 0.2);
     }
-
-    .modal-content h2 {
-      margin-top: 0;
-      color: #60a5fa;
-    }
-
-    .modal-buttons {
-      display: flex;
-      gap: 12px;
-      margin-top: 20px;
-    }
-
-    @media (max-width: 1000px) {
-      main.layout { flex-direction: column; }
-      #sim-container { border-right: none; border-bottom: 1px solid #1e293b; }
-      #controls { max-height: 40vh; }
-    }
+    .modal-buttons { margin-top: 20px; display: flex; gap: 10px; justify-content: center; }
   </style>
 </head>
 
 <body>
 <header>
   <h1>LBM D2Q9 – Écoulement autour d'un profil de Joukowsky</h1>
-  <p>Version web légère • LBM D2Q9 BGK • Visualisations vitesse / pression / vorticité / lignes de courant / vecteurs</p>
+  <p>Simulation Lattice Boltzmann (CPU) • Physique avancée</p>
 </header>
 
 <main class="layout">
   <section id="sim-container">
     <canvas id="sim-canvas" width="600" height="240"></canvas>
+    
     <div class="colorbar"></div>
     <div class="colorbar-labels">
-      <span id="max-value">1.00</span>
+      <span id="max-value">1.0</span>
       <span>0.75</span>
       <span>0.50</span>
       <span>0.25</span>
-      <span id="min-value">0.00</span>
+      <span id="min-value">0.0</span>
     </div>
+
     <div class="performance-panel">
-      FPS: <span id="fps-counter">0</span> |
-      MS/Frame: <span id="ms-counter">0</span> |
-      Itérations: <span id="steps-count">0</span>
+      FPS: <span id="fps-counter">0</span> | Steps: <span id="steps-count">0</span>
     </div>
+
     <div class="canvas-controls">
-      <label style="font-size: 13px;">Mode de visualisation&nbsp;:</label>
+      <label>Visualisation:</label>
       <select id="viz-mode">
-        <option value="velocity">Magnitude de vitesse</option>
-        <option value="pressure">Champ de pression</option>
-        <option value="vorticity">Vorticité</option>
+        <option value="velocity">Vitesse (Magnitude)</option>
+        <option value="pressure">Pression</option>
+        <option value="vorticity">Vorticité (Tourbillons)</option>
         <option value="streamlines">Lignes de courant</option>
-        <option value="vectors">Vecteurs vitesse</option>
+        <option value="vectors">Vecteurs</option>
       </select>
-      <label style="font-size: 13px;">Contraste&nbsp;:</label>
-      <input type="range" id="contrast" min="0.5" max="3.0" step="0.1" value="1.5" style="width: 80px;">
-      <button id="screenshot-btn">Capture</button>
+      <button id="screenshot-btn">📸 Capture</button>
     </div>
   </section>
 
   <aside id="controls">
     <div class="section">
       <h2>Paramètres d'écoulement</h2>
-
       <div class="control">
-        <span class="label">
-          <span>Nombre de Mach</span>
-          <span class="value" id="mach-value">0.10</span>
-        </span>
-        <div class="slider-with-indicator">
-          <div class="slider-indicator" id="mach-indicator" style="width:50%;"></div>
-          <input type="range" id="mach" min="0.02" max="0.18" step="0.01" value="0.10">
-        </div>
+        <span class="label"><span>Mach</span><span class="value" id="mach-value">0.10</span></span>
+        <input type="range" id="mach" min="0.02" max="0.2" step="0.01" value="0.10">
       </div>
-
       <div class="control">
-        <span class="label">
-          <span>Temps de relaxation τ</span>
-          <span class="value" id="tau-value">0.80</span>
-        </span>
-        <div class="slider-with-indicator">
-          <div class="slider-indicator" id="tau-indicator" style="width:30%;"></div>
-          <input type="range" id="tau" min="0.52" max="1.50" step="0.01" value="0.80">
-        </div>
+        <span class="label"><span>Viscosité (Tau)</span><span class="value" id="tau-value">0.65</span></span>
+        <input type="range" id="tau" min="0.51" max="1.2" step="0.01" value="0.65">
       </div>
-
       <div class="results-block">
-        <div class="row">
-          <span>Nombre de Reynolds (approx.)</span>
-          <span id="reynolds">~2000</span>
-        </div>
-        <div class="row">
-          <span>Viscosité cinématique ν</span>
-          <span id="viscosity">0.10</span>
-        </div>
+         <div class="row"><span>Reynolds (approx)</span><span id="reynolds">0</span></div>
+         <div class="row"><span>Portance (CL)</span><span id="res-cl">0.00</span></div>
+         <div class="row"><span>Traînée (CD)</span><span id="res-cd">0.00</span></div>
       </div>
     </div>
 
     <div class="section">
-      <h3>Géométrie du profil</h3>
-
+      <h3>Géométrie (Joukowsky)</h3>
       <div class="control">
-        <span class="label">
-          <span>Angle d'attaque α</span>
-          <span class="value" id="aoa-value">5°</span>
-        </span>
-        <div class="slider-with-indicator">
-          <div class="slider-indicator" id="aoa-indicator" style="width:50%;"></div>
-          <input type="range" id="aoa" min="-10" max="20" step="1" value="5">
-        </div>
+        <span class="label"><span>Angle (AoA)</span><span class="value" id="aoa-value">15°</span></span>
+        <input type="range" id="aoa" min="-20" max="30" step="1" value="15">
       </div>
-
       <div class="control">
-        <span class="label">
-          <span>Épaisseur relative t/c</span>
-          <span class="value" id="thickness-value">0.12</span>
-        </span>
-        <div class="slider-with-indicator">
-          <div class="slider-indicator" id="thickness-indicator" style="width:40%;"></div>
-          <input type="range" id="thickness" min="0.06" max="0.20" step="0.01" value="0.12">
-        </div>
+        <span class="label"><span>Épaisseur</span><span class="value" id="thickness-value">0.12</span></span>
+        <input type="range" id="thickness" min="0.05" max="0.25" step="0.01" value="0.12">
       </div>
-
       <div class="control">
-        <span class="label">
-          <span>Cambrure</span>
-          <span class="value" id="camber-value">0.08</span>
-        </span>
-        <div class="slider-with-indicator">
-          <div class="slider-indicator" id="camber-indicator" style="width:40%;"></div>
-          <input type="range" id="camber" min="0.00" max="0.20" step="0.01" value="0.08">
-        </div>
+        <span class="label"><span>Cambrure</span><span class="value" id="camber-value">0.10</span></span>
+        <input type="range" id="camber" min="0" max="0.2" step="0.01" value="0.10">
       </div>
     </div>
 
     <div class="section">
-      <h3>Paramètres de performance</h3>
-
-      <div class="control">
-        <span class="label">
-          <span>Résolution</span>
-          <span class="value" id="resolution-value">Moyenne</span>
-        </span>
-        <div class="quality-selector">
-          <div class="quality-btn" data-res="low">Basse</div>
-          <div class="quality-btn active" data-res="medium">Moyenne</div>
-          <div class="quality-btn" data-res="high">Haute</div>
-        </div>
-        <p class="info-text">
-          Réduisez la résolution pour améliorer les performances sur appareils lents.
-        </p>
+      <h3>Performance</h3>
+      <div class="quality-selector">
+        <div class="quality-btn" data-res="low">Low (Rapide)</div>
+        <div class="quality-btn active" data-res="medium">Medium</div>
+        <div class="quality-btn" data-res="high">High (Lent)</div>
       </div>
-
-      <div class="control">
-        <span class="label">
-          <span>Itérations par frame</span>
-          <span class="value" id="iterations-value">2</span>
-        </span>
-        <input type="range" id="iterations" min="1" max="10" step="1" value="2">
-        <p class="info-text">
-          Plus d'itérations accélèrent le transitoire mais réduisent le FPS.
-        </p>
-      </div>
-    </div>
-
-    <div class="section">
-      <h3>Coefficients aérodynamiques (thin-airfoil)</h3>
-      <div class="results-block">
-        <div class="row">
-          <span>Coefficient de portance CL</span>
-          <span id="res-cl">0.000</span>
-        </div>
-        <div class="row">
-          <span>Coefficient de traînée CD</span>
-          <span id="res-cd">0.000</span>
-        </div>
-        <div class="row">
-          <span>Finesse L/D</span>
-          <span id="res-ld">0.0</span>
-        </div>
-        <div class="row">
-          <span>Angle d'attaque α</span>
-          <span id="res-alpha">5.0° (0.087 rad)</span>
-        </div>
-      </div>
-
-      <p class="info-text">
-        <strong>Théorie du profil mince :</strong> CL ≈ 2π·α (α en radians).<br>
-        CD = CD₀ + CDᵢ avec CDᵢ ≈ CL²/(π·AR·e).
-      </p>
+      <p class="info-text">Si la simulation est lente, passez en mode "Low".</p>
     </div>
 
     <div class="buttons">
-      <button id="reset-btn" class="secondary">Réinitialiser</button>
-      <button id="pause-btn">Pause</button>
-      <button id="export-btn">Exporter données</button>
+      <button id="reset-btn" class="secondary">Reset</button>
+      <button id="pause-btn">Pause/Play</button>
     </div>
-
-    <p class="info-text" style="margin-top: 16px;">
-      Grille : <span id="grid-size">600×240</span> nœuds • D2Q9 BGK • Parois no-slip • Profil de Joukowsky en bounce-back
-      <br><br>
-      <span class="metric-badge">Version optimisée</span>
-    </p>
   </aside>
 </main>
 
 <footer>
-  Prototype LBM – Hamza Boudhair • JavaScript + Canvas 2D
+  LBM D2Q9 Prototype by Hamza - JS Canvas Implementation
 </footer>
 
 <div id="startup-modal" class="startup-modal">
   <div class="modal-content">
-    <h2>Simulation d'écoulement LBM D2Q9</h2>
-    <p>Cette simulation montre l'écoulement d'un fluide autour d'un profil de Joukowsky en utilisant la méthode Lattice Boltzmann (D2Q9).</p>
-    <h3>Instructions :</h3>
-    <ul>
-      <li>Ajustez les paramètres d'écoulement et de géométrie dans le panneau de droite.</li>
-      <li>Choisissez le mode de visualisation (vitesse, pression, vorticité, etc.).</li>
-      <li>Adaptez la résolution/les itérations selon les performances de votre GPU/CPU.</li>
-      <li>Utilisez « Pause » pour figer le champ.</li>
-    </ul>
+    <h2 style="color:#60a5fa; margin-bottom:10px;">LBM Flow Simulator</h2>
+    <p style="color:#cbd5e1; font-size:13px; margin-bottom:20px;">
+      Simulation de mécanique des fluides utilisant la méthode de Boltzmann sur réseau (Lattice Boltzmann Method).
+      <br><br>
+      Calculé sur le CPU en JavaScript.
+    </p>
     <div class="modal-buttons">
-      <button id="start-btn" style="flex:2;">Démarrer la simulation</button>
-      <button id="quality-low-btn" class="secondary">Faible résolution</button>
+      <button id="start-btn">Démarrer la simulation</button>
     </div>
   </div>
 </div>
 
 <script>
-  // === CONFIG GLOBALE ===
-  let canvas = document.getElementById("sim-canvas");
-  let ctx = canvas.getContext("2d");
+  // === CONFIGURATION GLOBALE ===
+  const canvas = document.getElementById("sim-canvas");
+  const ctx = canvas.getContext("2d", { willReadFrequently: true }); // Optimisation lecture
 
-  let Nx = canvas.width;
-  let Ny = canvas.height;
+  let Nx = 400; 
+  let Ny = 160;
   let size = Nx * Ny;
 
+  // Constantes D2Q9
   const Q = 9;
-  const w = [4/9,1/9,1/9,1/9,1/9,1/36,1/36,1/36,1/36];
-  const cx = [0,1,0,-1,0,1,-1,-1,1];
-  const cy = [0,0,1,0,-1,1,1,-1,-1];
-  const opp = [0,3,4,1,2,7,8,5,6];
-  const cs2 = 1/3;
+  const w = [4/9, 1/9, 1/9, 1/9, 1/9, 1/36, 1/36, 1/36, 1/36];
+  const cx = [0, 1, 0, -1, 0, 1, -1, -1, 1];
+  const cy = [0, 0, 1, 0, -1, 1, 1, -1, -1];
+  const opp = [0, 3, 4, 1, 2, 7, 8, 5, 6];
+  
+  // Tableaux de données (Typés pour performance)
+  let f, fTmp, rho, ux, uy, mask, vort, imgData, pixels;
 
-  let f, fTmp, rho, ux, uy, mask, vort;
-
-  let mach = 0.10;
-  let tau = 0.80;
-  let paused = false;
+  // Etat simulation
+  let running = false;
   let steps = 0;
-  let vizMode = "velocity";
-  let contrastVal = 1.5;
-  let iterationsPerFrame = 2;
+  let vizMode = "vorticity"; // Default cool look
+  let mach = 0.1;
+  let tau = 0.65; // Faible viscosité pour voir des tourbillons
   let resolutionMode = "medium";
 
-  let lastTime = performance.now();
-  let frames = 0;
+  // Géométrie
+  let airfoilPoints = [];
 
-  let imgData = ctx.createImageData(Nx, Ny);
-  let pixels = imgData.data;
-
-  let airfoilPoly = [];
-
-  // Colorbar stabilisée
-  let displayMax = 1.0;
-  let displayMin = 0.0;
-  const MAX_CAP = {
-    velocity: 1.0,
-    pressure: 0.5,
-    vorticity: 10.0
-  };
-
-  // === ALLOCATION TABLEAUX ===
-  function initDataArrays() {
-    f    = new Float32Array(Q * size);
+  // === INITIALISATION MEMOIRE ===
+  function allocMemory() {
+    size = Nx * Ny;
+    f = new Float32Array(Q * size);
     fTmp = new Float32Array(Q * size);
-    rho  = new Float32Array(size);
-    ux   = new Float32Array(size);
-    uy   = new Float32Array(size);
+    rho = new Float32Array(size);
+    ux = new Float32Array(size);
+    uy = new Float32Array(size);
     mask = new Uint8Array(size);
     vort = new Float32Array(size);
-  }
-
-  // === MAJ TAILLE GRILLE ===
-  function updateGridSize() {
-    if (resolutionMode === "low") {
-      Nx = 400; Ny = 160;
-    } else if (resolutionMode === "high") {
-      Nx = 800; Ny = 320;
-    } else {
-      Nx = 600; Ny = 240;
-    }
-    canvas.width = Nx;
-    canvas.height = Ny;
-    size = Nx * Ny;
-
     imgData = ctx.createImageData(Nx, Ny);
     pixels = imgData.data;
-
-    document.getElementById("grid-size").textContent = Nx + "×" + Ny;
-
-    initDataArrays();
-    initLBM();
   }
 
-  // === Géométrie Joukowsky + masque ===
-  function buildAirfoilMask() {
+  // === GEOMETRIE JOUKOWSKY ===
+  function createAirfoil() {
+    // Reset mask
     mask.fill(0);
+    
+    // Murs haut/bas
+    for(let i=0; i<Nx; i++) { mask[i]=1; mask[i+(Ny-1)*Nx]=1; }
 
-    // murs haut/bas
-    for (let x = 0; x < Nx; x++) {
-      mask[x] = 1;
-      mask[x + (Ny - 1) * Nx] = 1;
+    // Paramètres
+    const aoa = parseFloat(document.getElementById("aoa").value) * Math.PI / 180;
+    const thick = parseFloat(document.getElementById("thickness").value);
+    const camber = parseFloat(document.getElementById("camber").value);
+
+    const N = 1000;
+    // Centrage et Echelle
+    const scale = Ny * 0.25; 
+    const cx_screen = Nx * 0.25;
+    const cy_screen = Ny * 0.5;
+
+    // Joukowsky Transform
+    const centerOff = thick; // Simplification
+    const beta = aoa; 
+    
+    // Cercle dans plan Zeta
+    // Centre du cercle décalé
+    const zc_x = -thick; 
+    const zc_y = camber; 
+    const R = Math.sqrt((1-zc_x)**2 + zc_y**2); // Rayon pour passer par (1,0)
+
+    airfoilPoints = [];
+
+    for(let i=0; i<N; i++) {
+        let theta = 2 * Math.PI * i / N;
+        // Point sur le cercle
+        let zeta_x = zc_x + R * Math.cos(theta);
+        let zeta_y = zc_y + R * Math.sin(theta);
+
+        // Transform: z = zeta + 1/zeta
+        let den = zeta_x*zeta_x + zeta_y*zeta_y;
+        let z_x = zeta_x * (1 + 1/den);
+        let z_y = zeta_y * (1 - 1/den);
+
+        // Rotation (AoA)
+        let xr = z_x * Math.cos(aoa) - z_y * Math.sin(aoa);
+        let yr = z_x * Math.sin(aoa) + z_y * Math.cos(aoa);
+
+        // Screen coords
+        let sx = cx_screen + xr * scale;
+        let sy = cy_screen - yr * scale; // Y inversé canvas
+
+        airfoilPoints.push({x: sx, y: sy});
     }
 
-    const aoaDeg   = parseFloat(document.getElementById("aoa").value);
-    const thickness = parseFloat(document.getElementById("thickness").value);
-    const camber    = parseFloat(document.getElementById("camber").value);
-
-    const angle = aoaDeg * Math.PI / 180;
-    const cosA = Math.cos(angle), sinA = Math.sin(angle);
-
-    const Npts = 500;
-    const circleOffset = 0.08 + camber * 0.35;
-    let radius = 1.0 - thickness * 0.6;
-    if (radius < 0.25) radius = 0.25;
-
-    const pts = [];
-    for (let k = 0; k < Npts; k++) {
-      const theta = 2 * Math.PI * k / Npts;
-      const zx = circleOffset + radius * Math.cos(theta);
-      const zy = radius * Math.sin(theta);
-
-      const denom = zx*zx + zy*zy;
-      const invx = zx / denom;
-      const invy = -zy / denom;
-
-      let x = zx + invx;
-      let y = zy + invy;
-
-      const xr = x * cosA - y * sinA;
-      const yr = x * sinA + y * cosA;
-      pts.push({x:xr, y:yr});
+    // Rasterisation (Scanline filling simple)
+    // Bounding box
+    let minX=Nx, maxX=0, minY=Ny, maxY=0;
+    for(let p of airfoilPoints) {
+        if(p.x<minX) minX=p.x; if(p.x>maxX) maxX=p.x;
+        if(p.y<minY) minY=p.y; if(p.y>maxY) maxY=p.y;
     }
+    minX = Math.max(0, Math.floor(minX)); maxX = Math.min(Nx-1, Math.ceil(maxX));
+    minY = Math.max(0, Math.floor(minY)); maxY = Math.min(Ny-1, Math.ceil(maxY));
 
-    let minX = Infinity, maxX = -Infinity;
-    let minY = Infinity, maxY = -Infinity;
-    for (const p of pts) {
-      if (p.x < minX) minX = p.x;
-      if (p.x > maxX) maxX = p.x;
-      if (p.y < minY) minY = p.y;
-      if (p.y > maxY) maxY = p.y;
-    }
-    const spanX = maxX - minX, spanY = maxY - minY;
-    const midX  = 0.5 * (maxX + minX), midY = 0.5 * (maxY + minY);
-
-    const scale   = 0.4 * Math.min(Nx/spanX, Ny/spanY);
-    const centerX = Nx * 0.28;
-    const centerY = Ny * 0.5;
-
-    airfoilPoly = pts.map(p => ({
-      x: centerX + (p.x - midX) * scale,
-      y: centerY - (p.y - midY) * scale
-    }));
-
-    function inside(px, py) {
-      let inPoly = false;
-      for (let i = 0, j = airfoilPoly.length-1; i < airfoilPoly.length; j = i++) {
-        const xi = airfoilPoly[i].x, yi = airfoilPoly[i].y;
-        const xj = airfoilPoly[j].x, yj = airfoilPoly[j].y;
-        const inter = ((yi > py) !== (yj > py)) &&
-                      (px < (xj-xi)*(py-yi)/(yj-yi+1e-9)+xi);
-        if (inter) inPoly = !inPoly;
-      }
-      return inPoly;
-    }
-
-    for (let y = 1; y < Ny-1; y++) {
-      for (let x = 0; x < Nx; x++) {
-        const idx = x + y*Nx;
-        if (inside(x+0.5, y+0.5)) mask[idx] = 1;
-      }
+    // Point in Polygon test
+    for(let y=minY; y<=maxY; y++) {
+        for(let x=minX; x<=maxX; x++) {
+            let inside = false;
+            for(let i=0, j=airfoilPoints.length-1; i<airfoilPoints.length; j=i++) {
+                let xi = airfoilPoints[i].x, yi = airfoilPoints[i].y;
+                let xj = airfoilPoints[j].x, yj = airfoilPoints[j].y;
+                let intersect = ((yi > y) != (yj > y)) && (x < (xj - xi) * (y - yi) / (yj - yi) + xi);
+                if(intersect) inside = !inside;
+            }
+            if(inside) mask[x + y*Nx] = 1;
+        }
     }
   }
 
-  // === Initialisation LBM ===
-  function initLBM() {
-    buildAirfoilMask();
-    const u0 = mach * Math.sqrt(cs2);
-
-    for (let y = 0; y < Ny; y++) {
-      for (let x = 0; x < Nx; x++) {
-        const idx = x + y*Nx;
-        rho[idx] = 1.0;
-        ux[idx]  = mask[idx] ? 0 : u0;
-        uy[idx]  = 0;
-        const u2 = ux[idx]*ux[idx] + uy[idx]*uy[idx];
-
-        for (let k = 0; k < Q; k++) {
-          const cu = 3*(cx[k]*ux[idx] + cy[k]*uy[idx]);
-          f[k*size + idx] = w[k]*rho[idx]*(1 + cu + 0.5*cu*cu - 1.5*u2);
+  // === INITIALISATION SIMULATION ===
+  function initSim() {
+    mach = parseFloat(document.getElementById("mach").value);
+    tau = parseFloat(document.getElementById("tau").value);
+    
+    // Equilibre initial (Uniform flow)
+    const rho0 = 1.0;
+    const u0 = mach * 0.577; // mach * cs
+    
+    for(let i=0; i<size; i++) {
+        rho[i] = rho0;
+        if(mask[i]) {
+            ux[i] = 0; uy[i] = 0;
+        } else {
+            ux[i] = u0; uy[i] = 0;
         }
-      }
+
+        // Calcul fEq
+        const u2 = ux[i]*ux[i] + uy[i]*uy[i];
+        for(let k=0; k<Q; k++) {
+            const cu = 3*(cx[k]*ux[i] + cy[k]*uy[i]);
+            f[k*size + i] = w[k]*rho[i]*(1 + cu + 0.5*cu*cu - 1.5*u2);
+        }
     }
     steps = 0;
+    updateAeroStats();
   }
 
-  // === Sliders + labels ===
-  function bindSlider(id, labelId, fmt, cb) {
-    const s   = document.getElementById(id);
-    const lab = labelId ? document.getElementById(labelId) : null;
-
-    function upd() {
-      const v = parseFloat(s.value);
-      if (lab) lab.textContent = fmt(v);
-
-      const min = parseFloat(s.min);
-      const max = parseFloat(s.max);
-      const percent = ((v-min)/(max-min))*100;
-      const ind = document.getElementById(id+"-indicator");
-      if (ind) ind.style.width = percent + "%";
-
-      if (cb) cb(v);
-    }
-    s.addEventListener("input", upd);
-    upd();
-  }
-
-  // === CL/CD analytiques + Re ===
-  function updateAero() {
-    const aoaDeg = parseFloat(document.getElementById("aoa").value);
-    const alpha  = aoaDeg * Math.PI/180;
-    document.getElementById("res-alpha").textContent =
-      `${aoaDeg.toFixed(1)}° (${alpha.toFixed(3)} rad)`;
-
-    const nu = (tau - 0.5)/3;
-    const u0 = mach * Math.sqrt(cs2);
-    const L  = Nx * 0.15;
-    const Re = u0 * L / nu;
-    document.getElementById("reynolds").textContent  = `~${Math.round(Re)}`;
-    document.getElementById("viscosity").textContent = nu.toFixed(4);
-
-    let CL = 2*Math.PI*alpha;
-    if (CL > 2.5)  CL = 2.5;
-    if (CL < -2.5) CL = -2.5;
-
-    const CD0 = 0.01;
-    const AR  = 6.0;
-    const e   = 0.9;
-    const CDi = CL*CL/(Math.PI*AR*e);
-    const CD  = CD0 + CDi;
-    const LD  = CD !== 0 ? CL/CD : 0;
-
-    document.getElementById("res-cl").textContent = CL.toFixed(3);
-    document.getElementById("res-cd").textContent = CD.toFixed(3);
-    document.getElementById("res-ld").textContent = LD.toFixed(1);
-  }
-
-  // === Strain / vorticité ===
-  function computeVorticity() {
-    for (let y = 1; y < Ny-1; y++) {
-      for (let x = 1; x < Nx-1; x++) {
-        const idx  = x + y*Nx;
-        const idxL = (x-1) + y*Nx;
-        const idxR = (x+1) + y*Nx;
-        const idxD = x + (y-1)*Nx;
-        const idxU = x + (y+1)*Nx;
-        const dvy_dx = 0.5*(uy[idxR] - uy[idxL]);
-        const dux_dy = 0.5*(ux[idxU] - ux[idxD]);
-        vort[idx] = dvy_dx - dux_dy;
-      }
-    }
-  }
-
-  // === STEP LBM ===
+  // === ITERATION LBM (CORE) ===
   function lbmStep() {
-    // macros
-    for (let y = 0; y < Ny; y++) {
-      for (let x = 0; x < Nx; x++) {
-        const idx = x + y*Nx;
-        let r = 0, uxLoc = 0, uyLoc = 0;
-        for (let k = 0; k < Q; k++) {
-          const fi = f[k*size + idx];
-          r     += fi;
-          uxLoc += fi*cx[k];
-          uyLoc += fi*cy[k];
-        }
-        rho[idx] = r;
-        if (mask[idx]) {
-          ux[idx] = 0; uy[idx] = 0;
-        } else {
-          ux[idx] = uxLoc/r;
-          uy[idx] = uyLoc/r;
-        }
+    const uIn = mach * 0.577;
 
-        // entrée : vitesse imposée
-        if (x === 0 && !mask[idx]) {
-          const uIn = mach * Math.sqrt(cs2);
-          ux[idx] = uIn;
-          uy[idx] = 0;
-        }
+    // 1. COLLISION + STREAMING (Optimisé en 1 boucle si possible, mais séparé ici pour clarté)
+    
+    // Collision BGK
+    for(let y=0; y<Ny; y++) {
+        for(let x=0; x<Nx; x++) {
+            const i = x + y*Nx;
+            if(mask[i]) continue; // On traite les murs au streaming
 
-        // sortie : extrapolation simple
-        if (x === Nx-1 && !mask[idx]) {
-          const idxL = (x-1) + y*Nx;
-          ux[idx] = ux[idxL];
-          uy[idx] = uy[idxL];
-        }
-      }
-    }
-
-    computeVorticity();
-
-    // collision BGK
-    for (let y = 0; y < Ny; y++) {
-      for (let x = 0; x < Nx; x++) {
-        const idx = x + y*Nx;
-        if (mask[idx]) {
-          for (let k = 0; k < Q; k++) {
-            fTmp[k*size + idx] = f[k*size + idx];
-          }
-          continue;
-        }
-
-        const r   = rho[idx];
-        const uxL = ux[idx];
-        const uyL = uy[idx];
-        const u2  = uxL*uxL + uyL*uyL;
-
-        for (let k = 0; k < Q; k++) {
-          const cu  = (cx[k]*uxL + cy[k]*uyL)/cs2;
-          const feq = w[k]*r*(1 + cu + 0.5*cu*cu - 1.5*u2/cs2);
-          const idF = k*size + idx;
-          fTmp[idF] = f[idF] - (f[idF] - feq)/tau;
-        }
-      }
-    }
-
-    // streaming + bounce-back
-    for (let y = 0; y < Ny; y++) {
-      for (let x = 0; x < Nx; x++) {
-        const idx = x + y*Nx;
-        for (let k = 0; k < Q; k++) {
-          const xn = x + cx[k];
-          const yn = y + cy[k];
-          const src = k*size + idx;
-
-          if (xn < 0 || xn >= Nx || yn < 0 || yn >= Ny) {
-            const dest = opp[k]*size + idx;
-            f[dest] = fTmp[src];
-          } else {
-            const nIdx = xn + yn*Nx;
-            if (mask[nIdx]) {
-              const dest = opp[k]*size + idx;
-              f[dest] = fTmp[src];
-            } else {
-              const dest = k*size + nIdx;
-              f[dest] = fTmp[src];
+            // Macroscopic
+            let r = 0, u = 0, v = 0;
+            for(let k=0; k<Q; k++) {
+                const fk = f[k*size+i];
+                r += fk;
+                u += fk * cx[k];
+                v += fk * cy[k];
             }
-          }
+            rho[i] = r;
+            ux[i] = u/r; 
+            uy[i] = v/r;
+
+            // Force inlet (gauche)
+            if(x===0) { ux[i] = uIn; uy[i] = 0; rho[i]=1.0; }
+            
+            // Equilibre & Relaxation
+            const u2 = ux[i]*ux[i] + uy[i]*uy[i];
+            for(let k=0; k<Q; k++) {
+                const cu = 3*(cx[k]*ux[i] + cy[k]*uy[i]);
+                const fEq = w[k]*rho[i]*(1 + cu + 0.5*cu*cu - 1.5*u2);
+                fTmp[k*size+i] = f[k*size+i] - (f[k*size+i] - fEq)/tau;
+            }
         }
-      }
+    }
+
+    // Streaming (Propagation) + Bounce Back
+    for(let y=0; y<Ny; y++) {
+        for(let x=0; x<Nx; x++) {
+            const i = x + y*Nx;
+            
+            for(let k=0; k<Q; k++) {
+                // Position source
+                const x_prev = x - cx[k];
+                const y_prev = y - cy[k];
+                
+                if(x_prev >= 0 && x_prev < Nx && y_prev >= 0 && y_prev < Ny) {
+                    const i_prev = x_prev + y_prev*Nx;
+                    
+                    if(mask[i]) {
+                        // Si je suis un mur, je renvoie ce qui vient vers moi (Bounce Back)
+                        // Pas besoin de stocker, c'est implicite dans l'autre sens
+                    } else if(mask[i_prev]) {
+                        // Si la source était un mur -> Bounce Back
+                        // La particule qui allait vers le mur (k_opp) revient
+                        const k_opp = opp[k];
+                        f[k*size+i] = fTmp[k_opp*size+i]; 
+                    } else {
+                        // Standard stream
+                        f[k*size+i] = fTmp[k*size+i_prev];
+                    }
+                }
+            }
+        }
+    }
+
+    // Calcul Vorticité (Curl) pour visualisation
+    if(vizMode === "vorticity" || steps % 10 === 0) {
+        for(let y=1; y<Ny-1; y++) {
+            for(let x=1; x<Nx-1; x++) {
+                const i = x + y*Nx;
+                if(!mask[i]) {
+                    const uy_x = (uy[i+1] - uy[i-1])*0.5;
+                    const ux_y = (ux[i+Nx] - ux[i-Nx])*0.5;
+                    vort[i] = uy_x - ux_y;
+                } else {
+                    vort[i] = 0;
+                }
+            }
+        }
     }
 
     steps++;
   }
 
-  // === COLOR MAPS ===
-  function colormap(v) {
-    v = Math.max(0, Math.min(1, v));
-    const c1 = [15,23,42];
-    const c2 = [59,130,246];
-    const c3 = [251,191,36];
-    const c4 = [239,68,68];
-    let r,g,b;
-    if (v < 0.33) {
-      const t = v/0.33;
-      r = c1[0] + t*(c2[0]-c1[0]);
-      g = c1[1] + t*(c2[1]-c1[1]);
-      b = c1[2] + t*(c2[2]-c1[2]);
-    } else if (v < 0.66) {
-      const t = (v-0.33)/0.33;
-      r = c2[0] + t*(c3[0]-c2[0]);
-      g = c2[1] + t*(c3[1]-c2[1]);
-      b = c2[2] + t*(c3[2]-c2[2]);
-    } else {
-      const t = (v-0.66)/0.34;
-      r = c3[0] + t*(c4[0]-c3[0]);
-      g = c3[1] + t*(c4[1]-c3[1]);
-      b = c3[2] + t*(c4[2]-c3[2]);
-    }
-    return [r|0, g|0, b|0];
-  }
-
-  function colormapDiverging(v) {
-    v = Math.max(-1, Math.min(1, v));
-    const c1 = [59,130,246];
-    const c2 = [241,245,249];
-    const c3 = [239,68,68];
-    let r,g,b;
-    if (v < 0) {
-      const t = v + 1.0;
-      r = c1[0] + t*(c2[0]-c1[0]);
-      g = c1[1] + t*(c2[1]-c1[1]);
-      b = c1[2] + t*(c2[2]-c1[2]);
-    } else {
-      const t = v;
-      r = c2[0] + t*(c3[0]-c2[0]);
-      g = c2[1] + t*(c3[1]-c2[1]);
-      b = c2[2] + t*(c3[2]-c2[2]);
-    }
-    return [r|0, g|0, b|0];
-  }
-
-  // === RENDER ===
-  function render() {
-    const now = performance.now();
-    frames++;
-    if (now - lastTime >= 1000) {
-      const dt = now - lastTime;
-      const fps = (frames*1000/dt);
-      const ms  = dt/frames;
-      document.getElementById("fps-counter").textContent = fps.toFixed(0);
-      document.getElementById("ms-counter").textContent  = ms.toFixed(1);
-      frames = 0;
-      lastTime = now;
+  // === RENDU ===
+  function draw() {
+    // Color maps simples
+    // Turbo-like colors: Blue -> Cyan -> Green -> Yellow -> Red
+    function getColor(val, min, max) {
+        let t = (val - min) / (max - min);
+        t = Math.max(0, Math.min(1, t));
+        const r = Math.min(255, Math.max(0, 255 * (2*t - 1))); // Red at end
+        const g = Math.min(255, Math.max(0, 255 * (1 - 2*Math.abs(t-0.5))));
+        const b = Math.min(255, Math.max(0, 255 * (1 - 2*t)));
+        return [r, g, b];
     }
 
-    let maxVal = 0;
-    let minVal = Infinity;
-
-    if (vizMode === "velocity" || vizMode === "streamlines" || vizMode === "vectors") {
-      for (let i = 0; i < size; i++) {
-        if (!mask[i]) {
-          const uMag = Math.hypot(ux[i], uy[i]);
-          if (uMag > maxVal) maxVal = uMag;
-          if (uMag < minVal) minVal = uMag;
+    // Diverging (Blue - White - Red) for vorticity
+    function getDivColor(val, scale) {
+        let t = val * scale;
+        t = Math.max(-1, Math.min(1, t));
+        let r=255, g=255, b=255;
+        if(t < 0) { // Blueish
+            r = 255 * (1+t); g = 255 * (1+t);
+        } else { // Reddish
+            b = 255 * (1-t); g = 255 * (1-t);
         }
-      }
-    } else if (vizMode === "pressure") {
-      for (let i = 0; i < size; i++) {
-        if (!mask[i]) {
-          const p = Math.abs((rho[i]-1)*cs2);
-          if (p > maxVal) maxVal = p;
-          if (p < minVal) minVal = p;
-        }
-      }
-    } else if (vizMode === "vorticity") {
-      for (let i = 0; i < size; i++) {
-        if (!mask[i]) {
-          const v = Math.abs(vort[i]);
-          if (v > maxVal) maxVal = v;
-          if (v < minVal) minVal = v;
-        }
-      }
+        return [r, g, b];
     }
 
-    // bornes physiques + lissage
-    if (!isFinite(maxVal) || maxVal <= 0) maxVal = 1.0;
-    if (!isFinite(minVal) || minVal < 0)   minVal = 0.0;
+    let maxU = 0.2; 
 
-    if (vizMode === "velocity" || vizMode === "streamlines" || vizMode === "vectors") {
-      maxVal = Math.min(maxVal, MAX_CAP.velocity);
-    } else if (vizMode === "pressure") {
-      maxVal = Math.min(maxVal, MAX_CAP.pressure);
-    } else if (vizMode === "vorticity") {
-      maxVal = Math.min(maxVal, MAX_CAP.vorticity);
-    }
-
-    const alpha = 0.15;
-    displayMax = (1-alpha)*displayMax + alpha*maxVal;
-    displayMin = (1-alpha)*displayMin + alpha*minVal;
-
-    document.getElementById("max-value").textContent = displayMax.toFixed(2);
-    document.getElementById("min-value").textContent = displayMin.toFixed(2);
-
-    const scale = displayMax > 0 ? contrastVal/displayMax : 1.0;
-
-    // champs couleur
-    for (let y = 0; y < Ny; y++) {
-      for (let x = 0; x < Nx; x++) {
-        const idx = x + y*Nx;
-        const di  = 4*idx;
-
-        if (mask[idx]) {
-          pixels[di]   = 241;
-          pixels[di+1] = 245;
-          pixels[di+2] = 249;
-          pixels[di+3] = 255;
+    for(let i=0; i<size; i++) {
+        let r=0, g=0, b=0;
+        if(mask[i]) {
+            r=50; g=50; b=60; // Mur gris
         } else {
-          let val, rgb;
-
-          if (vizMode === "velocity" || vizMode === "streamlines" || vizMode === "vectors") {
-            const uMag = Math.hypot(ux[idx], uy[idx]);
-            val = uMag * scale;
-            rgb = colormap(val);
-          } else if (vizMode === "pressure") {
-            const p = (rho[idx]-1)*cs2;
-            val = p * scale * 5;
-            rgb = colormapDiverging(val);
-          } else { // vorticity
-            val = vort[idx] * scale * 0.5;
-            rgb = colormapDiverging(val);
-          }
-
-          pixels[di]   = rgb[0];
-          pixels[di+1] = rgb[1];
-          pixels[di+2] = rgb[2];
-          pixels[di+3] = 255;
+            if(vizMode === "velocity") {
+                const speed = Math.sqrt(ux[i]**2 + uy[i]**2);
+                const rgb = getColor(speed, 0, mach*0.8);
+                r=rgb[0]; g=rgb[1]; b=rgb[2];
+            } else if (vizMode === "pressure") {
+                const p = rho[i] - 1.0;
+                const rgb = getDivColor(p, 20.0);
+                r=rgb[0]; g=rgb[1]; b=rgb[2];
+            } else if (vizMode === "vorticity") {
+                const v = vort[i];
+                const rgb = getDivColor(v, 10.0); // Scale factor
+                r=rgb[0]; g=rgb[1]; b=rgb[2];
+            } else {
+                // Default speed
+                const speed = Math.sqrt(ux[i]**2 + uy[i]**2);
+                const rgb = getColor(speed, 0, mach*0.8);
+                r=rgb[0]; g=rgb[1]; b=rgb[2];
+            }
         }
-      }
+        const pIdx = i*4;
+        pixels[pIdx] = r; pixels[pIdx+1] = g; pixels[pIdx+2] = b; pixels[pIdx+3] = 255;
     }
-
     ctx.putImageData(imgData, 0, 0);
 
-    // surcouches
-    if (vizMode === "streamlines") {
-      ctx.strokeStyle = "rgba(255,255,255,0.6)";
-      ctx.lineWidth = 1;
-      const step = 15;
-      const maxLen = 80;
-      const dtLine = 0.8;
-
-      for (let sy = step; sy < Ny-step; sy += step) {
-        for (let sx = step; sx < Nx-step; sx += step) {
-          if (mask[sx + sy*Nx]) continue;
-
-          let px = sx, py = sy;
-          ctx.beginPath();
-          ctx.moveTo(px, py);
-
-          for (let n = 0; n < maxLen; n++) {
-            const ix = px|0, iy = py|0;
-            if (ix < 0 || ix >= Nx || iy < 0 || iy >= Ny) break;
-            const idx = ix + iy*Nx;
-            if (mask[idx]) break;
-
-            const vx = ux[idx], vy = uy[idx];
-            const vmag = Math.hypot(vx, vy);
-            if (vmag < 1e-3) break;
-
-            px += vx * dtLine / vmag;
-            py += vy * dtLine / vmag;
-            ctx.lineTo(px, py);
-          }
-          ctx.stroke();
+    // Overlay Vecteurs (Sous-échantillonné)
+    if(vizMode === "vectors") {
+        ctx.strokeStyle = "rgba(255,255,255,0.5)";
+        ctx.beginPath();
+        const step = 10;
+        for(let y=step; y<Ny; y+=step) {
+            for(let x=step; x<Nx; x+=step) {
+                const i = x + y*Nx;
+                if(!mask[i]) {
+                    const scale = 100;
+                    ctx.moveTo(x, y);
+                    ctx.lineTo(x + ux[i]*scale, y + uy[i]*scale);
+                }
+            }
         }
-      }
-    } else if (vizMode === "vectors") {
-      ctx.strokeStyle = "rgba(255,255,255,0.85)";
-      ctx.lineWidth = 1;
-      const step = 20;
-      const scaleVec = 6;
-
-      for (let y = step; y < Ny-step; y += step) {
-        for (let x = step; x < Nx-step; x += step) {
-          const idx = x + y*Nx;
-          if (mask[idx]) continue;
-          const vx = ux[idx], vy = uy[idx];
-          const vmag = Math.hypot(vx, vy);
-          if (vmag < 0.01) continue;
-
-          const ex = vx*scaleVec;
-          const ey = vy*scaleVec;
-          const ang = Math.atan2(ey, ex);
-
-          ctx.beginPath();
-          ctx.moveTo(x, y);
-          ctx.lineTo(x+ex, y+ey);
-          ctx.stroke();
-
-          ctx.beginPath();
-          ctx.moveTo(x+ex, y+ey);
-          ctx.lineTo(x+ex-5*Math.cos(ang-Math.PI/6), y+ey-5*Math.sin(ang-Math.PI/6));
-          ctx.moveTo(x+ex, y+ey);
-          ctx.lineTo(x+ex-5*Math.cos(ang+Math.PI/6), y+ey-5*Math.sin(ang+Math.PI/6));
-          ctx.stroke();
-        }
-      }
+        ctx.stroke();
     }
 
-    document.getElementById("steps-count").textContent = steps;
+    // Overlay Info
+    document.getElementById("fps-counter").innerText = (1000/frameTime).toFixed(0);
+    document.getElementById("steps-count").innerText = steps;
   }
 
-  // === LOOP ===
-  function loop() {
-    if (!paused) {
-      for (let i = 0; i < iterationsPerFrame; i++) {
+  // === BOUCLE PRINCIPALE ===
+  let lastTime = 0;
+  let frameTime = 16;
+
+  function loop(timestamp) {
+    if(!running) return;
+    
+    frameTime = timestamp - lastTime;
+    lastTime = timestamp;
+
+    // Multi-steps par frame pour accélérer
+    const iter = resolutionMode === "high" ? 1 : (resolutionMode === "low" ? 5 : 3);
+    
+    for(let k=0; k<iter; k++) {
         lbmStep();
-      }
     }
-    render();
+    draw();
     requestAnimationFrame(loop);
   }
 
-  // === EVENTS / UI ===
-  function setupEventListeners() {
-    bindSlider("mach","mach-value",v=>v.toFixed(2), v=>{
-      mach = v; initLBM(); updateAero();
-    });
-    bindSlider("tau","tau-value",v=>v.toFixed(2), v=>{
-      tau = v; updateAero();
-    });
-    bindSlider("aoa","aoa-value",v=>v.toFixed(0)+"°", ()=>{
-      initLBM(); updateAero();
-    });
-    bindSlider("thickness","thickness-value",v=>v.toFixed(2), ()=>{ initLBM(); });
-    bindSlider("camber","camber-value",v=>v.toFixed(2), ()=>{ initLBM(); });
-    bindSlider("contrast",null,v=>v.toFixed(1), v=>{ contrastVal = v; });
-    bindSlider("iterations","iterations-value",v=>v.toFixed(0), v=>{ iterationsPerFrame = v; });
-
-    document.getElementById("viz-mode").addEventListener("change", e=>{
-      vizMode = e.target.value;
-    });
-
-    document.getElementById("pause-btn").addEventListener("click", ()=>{
-      paused = !paused;
-      document.getElementById("pause-btn").textContent = paused ? "Reprendre" : "Pause";
-    });
-
-    document.getElementById("reset-btn").addEventListener("click", ()=>{
-      initLBM();
-    });
-
-    document.getElementById("screenshot-btn").addEventListener("click", ()=>{
-      const a = document.createElement("a");
-      a.download = `lbm-${new Date().toISOString().slice(0,19)}.png`;
-      a.href = canvas.toDataURL();
-      a.click();
-    });
-
-    document.getElementById("export-btn").addEventListener("click", ()=>{
-      const aoa = parseFloat(document.getElementById("aoa").value);
-      const data = {
-        parameters: {
-          mach, tau, aoa,
-          thickness: parseFloat(document.getElementById("thickness").value),
-          camber:    parseFloat(document.getElementById("camber").value),
-          resolution: resolutionMode
-        },
-        results: {
-          CL: parseFloat(document.getElementById("res-cl").textContent),
-          CD: parseFloat(document.getElementById("res-cd").textContent),
-          LD: parseFloat(document.getElementById("res-ld").textContent),
-          Re: document.getElementById("reynolds").textContent,
-          steps
-        }
-      };
-      const blob = new Blob([JSON.stringify(data,null,2)], {type:"application/json"});
-      const url  = URL.createObjectURL(blob);
-      const a    = document.createElement("a");
-      a.href = url;
-      a.download = `lbm-data-${new Date().toISOString().slice(0,19)}.json`;
-      a.click();
-      URL.revokeObjectURL(url);
-    });
-
-    document.querySelectorAll(".quality-btn").forEach(btn=>{
-      btn.addEventListener("click", ()=>{
-        document.querySelectorAll(".quality-btn").forEach(b=>b.classList.remove("active"));
-        btn.classList.add("active");
-        resolutionMode = btn.getAttribute("data-res");
-        document.getElementById("resolution-value").textContent =
-          resolutionMode==="low" ? "Basse" :
-          resolutionMode==="high" ? "Haute" : "Moyenne";
-        updateGridSize();
-        updateAero();
-      });
-    });
-
-    document.getElementById("start-btn").addEventListener("click", ()=>{
-      document.getElementById("startup-modal").style.display = "none";
-    });
-
-    document.getElementById("quality-low-btn").addEventListener("click", ()=>{
-      resolutionMode = "low";
-      document.querySelectorAll(".quality-btn").forEach(b=>b.classList.remove("active"));
-      document.querySelector('.quality-btn[data-res="low"]').classList.add("active");
-      document.getElementById("resolution-value").textContent = "Basse";
-      updateGridSize();
-      updateAero();
-      document.getElementById("startup-modal").style.display = "none";
-    });
+  // === GESTION UI ===
+  function updateAeroStats() {
+    // Estimation simple
+    const aoa = document.getElementById("aoa").value;
+    const cl = 0.1 * aoa; // Approximation linéaire grossière
+    const cd = 0.01 + 0.001 * aoa*aoa; 
+    const re = (mach * Nx * 0.2) / ((tau-0.5)/3);
+    
+    document.getElementById("res-cl").innerText = cl.toFixed(3);
+    document.getElementById("res-cd").innerText = cd.toFixed(4);
+    document.getElementById("reynolds").innerText = re.toFixed(0);
   }
 
-  // === INITIALISATION ===
-  initDataArrays();
-  updateGridSize();
-  setupEventListeners();
-  updateAero();
-  lastTime = performance.now();
-  requestAnimationFrame(loop);
+  // Listeners UI
+  document.getElementById("start-btn").onclick = () => {
+    document.getElementById("startup-modal").style.display = "none";
+    running = true;
+    lastTime = performance.now();
+    requestAnimationFrame(loop);
+  };
+
+  document.getElementById("pause-btn").onclick = () => {
+    running = !running;
+    if(running) {
+        lastTime = performance.now();
+        requestAnimationFrame(loop);
+    }
+  };
+
+  document.getElementById("reset-btn").onclick = () => {
+    createAirfoil();
+    initSim();
+    draw();
+  };
+
+  document.getElementById("screenshot-btn").onclick = () => {
+    const link = document.createElement('a');
+    link.download = 'cfd-simulation.png';
+    link.href = canvas.toDataURL();
+    link.click();
+  };
+
+  // Sliders live update
+  ['mach', 'tau', 'aoa', 'thickness', 'camber'].forEach(id => {
+    const el = document.getElementById(id);
+    const valEl = document.getElementById(id+"-value");
+    el.addEventListener("input", () => {
+        valEl.innerText = el.value;
+        if(id === 'aoa' || id === 'thickness' || id === 'camber') {
+            createAirfoil();
+            initSim(); // Re-init flow si la géométrie change brutalement
+        } else {
+            mach = parseFloat(document.getElementById("mach").value);
+            tau = parseFloat(document.getElementById("tau").value);
+            updateAeroStats();
+        }
+    });
+  });
+
+  document.getElementById("viz-mode").addEventListener("change", (e) => {
+    vizMode = e.target.value;
+    draw();
+  });
+
+  // Quality buttons
+  document.querySelectorAll('.quality-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+        document.querySelectorAll('.quality-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        resolutionMode = btn.dataset.res;
+        
+        // Resize logic
+        if(resolutionMode === "low") { Nx=200; Ny=80; }
+        else if(resolutionMode === "medium") { Nx=400; Ny=160; }
+        else { Nx=600; Ny=240; }
+        
+        canvas.width = Nx; canvas.height = Ny;
+        allocMemory();
+        createAirfoil();
+        initSim();
+    });
+  });
+
+  // === BOOTSTRAP ===
+  allocMemory();
+  createAirfoil();
+  initSim();
+  draw(); // Premier rendu statique
+
 </script>
 </body>
 </html>
