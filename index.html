@@ -1,886 +1,495 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <title>LBM D2Q9 – Joukowsky Airfoil (Version Light)</title>
-  <style>
-    * { box-sizing: border-box; }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GPU CFD - Parametric Airfoil</title>
+    <style>
+        body { margin: 0; background-color: #050505; color: #eee; font-family: 'Segoe UI', sans-serif; overflow: hidden; }
+        canvas { display: block; width: 100vw; height: 100vh; }
+        
+        /* Interface Pro */
+        #ui-container {
+            position: absolute; top: 20px; left: 20px; width: 300px;
+            padding: 25px; border-radius: 16px;
+            background: rgba(15, 15, 20, 0.85);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 8px 32px rgba(0,0,0,0.6);
+            pointer-events: auto;
+            user-select: none;
+        }
 
-    body {
-      margin: 0;
-      padding: 0;
-      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
-      background: #0a0e27;
-      color: #e5e7eb;
-      height: 100vh;
-      display: flex;
-      flex-direction: column;
-      overflow: hidden;
-    }
+        h1 { margin: 0 0 5px 0; font-size: 20px; color: #fff; font-weight: 700; letter-spacing: -0.5px; }
+        h2 { margin: 0 0 20px 0; font-size: 13px; color: #4ade80; text-transform: uppercase; font-weight: 500; letter-spacing: 1px; }
+        
+        .section-title { font-size: 11px; color: #666; text-transform: uppercase; margin-top: 15px; margin-bottom: 8px; font-weight: bold; border-bottom: 1px solid #333; padding-bottom: 4px; }
 
-    header {
-      padding: 16px 24px;
-      border-bottom: 1px solid #1e293b;
-      background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
-      box-shadow: 0 4px 6px rgba(0,0,0,0.3);
-    }
+        .control-group { margin-bottom: 12px; }
+        label { display: flex; justify-content: space-between; font-size: 13px; color: #ccc; margin-bottom: 6px; }
+        span.val { color: #4ade80; font-family: monospace; font-weight: bold; }
+        
+        input[type=range] {
+            width: 100%; -webkit-appearance: none; background: transparent; margin: 0;
+        }
+        input[type=range]:focus { outline: none; }
+        input[type=range]::-webkit-slider-runnable-track {
+            width: 100%; height: 4px; background: #333; border-radius: 2px; cursor: pointer;
+        }
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none; height: 14px; width: 14px; border-radius: 50%;
+            background: #eee; margin-top: -5px; cursor: pointer; box-shadow: 0 0 10px rgba(0,0,0,0.5); transition: background 0.2s;
+        }
+        input[type=range]::-webkit-slider-thumb:hover { background: #4ade80; }
 
-    header h1 {
-      font-size: 22px;
-      margin: 0;
-      background: linear-gradient(135deg, #60a5fa 0%, #a78bfa 100%);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      font-weight: 700;
-    }
-
-    header p {
-      margin: 6px 0 0;
-      font-size: 13px;
-      color: #94a3b8;
-    }
-
-    main.layout {
-      flex: 1;
-      display: flex;
-      min-height: 0;
-    }
-
-    #sim-container {
-      flex: 3;
-      background: #020617;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      border-right: 1px solid #1e293b;
-      padding: 20px;
-    }
-
-    #sim-canvas {
-      border: 2px solid #334155;
-      background: #000;
-      box-shadow: 0 8px 32px rgba(0,0,0,0.5);
-      border-radius: 4px;
-    }
-
-    .canvas-controls {
-      margin-top: 16px;
-      display: flex;
-      gap: 12px;
-      align-items: center;
-    }
-
-    .canvas-controls select {
-      padding: 8px 12px;
-      background: #1e293b;
-      border: 1px solid #334155;
-      color: #e5e7eb;
-      border-radius: 6px;
-      font-size: 13px;
-      cursor: pointer;
-    }
-
-    .canvas-controls select:hover {
-      border-color: #475569;
-    }
-
-    #controls {
-      flex: 1;
-      padding: 24px;
-      background: #0f172a;
-      color: #e5e7eb;
-      overflow-y: auto;
-      min-width: 320px;
-    }
-
-    #controls h2 {
-      margin-top: 0;
-      margin-bottom: 16px;
-      font-size: 18px;
-      color: #60a5fa;
-      font-weight: 600;
-    }
-
-    .section {
-      margin-bottom: 24px;
-      padding-bottom: 20px;
-      border-bottom: 1px solid #1e293b;
-    }
-
-    .section:last-child {
-      border-bottom: none;
-    }
-
-    .section h3 {
-      font-size: 15px;
-      margin: 0 0 12px 0;
-      color: #a78bfa;
-      font-weight: 600;
-    }
-
-    .control {
-      margin-bottom: 16px;
-      font-size: 13px;
-    }
-
-    .control span.label {
-      display: flex;
-      justify-content: space-between;
-      margin-bottom: 6px;
-      align-items: center;
-    }
-
-    .control span.value {
-      color: #60a5fa;
-      font-variant-numeric: tabular-nums;
-      font-weight: 600;
-      margin-left: 8px;
-    }
-
-    input[type="range"] {
-      width: 100%;
-      height: 6px;
-      border-radius: 3px;
-      background: #1e293b;
-      outline: none;
-      -webkit-appearance: none;
-    }
-
-    input[type="range"]::-webkit-slider-thumb {
-      -webkit-appearance: none;
-      appearance: none;
-      width: 16px;
-      height: 16px;
-      border-radius: 50%;
-      background: #60a5fa;
-      cursor: pointer;
-      transition: all 0.2s;
-    }
-
-    input[type="range"]::-webkit-slider-thumb:hover {
-      background: #93c5fd;
-      transform: scale(1.1);
-    }
-
-    input[type="range"]::-moz-range-thumb {
-      width: 16px;
-      height: 16px;
-      border-radius: 50%;
-      background: #60a5fa;
-      cursor: pointer;
-      border: none;
-    }
-
-    .buttons {
-      display: flex;
-      gap: 8px;
-      margin-top: 12px;
-    }
-
-    button {
-      flex: 1;
-      padding: 10px 14px;
-      border-radius: 6px;
-      border: none;
-      background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
-      color: white;
-      font-size: 13px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.2s;
-      box-shadow: 0 2px 4px rgba(37,99,235,0.3);
-    }
-
-    button:hover {
-      transform: translateY(-1px);
-      box-shadow: 0 4px 8px rgba(37,99,235,0.4);
-    }
-
-    button:active {
-      transform: translateY(0);
-    }
-
-    button.secondary {
-      background: linear-gradient(135deg, #374151 0%, #1f2937 100%);
-      box-shadow: 0 2px 4px rgba(0,0,0,0.3);
-    }
-
-    .results-block {
-      background: #1e293b;
-      padding: 16px;
-      border-radius: 8px;
-      font-size: 13px;
-      margin-top: 8px;
-    }
-
-    .results-block .row {
-      display: flex;
-      justify-content: space-between;
-      margin-bottom: 8px;
-      font-variant-numeric: tabular-nums;
-    }
-
-    .results-block .row:last-child {
-      margin-bottom: 0;
-    }
-
-    .results-block .row span:first-child {
-      color: #94a3b8;
-    }
-
-    .results-block .row span:last-child {
-      color: #60a5fa;
-      font-weight: 600;
-    }
-
-    .info-text {
-      margin-top: 12px;
-      font-size: 11px;
-      color: #64748b;
-      line-height: 1.5;
-    }
-
-    footer {
-      padding: 10px 20px;
-      font-size: 11px;
-      color: #64748b;
-      border-top: 1px solid #1e293b;
-      background: #0f172a;
-      text-align: center;
-    }
-
-    .metric-badge {
-      display: inline-block;
-      padding: 4px 8px;
-      background: #1e293b;
-      border-radius: 4px;
-      font-size: 11px;
-      color: #60a5fa;
-      margin-top: 4px;
-    }
-  </style>
+        .footer { margin-top: 25px; font-size: 11px; color: #555; text-align: center; }
+        a { color: #777; text-decoration: none; }
+    </style>
 </head>
-
 <body>
-<header>
-  <h1>LBM D2Q9 – Écoulement autour d'un profil de Joukowsky</h1>
-  <p>
-    Version légère pour le web • LBM D2Q9 BGK • Visualisations vitesse / pression / vorticité / lignes de courant
-  </p>
-</header>
 
-<main class="layout">
-  <section id="sim-container">
-    <canvas id="sim-canvas" width="600" height="240"></canvas>
-    <div class="canvas-controls">
-      <label style="font-size: 13px;">Mode de visualisation&nbsp;:</label>
-      <select id="viz-mode">
-        <option value="velocity">Magnitude de vitesse</option>
-        <option value="pressure">Champ de pression</option>
-        <option value="vorticity">Vorticité</option>
-        <option value="streamlines">Lignes de courant</option>
-      </select>
-      <label style="font-size: 13px; margin-left: 12px;">Contraste&nbsp;:</label>
-      <input type="range" id="contrast" min="0.5" max="3.0" step="0.1" value="1.5" style="width: 120px;">
-    </div>
-  </section>
-
-  <aside id="controls">
-    <div class="section">
-      <h2>Paramètres d'écoulement</h2>
-
-      <div class="control">
-        <span class="label">
-          <span>Nombre de Mach (entrée)</span>
-          <span class="value" id="mach-value">0.10</span>
-        </span>
-        <input type="range" id="mach" min="0.02" max="0.18" step="0.01" value="0.10">
-      </div>
-
-      <div class="control">
-        <span class="label">
-          <span>Temps de relaxation τ</span>
-          <span class="value" id="tau-value">0.80</span>
-        </span>
-        <input type="range" id="tau" min="0.52" max="1.50" step="0.01" value="0.80">
-      </div>
-
-      <div class="results-block">
-        <div class="row">
-          <span>Nombre de Reynolds (approx.)</span>
-          <span id="reynolds">~2000</span>
+    <div id="ui-container">
+        <h1>Virtual Wind Tunnel</h1>
+        <h2>Navier-Stokes Solver (WebGL2)</h2>
+        
+        <div class="section-title">Flow Conditions</div>
+        
+        <div class="control-group">
+            <label>Inlet Velocity (Mach) <span id="val-speed" class="val">1.0</span></label>
+            <input type="range" id="inp-speed" min="0" max="2.5" step="0.1" value="1.2">
         </div>
-        <div class="row">
-          <span>Viscosité cinématique ν</span>
-          <span id="viscosity">0.10</span>
+        <div class="control-group">
+            <label>Viscosity (Re) <span id="val-visc" class="val">0.002</span></label>
+            <input type="range" id="inp-visc" min="0" max="0.05" step="0.001" value="0.002">
         </div>
-      </div>
+
+        <div class="section-title">Airfoil Geometry (Joukowsky)</div>
+
+        <div class="control-group">
+            <label>Angle of Attack <span id="val-aoa" class="val">15°</span></label>
+            <input type="range" id="inp-aoa" min="-20" max="40" step="1" value="15">
+        </div>
+        <div class="control-group">
+            <label>Thickness (t/c) <span id="val-thick" class="val">0.12</span></label>
+            <input type="range" id="inp-thick" min="0.01" max="0.3" step="0.01" value="0.12">
+        </div>
+        <div class="control-group">
+            <label>Camber <span id="val-camber" class="val">0.08</span></label>
+            <input type="range" id="inp-camber" min="-0.1" max="0.2" step="0.01" value="0.08">
+        </div>
+
+        <div class="footer">
+            Real-time GPU Simulation<br>
+            Developed by Hamza Boudhair
+        </div>
     </div>
 
-    <div class="section">
-      <h3>Géométrie du profil</h3>
+    <canvas id="glcanvas"></canvas>
 
-      <div class="control">
-        <span class="label">
-          <span>Angle d'attaque α</span>
-          <span class="value" id="aoa-value">5°</span>
-        </span>
-        <input type="range" id="aoa" min="-10" max="20" step="1" value="5">
-      </div>
-
-      <div class="control">
-        <span class="label">
-          <span>Épaisseur relative t/c</span>
-          <span class="value" id="thickness-value">0.12</span>
-        </span>
-        <input type="range" id="thickness" min="0.06" max="0.20" step="0.01" value="0.12">
-      </div>
-
-      <div class="control">
-        <span class="label">
-          <span>Cambrure</span>
-          <span class="value" id="camber-value">0.08</span>
-        </span>
-        <input type="range" id="camber" min="0.00" max="0.20" step="0.01" value="0.08">
-      </div>
-    </div>
-
-    <div class="section">
-      <h3>Coefficients aérodynamiques (thin-airfoil)</h3>
-      
-      <div class="results-block">
-        <div class="row">
-          <span>Coefficient de portance CL</span>
-          <span id="res-cl">0.000</span>
-        </div>
-        <div class="row">
-          <span>Coefficient de traînée CD</span>
-          <span id="res-cd">0.000</span>
-        </div>
-        <div class="row">
-          <span>Finesse L/D</span>
-          <span id="res-ld">0.0</span>
-        </div>
-        <div class="row">
-          <span>Angle d'attaque α</span>
-          <span id="res-alpha">5.0° (0.087 rad)</span>
-        </div>
-      </div>
-
-      <p class="info-text">
-        <strong>Théorie du profil mince :</strong> CL ≈ 2π·α (α en radians).<br>
-        CD est estimé par un modèle simple (traînée de profil + induite) à partir de CL.
-      </p>
-    </div>
-
-    <div class="buttons">
-      <button id="reset-btn" class="secondary">Réinitialiser</button>
-      <button id="pause-btn">Pause</button>
-    </div>
-
-    <p class="info-text" style="margin-top: 16px;">
-      Grille&nbsp;: 600×240 nœuds • D2Q9 BGK • Parois no-slip • Profil de Joukowsky en bounce-back
-      <br><br>
-      <span class="metric-badge">Itérations&nbsp;: <span id="steps-count">0</span></span>
-    </p>
-  </aside>
-</main>
-
-<footer>
-  Prototype Web LBM – Hamza Boudhair • JavaScript + Canvas 2D
-</footer>
-
-<script>
-  const canvas = document.getElementById("sim-canvas");
-  const ctx = canvas.getContext("2d");
-  const Nx = canvas.width;
-  const Ny = canvas.height;
-
-  // --- LBM D2Q9 ---
-  const Q = 9;
-  const w = [4/9, 1/9,1/9,1/9,1/9, 1/36,1/36,1/36,1/36];
-  const cx = [0, 1, 0,-1, 0, 1,-1,-1, 1];
-  const cy = [0, 0, 1, 0,-1, 1, 1,-1,-1];
-  const opp = [0,3,4,1,2,7,8,5,6];
-  const cs2 = 1/3;
-
-  const size = Nx * Ny;
-  const f    = new Float32Array(Q * size);
-  const fTmp = new Float32Array(Q * size);
-  const rho  = new Float32Array(size);
-  const ux   = new Float32Array(size);
-  const uy   = new Float32Array(size);
-  const mask = new Uint8Array(size);
-  const vorticity = new Float32Array(size);
-
-  let mach = 0.10;
-  let tau  = 0.80;
-  let paused = false;
-  let steps = 0;
-  let vizMode = "velocity";
-  let contrastVal = 1.5;
-
-  let airfoilPoly = [];
-
-  // --- Géométrie / masque ---
-  function buildAirfoilMask() {
-    mask.fill(0);
-
-    // parois haut/bas
-    for (let x = 0; x < Nx; x++) {
-      mask[x] = 1;
-      mask[x + (Ny-1)*Nx] = 1;
-    }
-
-    const aoaDeg   = parseFloat(document.getElementById("aoa").value);
-    const thickness = parseFloat(document.getElementById("thickness").value);
-    const camber   = parseFloat(document.getElementById("camber").value);
-
-    const angle = aoaDeg * Math.PI / 180;
-    const cosA = Math.cos(angle);
-    const sinA = Math.sin(angle);
-
-    const Npts = 500;
-    const circleOffset = 0.08 + camber * 0.35;
-    let radius = 1.0 - thickness * 0.6;
-    if (radius < 0.25) radius = 0.25;
-
-    const pts = [];
-    for (let k = 0; k < Npts; k++) {
-      const theta = 2 * Math.PI * k / Npts;
-      const zx = circleOffset + radius * Math.cos(theta);
-      const zy = radius * Math.sin(theta);
-
-      const denom = zx*zx + zy*zy;
-      const invx = zx / denom;
-      const invy = -zy / denom;
-
-      let x = zx + invx;
-      let y = zy + invy;
-
-      const xr = x*cosA - y*sinA;
-      const yr = x*sinA + y*cosA;
-
-      pts.push({x:xr, y:yr});
-    }
-
-    // normalisation + placement dans le domaine
-    let minX = Infinity, maxX = -Infinity;
-    let minY = Infinity, maxY = -Infinity;
-    for (const p of pts) {
-      if (p.x < minX) minX = p.x;
-      if (p.x > maxX) maxX = p.x;
-      if (p.y < minY) minY = p.y;
-      if (p.y > maxY) maxY = p.y;
-    }
-    const spanX = maxX - minX;
-    const spanY = maxY - minY;
-    const midX = 0.5 * (maxX + minX);
-    const midY = 0.5 * (maxY + minY);
-
-    const scale   = 0.4 * Math.min(Nx/spanX, Ny/spanY);
-    const centerX = Nx * 0.28;
-    const centerY = Ny * 0.50;
-
-    airfoilPoly = pts.map(p => ({
-      x: centerX + (p.x - midX) * scale,
-      y: centerY - (p.y - midY) * scale
-    }));
-
-    function pointInPoly(px, py) {
-      let inside = false;
-      for (let i = 0, j = airfoilPoly.length-1; i < airfoilPoly.length; j = i++) {
-        const xi = airfoilPoly[i].x, yi = airfoilPoly[i].y;
-        const xj = airfoilPoly[j].x, yj = airfoilPoly[j].y;
-        const intersect = ((yi>py) !== (yj>py)) &&
-          (px < (xj-xi)*(py-yi)/(yj-yi+1e-9)+xi);
-        if (intersect) inside = !inside;
-      }
-      return inside;
-    }
-
-    for (let y = 1; y < Ny-1; y++) {
-      for (let x = 0; x < Nx; x++) {
-        const idx = x + y*Nx;
-        const px = x + 0.5;
-        const py = y + 0.5;
-        if (pointInPoly(px, py)) {
-          mask[idx] = 1;
+    <script id="vs-base" type="x-shader/x-vertex">
+        attribute vec2 a_pos;
+        varying vec2 v_uv;
+        void main() {
+            v_uv = a_pos * 0.5 + 0.5;
+            gl_Position = vec4(a_pos, 0.0, 1.0);
         }
-      }
-    }
-  }
+    </script>
 
-  // --- Initialisation LBM ---
-  function initLBM() {
-    buildAirfoilMask();
-    const u0 = mach * Math.sqrt(cs2);
+    <script id="fs-advect" type="x-shader/x-fragment">
+        precision highp float;
+        varying vec2 v_uv;
+        uniform sampler2D u_velocity;
+        uniform sampler2D u_source;
+        uniform vec2 u_texel;
+        uniform float u_dt;
+        uniform sampler2D u_obstacle; // Masque de l'aile
 
-    for (let y = 0; y < Ny; y++) {
-      for (let x = 0; x < Nx; x++) {
-        const idx = x + y*Nx;
-        rho[idx] = 1.0;
-        ux[idx]  = mask[idx] ? 0 : u0;
-        uy[idx]  = 0.0;
-        const u2 = ux[idx]*ux[idx] + uy[idx]*uy[idx];
-        for (let k = 0; k < Q; k++) {
-          const cu = 3*(cx[k]*ux[idx] + cy[k]*uy[idx]);
-          f[k*size + idx] = w[k]*rho[idx]*(1 + cu + 0.5*cu*cu - 1.5*u2);
-        }
-      }
-    }
-    steps = 0;
-  }
-
-  // --- sliders / UI ---
-  function bindSlider(id, labelId, fmt, callback) {
-    const s   = document.getElementById(id);
-    const lab = labelId ? document.getElementById(labelId) : null;
-    function upd() {
-      const v = parseFloat(s.value);
-      if (lab) lab.textContent = fmt(v);
-      if (callback) callback(v);
-    }
-    s.addEventListener("input", upd);
-    upd();
-  }
-
-  function updateAero() {
-    const aoaDeg = parseFloat(document.getElementById("aoa").value);
-    const alpha  = aoaDeg * Math.PI / 180;
-    document.getElementById("res-alpha").textContent =
-      `${aoaDeg.toFixed(1)}° (${alpha.toFixed(3)} rad)`;
-
-    const nu = (tau - 0.5) / 3;
-    const u0 = mach * Math.sqrt(cs2);
-    const L  = Nx * 0.15;      // longueur caractéristique approximative
-    const Re = u0 * L / nu;
-    document.getElementById("reynolds").textContent  = `~${Math.round(Re)}`;
-    document.getElementById("viscosity").textContent = nu.toFixed(4);
-
-    computeAeroAnalytique();
-  }
-
-  // CL / CD analytiques (thin-airfoil + modèle simple de traînée)
-  function computeAeroAnalytique() {
-    const aoaDeg = parseFloat(document.getElementById("aoa").value);
-    const alpha  = aoaDeg * Math.PI / 180;
-
-    let CL = 2 * Math.PI * alpha;
-    // clamp pour éviter les valeurs délirantes
-    if (CL > 2.5) CL = 2.5;
-    if (CL < -2.5) CL = -2.5;
-
-    const CD0 = 0.01;              // traînée de profil de base
-    const AR  = 6.0;               // aspect ratio fictif
-    const e   = 0.9;               // efficacité Oswald
-    const CDi = CL * CL / (Math.PI * AR * e);
-    const CD  = CD0 + CDi;
-    const LD  = CL / CD;
-
-    document.getElementById("res-cl").textContent = CL.toFixed(3);
-    document.getElementById("res-cd").textContent = CD.toFixed(3);
-    document.getElementById("res-ld").textContent = LD.toFixed(1);
-  }
-
-  bindSlider("mach","mach-value",v=>v.toFixed(2), v=>{ mach=v; initLBM(); updateAero(); });
-  bindSlider("tau","tau-value",v=>v.toFixed(2),  v=>{ tau=v;  updateAero(); });
-  bindSlider("aoa","aoa-value",v=>v.toFixed(0)+"°", ()=>{ initLBM(); updateAero(); });
-  bindSlider("thickness","thickness-value",v=>v.toFixed(2), ()=>{ initLBM(); });
-  bindSlider("camber","camber-value",v=>v.toFixed(2), ()=>{ initLBM(); });
-  bindSlider("contrast", null, v=>v.toFixed(1), v=>{ contrastVal = v; });
-
-  document.getElementById("viz-mode").addEventListener("change", e => {
-    vizMode = e.target.value;
-  });
-
-  document.getElementById("pause-btn").addEventListener("click",()=>{
-    paused = !paused;
-    document.getElementById("pause-btn").textContent = paused ? "Reprendre" : "Pause";
-  });
-
-  document.getElementById("reset-btn").addEventListener("click",()=>{
-    initLBM();
-  });
-
-  updateAero();
-
-  // --- dérivées / vorticité ---
-  function computeVorticity() {
-    for (let y = 1; y < Ny-1; y++) {
-      for (let x = 1; x < Nx-1; x++) {
-        const idx  = x + y*Nx;
-        const idxL = (x-1) + y*Nx;
-        const idxR = (x+1) + y*Nx;
-        const idxD = x + (y-1)*Nx;
-        const idxU = x + (y+1)*Nx;
-
-        const du_dy = 0.5 * (ux[idxU] - ux[idxD]);
-        const dv_dx = 0.5 * (uy[idxR] - uy[idxL]);
-        vorticity[idx] = dv_dx - du_dy;
-      }
-    }
-  }
-
-  // --- une étape LBM ---
-  function lbmStep() {
-    const nu = (tau - 0.5)/3;
-    if (nu <= 0) return;
-
-    // macros
-    for (let y = 0; y < Ny; y++) {
-      for (let x = 0; x < Nx; x++) {
-        const idx = x + y*Nx;
-        let r = 0, jx = 0, jy = 0;
-        for (let k = 0; k < Q; k++) {
-          const fi = f[k*size + idx];
-          r  += fi;
-          jx += fi * cx[k];
-          jy += fi * cy[k];
-        }
-        if (r < 1e-12 || mask[idx]) {
-          rho[idx] = 1.0;
-          ux[idx]  = 0.0;
-          uy[idx]  = 0.0;
-        } else {
-          rho[idx] = r;
-          ux[idx]  = jx / r;
-          uy[idx]  = jy / r;
-        }
-      }
-    }
-
-    // collision BGK + BC entrée/sortie simples
-    const omega = 1.0 / tau;
-    for (let y = 0; y < Ny; y++) {
-      for (let x = 0; x < Nx; x++) {
-        const idx = x + y*Nx;
-        const solid = mask[idx];
-
-        if (solid) {
-          for (let k = 0; k < Q; k++) fTmp[k*size + idx] = f[k*size + idx];
-          continue;
-        }
-
-        let r  = rho[idx];
-        let uxLoc = ux[idx];
-        let uyLoc = uy[idx];
-
-        // entrée (vitesse imposée)
-        if (x === 0 && !solid) {
-          uxLoc = mach * Math.sqrt(cs2);
-          uyLoc = 0.0;
-          r = 1.0;
-        }
-
-        // sortie (copie du voisin amont)
-        if (x === Nx-1 && !solid) {
-          const idxL = (x-1) + y*Nx;
-          uxLoc = ux[idxL];
-          uyLoc = uy[idxL];
-          r     = rho[idxL];
-        }
-
-        const u2 = uxLoc*uxLoc + uyLoc*uyLoc;
-
-        for (let k = 0; k < Q; k++) {
-          const cu  = (cx[k]*uxLoc + cy[k]*uyLoc) / cs2;
-          const feq = w[k]*r*(1 + cu + 0.5*cu*cu - 1.5*u2/cs2);
-          const idxF = k*size + idx;
-          fTmp[idxF] = f[idxF] - omega*(f[idxF] - feq);
-        }
-      }
-    }
-
-    // streaming + bounce-back
-    for (let y = 0; y < Ny; y++) {
-      for (let x = 0; x < Nx; x++) {
-        const idx = x + y*Nx;
-        for (let k = 0; k < Q; k++) {
-          const xn = x + cx[k];
-          const yn = y + cy[k];
-
-          if (xn < 0 || xn >= Nx || yn < 0 || yn >= Ny) {
-            f[opp[k]*size + idx] = fTmp[k*size + idx];
-          } else {
-            const nIdx = xn + yn*Nx;
-            if (mask[nIdx]) {
-              f[opp[k]*size + idx] = fTmp[k*size + idx];
-            } else {
-              f[k*size + nIdx] = fTmp[k*size + idx];
+        void main() {
+            // Si on est dans un obstacle, vitesse nulle
+            float solid = texture2D(u_obstacle, v_uv).r;
+            if(solid > 0.5) {
+                gl_FragColor = vec4(0.0);
+                return;
             }
-          }
+
+            vec2 pos = v_uv - u_dt * texture2D(u_velocity, v_uv).xy * u_texel;
+            gl_FragColor = texture2D(u_source, pos);
         }
-      }
-    }
+    </script>
 
-    steps++;
-  }
+    <script id="fs-divergence" type="x-shader/x-fragment">
+        precision highp float;
+        varying vec2 v_uv;
+        uniform sampler2D u_velocity;
+        uniform vec2 u_texel;
+        uniform sampler2D u_obstacle;
 
-  // --- rendu ---
-  const imgData = ctx.createImageData(Nx, Ny);
-  const data = imgData.data;
-
-  function colormap(v) {
-    v = Math.max(0, Math.min(1, v));
-    const c1 = [15,23,42];
-    const c2 = [59,130,246];
-    const c3 = [251,191,36];
-    const c4 = [239,68,68];
-    let r,g,b;
-    if (v < 0.33) {
-      const t = v/0.33;
-      r = c1[0] + t*(c2[0]-c1[0]);
-      g = c1[1] + t*(c2[1]-c1[1]);
-      b = c1[2] + t*(c2[2]-c1[2]);
-    } else if (v < 0.66) {
-      const t = (v-0.33)/0.33;
-      r = c2[0] + t*(c3[0]-c2[0]);
-      g = c2[1] + t*(c3[1]-c2[1]);
-      b = c2[2] + t*(c4[2]-c2[2]);
-    } else {
-      const t = (v-0.66)/0.34;
-      r = c3[0] + t*(c4[0]-c3[0]);
-      g = c3[1] + t*(c4[1]-c3[1]);
-      b = c3[2] + t*(c4[2]-c3[2]);
-    }
-    return [Math.round(r), Math.round(g), Math.round(b)];
-  }
-
-  function colormapDiverging(v) {
-    v = Math.max(-1, Math.min(1, v));
-    const c1 = [59,130,246];
-    const c2 = [241,245,249];
-    const c3 = [239,68,68];
-    let r,g,b;
-    if (v < 0) {
-      const t = (v+1.0);
-      r = c1[0] + t*(c2[0]-c1[0]);
-      g = c1[1] + t*(c2[1]-c1[1]);
-      b = c1[2] + t*(c2[2]-c1[2]);
-    } else {
-      const t = v;
-      r = c2[0] + t*(c3[0]-c2[0]);
-      g = c2[1] + t*(c3[1]-c2[1]);
-      b = c2[2] + t*(c3[2]-c2[2]);
-    }
-    return [Math.round(r), Math.round(g), Math.round(b)];
-  }
-
-  function render() {
-    computeVorticity();
-
-    let maxVal = 0;
-
-    if (vizMode === "velocity") {
-      for (let i = 0; i < size; i++) {
-        if (!mask[i]) {
-          const uMag = Math.sqrt(ux[i]*ux[i] + uy[i]*uy[i]);
-          if (uMag > maxVal) maxVal = uMag;
+        void main() {
+            float L = texture2D(u_velocity, v_uv - vec2(u_texel.x, 0.0)).x;
+            float R = texture2D(u_velocity, v_uv + vec2(u_texel.x, 0.0)).x;
+            float B = texture2D(u_velocity, v_uv - vec2(0.0, u_texel.y)).y;
+            float T = texture2D(u_velocity, v_uv + vec2(0.0, u_texel.y)).y;
+            
+            // Conditions aux limites simples pour l'obstacle dans la divergence
+            // (Approximation: si voisin est mur, on prend la vitesse courante = 0)
+            
+            float div = 0.5 * (R - L + T - B);
+            gl_FragColor = vec4(div, 0.0, 0.0, 1.0);
         }
-      }
-    } else if (vizMode === "pressure") {
-      for (let i = 0; i < size; i++) {
-        if (!mask[i]) {
-          const p = Math.abs((rho[i]-1)*cs2);
-          if (p > maxVal) maxVal = p;
+    </script>
+
+    <script id="fs-jacobi" type="x-shader/x-fragment">
+        precision highp float;
+        varying vec2 v_uv;
+        uniform sampler2D u_pressure;
+        uniform sampler2D u_divergence;
+        uniform vec2 u_texel;
+        uniform sampler2D u_obstacle;
+
+        void main() {
+            float L = texture2D(u_pressure, v_uv - vec2(u_texel.x, 0.0)).x;
+            float R = texture2D(u_pressure, v_uv + vec2(u_texel.x, 0.0)).x;
+            float B = texture2D(u_pressure, v_uv - vec2(0.0, u_texel.y)).x;
+            float T = texture2D(u_pressure, v_uv + vec2(0.0, u_texel.y)).x;
+            float dC = texture2D(u_divergence, v_uv).x;
+
+            float p = (L + R + B + T - dC) * 0.25;
+            gl_FragColor = vec4(p, 0.0, 0.0, 1.0);
         }
-      }
-    } else if (vizMode === "vorticity") {
-      for (let i = 0; i < size; i++) {
-        if (!mask[i]) {
-          const v = Math.abs(vorticity[i]);
-          if (v > maxVal) maxVal = v;
+    </script>
+
+    <script id="fs-gradient" type="x-shader/x-fragment">
+        precision highp float;
+        varying vec2 v_uv;
+        uniform sampler2D u_pressure;
+        uniform sampler2D u_velocity;
+        uniform vec2 u_texel;
+        uniform sampler2D u_obstacle;
+
+        void main() {
+            float solid = texture2D(u_obstacle, v_uv).r;
+            if(solid > 0.5) {
+                gl_FragColor = vec4(0.0);
+                return;
+            }
+
+            float L = texture2D(u_pressure, v_uv - vec2(u_texel.x, 0.0)).x;
+            float R = texture2D(u_pressure, v_uv + vec2(u_texel.x, 0.0)).x;
+            float B = texture2D(u_pressure, v_uv - vec2(0.0, u_texel.y)).x;
+            float T = texture2D(u_pressure, v_uv + vec2(0.0, u_texel.y)).x;
+
+            vec2 vel = texture2D(u_velocity, v_uv).xy;
+            vel -= 0.5 * vec2(R - L, T - B);
+            gl_FragColor = vec4(vel, 0.0, 1.0);
         }
-      }
-    }
+    </script>
 
-    const scale = maxVal > 0 ? contrastVal / maxVal : 1.0;
+    <script id="fs-display" type="x-shader/x-fragment">
+        precision highp float;
+        varying vec2 v_uv;
+        uniform sampler2D u_velocity;
+        uniform sampler2D u_obstacle;
+        uniform vec2 u_texel;
 
-    for (let y = 0; y < Ny; y++) {
-      for (let x = 0; x < Nx; x++) {
-        const idx = x + y*Nx;
-        const di  = 4*idx;
-
-        if (mask[idx]) {
-          data[di] = 241; data[di+1] = 245; data[di+2] = 249; data[di+3] = 255;
-        } else {
-          let rgb;
-          if (vizMode === "velocity" || vizMode === "streamlines") {
-            const uMag = Math.sqrt(ux[idx]*ux[idx] + uy[idx]*uy[idx]);
-            const v = uMag * scale;
-            rgb = colormap(v);
-          } else if (vizMode === "pressure") {
-            const p = (rho[idx]-1)*cs2;
-            const v = p * scale * 5.0;
-            rgb = colormapDiverging(v);
-          } else { // vorticity
-            const v = vorticity[idx] * scale * 0.5;
-            rgb = colormapDiverging(v);
-          }
-          data[di]   = rgb[0];
-          data[di+1] = rgb[1];
-          data[di+2] = rgb[2];
-          data[di+3] = 255;
+        // "Turbo" colormap
+        vec3 colormap(float t) {
+            t = clamp(t, 0.0, 1.0);
+            vec3 c = vec3(0.0);
+            c.r = 0.237 + 1.6 * sin(t * 4.0 - 0.5);
+            c.g = 0.9 + 0.9 * sin(t * 4.0 - 2.5);
+            c.b = 1.0 + 1.5 * sin(t * 4.0 - 4.5); 
+            return c;
         }
-      }
-    }
 
-    ctx.putImageData(imgData, 0, 0);
+        void main() {
+            float solid = texture2D(u_obstacle, v_uv).r;
+            
+            // Rendu Aile
+            if (solid > 0.5) {
+                gl_FragColor = vec4(0.2, 0.2, 0.2, 1.0); // Gris foncé
+                // Contour vert fluo pour le style
+                return; 
+            }
 
-    // lignes de courant par-dessus
-    if (vizMode === "streamlines") {
-      ctx.strokeStyle = "rgba(255,255,255,0.6)";
-      ctx.lineWidth = 1;
+            // Rendu Fluide (Curl/Vorticité)
+            float L = texture2D(u_velocity, v_uv - vec2(u_texel.x, 0.0)).y;
+            float R = texture2D(u_velocity, v_uv + vec2(u_texel.x, 0.0)).y;
+            float B = texture2D(u_velocity, v_uv - vec2(0.0, u_texel.y)).x;
+            float T = texture2D(u_velocity, v_uv + vec2(0.0, u_texel.y)).x;
+            float curl = (R - L) - (T - B);
 
-      const stepSeed = 25;
-      const maxLen   = 40;
-      const dt = 1.0;
+            vec2 vel = texture2D(u_velocity, v_uv).xy;
+            float speed = length(vel);
 
-      for (let sy = stepSeed; sy < Ny-stepSeed; sy += stepSeed) {
-        for (let sx = stepSeed; sx < Nx-stepSeed; sx += stepSeed) {
-          if (mask[sx + sy*Nx]) continue;
+            // Mélange visuel : Vorticité + Vitesse
+            vec3 col = colormap(speed * 0.4 + abs(curl) * 2.0);
+            
+            // Ajout d'un peu de contraste
+            col = pow(col, vec3(1.1));
 
-          let px = sx, py = sy;
-          ctx.beginPath();
-          ctx.moveTo(px, py);
+            // Bordure de l'aile (anti-aliasing manuel simple)
+            // (Si le voisin est solide, on dessine un contour)
+            // ... (simplifié pour perf)
 
-          for (let n = 0; n < maxLen; n++) {
-            const ix = px|0, iy = py|0;
-            if (ix < 0 || ix >= Nx || iy < 0 || iy >= Ny) break;
-            const idx = ix + iy*Nx;
-            if (mask[idx]) break;
-
-            const vx = ux[idx];
-            const vy = uy[idx];
-            const speed = Math.sqrt(vx*vx + vy*vy);
-            if (speed < 1e-4) break;
-
-            px += (vx / speed) * dt;
-            py += (vy / speed) * dt;
-            ctx.lineTo(px, py);
-          }
-          ctx.stroke();
+            gl_FragColor = vec4(col, 1.0);
         }
-      }
-    }
+    </script>
 
-    document.getElementById("steps-count").textContent = steps;
-  }
+    <script id="fs-boundary" type="x-shader/x-fragment">
+        precision highp float;
+        varying vec2 v_uv;
+        uniform sampler2D u_velocity;
+        uniform float u_inflow;
+        
+        void main() {
+            vec2 vel = texture2D(u_velocity, v_uv).xy;
+            
+            // Mur Haut/Bas
+            if (v_uv.y < 0.01 || v_uv.y > 0.99) vel = vec2(u_inflow, 0.0);
+            
+            // Entrée Gauche (Vent)
+            if (v_uv.x < 0.01) vel = vec2(u_inflow, 0.0);
+            
+            gl_FragColor = vec4(vel, 0.0, 1.0);
+        }
+    </script>
 
-  // --- boucle principale ---
-  function loop() {
-    if (!paused) {
-      // 1 seule itération LBM par frame → beaucoup plus fluide
-      lbmStep();
-    }
-    render();
-    requestAnimationFrame(loop);
-  }
+    <script>
+        const canvas = document.getElementById('glcanvas');
+        const gl = canvas.getContext('webgl');
 
-  initLBM();
-  requestAnimationFrame(loop);
-</script>
+        // Extensions requises pour la physique
+        if (!gl.getExtension('OES_texture_float')) alert('No Float Texture Support');
+        gl.getExtension('OES_texture_float_linear');
+
+        const SIM_W = 512;
+        const SIM_H = 256;
+        const ITERATIONS = 30; // Précision
+
+        // --- OBSTACLE CANVAS (CPU Generation) ---
+        // On dessine l'aile sur un canvas 2D caché, puis on l'envoie au GPU comme texture
+        const obsCanvas = document.createElement('canvas');
+        obsCanvas.width = SIM_W;
+        obsCanvas.height = SIM_H;
+        const obsCtx = obsCanvas.getContext('2d');
+
+        // --- WEBGL UTILS ---
+        function createProgram(vsId, fsId) {
+            const vs = gl.createShader(gl.VERTEX_SHADER);
+            gl.shaderSource(vs, document.getElementById(vsId).text); gl.compileShader(vs);
+            if(!gl.getShaderParameter(vs, gl.COMPILE_STATUS)) console.log(gl.getShaderInfoLog(vs));
+
+            const fs = gl.createShader(gl.FRAGMENT_SHADER);
+            gl.shaderSource(fs, document.getElementById(fsId).text); gl.compileShader(fs);
+            if(!gl.getShaderParameter(fs, gl.COMPILE_STATUS)) console.log(gl.getShaderInfoLog(fs));
+
+            const p = gl.createProgram();
+            gl.attachShader(p, vs); gl.attachShader(p, fs);
+            gl.linkProgram(p);
+            return p;
+        }
+
+        function createFBO(w, h) {
+            const t = gl.createTexture();
+            gl.bindTexture(gl.TEXTURE_2D, t);
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+            gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, w, h, 0, gl.RGBA, gl.FLOAT, null);
+            const f = gl.createFramebuffer();
+            gl.bindFramebuffer(gl.FRAMEBUFFER, f);
+            gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, t, 0);
+            return { fbo: f, tex: t };
+        }
+
+        function createTextureFromCanvas(c) {
+            const t = gl.createTexture();
+            gl.bindTexture(gl.TEXTURE_2D, t);
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+            // Update function
+            t.update = () => {
+                gl.bindTexture(gl.TEXTURE_2D, t);
+                gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, c);
+            };
+            t.update();
+            return t;
+        }
+
+        // --- PROGRAMS ---
+        const P = {
+            advect: createProgram('vs-base', 'fs-advect'),
+            divergence: createProgram('vs-base', 'fs-divergence'),
+            jacobi: createProgram('vs-base', 'fs-jacobi'),
+            gradient: createProgram('vs-base', 'fs-gradient'),
+            display: createProgram('vs-base', 'fs-display'),
+            boundary: createProgram('vs-base', 'fs-boundary')
+        };
+
+        // --- STATE ---
+        let vel = [createFBO(SIM_W, SIM_H), createFBO(SIM_W, SIM_H)];
+        let pres = [createFBO(SIM_W, SIM_H), createFBO(SIM_W, SIM_H)];
+        let div = createFBO(SIM_W, SIM_H);
+        
+        const quad = gl.createBuffer();
+        gl.bindBuffer(gl.ARRAY_BUFFER, quad);
+        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1,-1, 1,-1, -1,1, 1,1]), gl.STATIC_DRAW);
+
+        // --- GENERATE AIRFOIL (Joukowsky Transform) ---
+        function updateAirfoil() {
+            const aoa = parseFloat(document.getElementById('inp-aoa').value);
+            const thick = parseFloat(document.getElementById('inp-thick').value);
+            const camber = parseFloat(document.getElementById('inp-camber').value);
+
+            // Update UI Text
+            document.getElementById('val-aoa').innerText = aoa + "°";
+            document.getElementById('val-thick').innerText = thick;
+            document.getElementById('val-camber').innerText = camber;
+
+            // Draw on Canvas
+            obsCtx.fillStyle = "black";
+            obsCtx.fillRect(0, 0, SIM_W, SIM_H);
+            obsCtx.fillStyle = "white";
+            
+            obsCtx.save();
+            obsCtx.translate(SIM_W * 0.3, SIM_H * 0.5);
+            obsCtx.scale(SIM_W/4, SIM_W/4); // Zoom
+            obsCtx.rotate(aoa * Math.PI / 180);
+
+            obsCtx.beginPath();
+            const N = 200;
+            // Joukowsky parameters
+            const centerOff = 0.1 + camber * 0.5; // approximate center shift
+            const radius = 1.0 + thick; 
+            const zetaC = { x: -thick, y: camber }; // Circle center in Zeta plane
+            
+            // Draw shape
+            for(let i=0; i<=N; i++) {
+                const theta = 2 * Math.PI * i / N;
+                // Zeta plane (Circle)
+                const zx = zetaC.x + radius * Math.cos(theta);
+                const zy = zetaC.y + radius * Math.sin(theta);
+                
+                // Transform to Z plane (Airfoil): z = zeta + 1/zeta
+                const den = zx*zx + zy*zy;
+                const x = zx * (1 + 1/den);
+                const y = zy * (1 - 1/den);
+                
+                if(i===0) obsCtx.moveTo(x, -y); // Invert Y for canvas
+                else obsCtx.lineTo(x, -y);
+            }
+            obsCtx.fill();
+            obsCtx.restore();
+
+            // Update GPU Texture
+            obstacleTex.update();
+        }
+
+        const obstacleTex = createTextureFromCanvas(obsCanvas);
+
+        // Listeners
+        ['inp-aoa', 'inp-thick', 'inp-camber'].forEach(id => {
+            document.getElementById(id).addEventListener('input', updateAirfoil);
+        });
+        updateAirfoil(); // Init
+
+        const inpSpeed = document.getElementById('inp-speed');
+        const inpVisc = document.getElementById('inp-visc');
+        inpSpeed.oninput = () => document.getElementById('val-speed').innerText = inpSpeed.value;
+        inpVisc.oninput = () => document.getElementById('val-visc').innerText = inpVisc.value;
+
+        // --- SIMULATION LOOP ---
+        function run() {
+            gl.viewport(0, 0, SIM_W, SIM_H);
+            const texel = [1/SIM_W, 1/SIM_H];
+            const dt = 0.016;
+            const speed = parseFloat(inpSpeed.value);
+
+            // Helper Draw
+            const draw = (prog) => {
+                gl.useProgram(prog);
+                const l = gl.getAttribLocation(prog, 'a_pos');
+                gl.enableVertexAttribArray(l);
+                gl.vertexAttribPointer(l, 2, gl.FLOAT, false, 0, 0);
+                gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+            }
+
+            // 1. Advection
+            gl.bindFramebuffer(gl.FRAMEBUFFER, vel[1].fbo);
+            gl.useProgram(P.advect);
+            gl.uniform1i(gl.getUniformLocation(P.advect, 'u_velocity'), 0);
+            gl.uniform1i(gl.getUniformLocation(P.advect, 'u_source'), 0);
+            gl.uniform1i(gl.getUniformLocation(P.advect, 'u_obstacle'), 1);
+            gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, vel[0].tex);
+            gl.activeTexture(gl.TEXTURE1); gl.bindTexture(gl.TEXTURE_2D, obstacleTex);
+            gl.uniform2fv(gl.getUniformLocation(P.advect, 'u_texel'), texel);
+            gl.uniform1f(gl.getUniformLocation(P.advect, 'u_dt'), dt);
+            draw(P.advect);
+            [vel[0], vel[1]] = [vel[1], vel[0]];
+
+            // 2. Boundary (Inflow + Walls)
+            gl.bindFramebuffer(gl.FRAMEBUFFER, vel[1].fbo);
+            gl.useProgram(P.boundary);
+            gl.uniform1i(gl.getUniformLocation(P.boundary, 'u_velocity'), 0);
+            gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, vel[0].tex);
+            gl.uniform1f(gl.getUniformLocation(P.boundary, 'u_inflow'), speed);
+            draw(P.boundary);
+            [vel[0], vel[1]] = [vel[1], vel[0]];
+
+            // 3. Divergence
+            gl.bindFramebuffer(gl.FRAMEBUFFER, div.fbo);
+            gl.useProgram(P.divergence);
+            gl.uniform1i(gl.getUniformLocation(P.divergence, 'u_velocity'), 0);
+            gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, vel[0].tex);
+            gl.uniform2fv(gl.getUniformLocation(P.divergence, 'u_texel'), texel);
+            draw(P.divergence);
+
+            // 4. Jacobi (Pressure)
+            gl.useProgram(P.jacobi);
+            gl.uniform1i(gl.getUniformLocation(P.jacobi, 'u_divergence'), 1);
+            gl.activeTexture(gl.TEXTURE1); gl.bindTexture(gl.TEXTURE_2D, div.tex);
+            gl.uniform2fv(gl.getUniformLocation(P.jacobi, 'u_texel'), texel);
+            for(let i=0; i<ITERATIONS; i++) {
+                gl.bindFramebuffer(gl.FRAMEBUFFER, pres[1].fbo);
+                gl.uniform1i(gl.getUniformLocation(P.jacobi, 'u_pressure'), 0);
+                gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, pres[0].tex);
+                draw(P.jacobi);
+                [pres[0], pres[1]] = [pres[1], pres[0]];
+            }
+
+            // 5. Gradient Subtraction
+            gl.bindFramebuffer(gl.FRAMEBUFFER, vel[1].fbo);
+            gl.useProgram(P.gradient);
+            gl.uniform1i(gl.getUniformLocation(P.gradient, 'u_pressure'), 0);
+            gl.uniform1i(gl.getUniformLocation(P.gradient, 'u_velocity'), 1);
+            gl.uniform1i(gl.getUniformLocation(P.gradient, 'u_obstacle'), 2);
+            gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, pres[0].tex);
+            gl.activeTexture(gl.TEXTURE1); gl.bindTexture(gl.TEXTURE_2D, vel[0].tex);
+            gl.activeTexture(gl.TEXTURE2); gl.bindTexture(gl.TEXTURE_2D, obstacleTex);
+            gl.uniform2fv(gl.getUniformLocation(P.gradient, 'u_texel'), texel);
+            draw(P.gradient);
+            [vel[0], vel[1]] = [vel[1], vel[0]];
+
+            // 6. Display
+            gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+            gl.viewport(0, 0, canvas.width, canvas.height);
+            gl.useProgram(P.display);
+            gl.uniform1i(gl.getUniformLocation(P.display, 'u_velocity'), 0);
+            gl.uniform1i(gl.getUniformLocation(P.display, 'u_obstacle'), 1);
+            gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, vel[0].tex);
+            gl.activeTexture(gl.TEXTURE1); gl.bindTexture(gl.TEXTURE_2D, obstacleTex);
+            gl.uniform2fv(gl.getUniformLocation(P.display, 'u_texel'), texel);
+            draw(P.display);
+
+            requestAnimationFrame(run);
+        }
+
+        window.onresize = () => { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
+        run();
+
+    </script>
 </body>
 </html>
