@@ -346,40 +346,47 @@
     `;
 
     const simFS = `#version 300 es
-      precision highp float;
-      in vec2 v_uv;
-      out vec4 outColor;
+  precision highp float;
+  in vec2 v_uv;
+  out vec4 outColor;
 
-      uniform sampler2D u_prev;
-      uniform vec2 u_resolution;
-      uniform float u_diffusion;
-      uniform float u_time;
-      uniform float u_mach;
-      uniform float u_cs;
+  uniform sampler2D u_prev;
+  uniform vec2 u_resolution;
+  uniform float u_diffusion;
+  uniform float u_time;
+  uniform float u_mach;
 
-      void main() {
-        vec2 texel = 1.0 / u_resolution;
+  void main() {
+    vec2 texel = 1.0 / u_resolution;
+    
+    // 1. Définir l'obstacle (simulé ici par un cercle pour l'exemple)
+    // Dans la version finale, cela viendrait d'une texture
+    vec2 center = vec2(0.3, 0.5); // Position de l'aile
+    float radius = 0.1;
+    float dist = distance(v_uv, center);
+    bool isSolid = dist < radius;
 
-        float c  = texture(u_prev, v_uv).r;
-        float up = texture(u_prev, v_uv + vec2(0.0,  texel.y)).r;
-        float dn = texture(u_prev, v_uv + vec2(0.0, -texel.y)).r;
-        float rt = texture(u_prev, v_uv + vec2( texel.x, 0.0)).r;
-        float lt = texture(u_prev, v_uv + vec2(-texel.x, 0.0)).r;
+    // 2. Physique du fluide
+    float c  = texture(u_prev, v_uv).r;
+    float up = texture(u_prev, v_uv + vec2(0.0,  texel.y)).r;
+    float dn = texture(u_prev, v_uv + vec2(0.0, -texel.y)).r;
+    float rt = texture(u_prev, v_uv + vec2( texel.x, 0.0)).r;
+    float lt = texture(u_prev, v_uv + vec2(-texel.x, 0.0)).r;
 
-        float lap = (up + dn + rt + lt - 4.0 * c);
+    float lap = (up + dn + rt + lt - 4.0 * c);
+    float wave = sin(12.0 * (v_uv.x + u_mach * u_time * 0.3) + 8.0 * v_uv.y - 0.6 * u_time);
+    float next = c + u_diffusion * lap + 0.03 * wave;
 
-        float wave = sin(12.0 * (v_uv.x + u_mach * u_time * 0.3) +
-                         8.0  * (v_uv.y) -
-                         0.6  * u_time);
+    // 3. CONDITION AUX LIMITES (Boundary Condition)
+    // Si on est dans l'obstacle, le fluide est bloqué (ou absorbe la valeur)
+    if (isSolid) {
+        next = 0.0; // Mur absorbant
+    }
 
-        float next = c + u_diffusion * lap + 0.03 * wave * (0.5 + 2.0 * u_cs);
-
-        next = mix(next, 0.5, 0.002);
-        next = clamp(next, 0.0, 1.0);
-
-        outColor = vec4(next, 0.0, 0.0, 1.0);
-      }
-    `;
+    next = clamp(next, 0.0, 1.0);
+    outColor = vec4(next, 0.0, 0.0, 1.0);
+  }
+`;
 
     const displayFS = `#version 300 es
       precision highp float;
@@ -683,3 +690,4 @@
   </script>
 </body>
 </html>
+
