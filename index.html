@@ -2,118 +2,36 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport"
-        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>LBM Smoke Effect</title>
   <style>
-    /* ============================
-       STYLE UI / CADRE INCHANGÉ
-       ============================ */
-    * {
-      box-sizing: border-box;
-      user-select: none;
-      font-family: 'Segoe UI', sans-serif;
-    }
-
-    body {
-      margin: 0;
-      background: #000;
-      height: 100vh;
-      overflow: hidden;
-    }
-
-    canvas {
-      display: block;
-      width: 100%;
-      height: 100%;
-    }
+    /* Style identique pour l'interface */
+    * { box-sizing: border-box; user-select: none; font-family: 'Segoe UI', sans-serif; }
+    body { margin: 0; background: #000; height: 100vh; overflow: hidden; }
+    canvas { display: block; width: 100%; height: 100%; }
 
     #controls {
-      position: absolute;
-      top: 20px;
-      right: 20px;
-      width: 280px;
+      position: absolute; top: 20px; right: 20px; width: 280px;
       padding: 20px;
-      background: rgba(0, 0, 0, 0.8);
+      background: rgba(0, 0, 0, 0.8); /* Fond plus sombre pour le contraste */
       border: 1px solid rgba(255, 255, 255, 0.15);
       border-radius: 12px;
-      color: #fff;
+      color: white;
     }
+    
+    h2 { margin: 0 0 15px 0; font-size: 12px; color: #22d3ee; text-transform: uppercase; letter-spacing: 2px; font-weight: 800; }
+    
+    .group { margin-bottom: 12px; }
+    .labels { display: flex; justify-content: space-between; font-size: 10px; color: #9ca3af; margin-bottom: 4px; font-weight: 600; text-transform: uppercase;}
+    
+    input[type=range] { width: 100%; height: 4px; background: #333; border-radius: 2px; outline: none; -webkit-appearance: none; }
+    input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 12px; height: 12px; background: #22d3ee; border-radius: 50%; cursor: pointer; border: 2px solid #000; }
 
-    h2 {
-      margin: 0 0 15px 0;
-      font-size: 12px;
-      color: #22d3ee;
-      text-transform: uppercase;
-      letter-spacing: 2px;
-      font-weight: 800;
-    }
+    .btns { display: flex; gap: 8px; margin-top: 20px; }
+    button { flex: 1; padding: 10px; background: #222; border: 1px solid #444; color: #22d3ee; border-radius: 6px; cursor: pointer; font-size: 10px; font-weight: bold; text-transform: uppercase; }
+    button:hover { background: #333; color: #fff; }
 
-    .group {
-      margin-bottom: 12px;
-    }
-
-    .labels {
-      display: flex;
-      justify-content: space-between;
-      font-size: 10px;
-      color: #9ca3af;
-      margin-bottom: 4px;
-      font-weight: 600;
-      text-transform: uppercase;
-    }
-
-    input[type="range"] {
-      width: 100%;
-      height: 4px;
-      background: #333;
-      border-radius: 2px;
-      outline: none;
-      -webkit-appearance: none;
-    }
-
-    input[type="range"]::-webkit-slider-thumb {
-      -webkit-appearance: none;
-      width: 12px;
-      height: 12px;
-      background: #22d3ee;
-      border-radius: 50%;
-      cursor: pointer;
-      border: 2px solid #000;
-    }
-
-    .btns {
-      display: flex;
-      gap: 8px;
-      margin-top: 20px;
-    }
-
-    button {
-      flex: 1;
-      padding: 10px;
-      background: #222;
-      border: 1px solid #444;
-      color: #22d3ee;
-      border-radius: 6px;
-      cursor: pointer;
-      font-size: 10px;
-      font-weight: bold;
-      text-transform: uppercase;
-    }
-
-    button:hover {
-      background: #333;
-      color: #fff;
-    }
-
-    .hint {
-      position: absolute;
-      bottom: 20px;
-      left: 20px;
-      color: rgba(255, 255, 255, 0.4);
-      font-size: 12px;
-      pointer-events: none;
-    }
+    .hint { position: absolute; bottom: 20px; left: 20px; color: rgba(255,255,255,0.4); font-size: 12px; pointer-events: none; }
   </style>
 </head>
 <body>
@@ -123,32 +41,21 @@
 
 <div id="controls">
   <h2>Smoke Tunnel</h2>
-
+  
   <div class="group">
-    <div class="labels">
-      <span>Speed</span><span id="v-mach" class="val">0.15</span>
-    </div>
+    <div class="labels"><span>Speed</span><span id="v-mach" class="val">0.15</span></div>
     <input type="range" id="mach" min="0.00" max="0.4" step="0.01" value="0.15">
   </div>
-
   <div class="group">
-    <div class="labels">
-      <span>Viscosity (Smoke Detail)</span><span id="v-visc" class="val">0.015</span>
-    </div>
+    <div class="labels"><span>Viscosity (Smoke Detail)</span><span id="v-visc" class="val">0.015</span></div>
     <input type="range" id="visc" min="0.005" max="0.1" step="0.001" value="0.015">
   </div>
-
   <div class="group">
-    <div class="labels">
-      <span>Angle</span><span id="v-aoa" class="val">12°</span>
-    </div>
+    <div class="labels"><span>Angle</span><span id="v-aoa" class="val">12°</span></div>
     <input type="range" id="aoa" min="-180" max="180" step="1" value="12">
   </div>
-
   <div class="group">
-    <div class="labels">
-      <span>Contrast</span><span id="v-cont" class="val">2.0</span>
-    </div>
+    <div class="labels"><span>Contrast</span><span id="v-cont" class="val">2.0</span></div>
     <input type="range" id="cont" min="1.0" max="5.0" step="0.1" value="2.0">
   </div>
 
@@ -159,444 +66,268 @@
 </div>
 
 <script>
-  // ======================================================
-  // 1. CONFIGURATION & CONSTANTES
-  // ======================================================
-  const canvas = document.getElementById('c');
-  const ctx = canvas.getContext('2d', { alpha: false });
+const cvs = document.getElementById('c');
+const ctx = cvs.getContext('2d', { alpha: false });
 
-  // Résolution interne (fixe) du domaine LBM
-  const Nx = 400;
-  const Ny = 200;
-  const Q  = 9;
+// Augmenter la résolution pour avoir l'effet "fumée fine"
+let Nx = 400; 
+let Ny = 200; 
+const Q = 9;
 
-  // Directions du schéma D2Q9
-  const W = [4/9, 1/9, 1/9, 1/9, 1/9, 1/36, 1/36, 1/36, 1/36];
-  const CX = [0, 1, 0, -1, 0,  1, -1, -1, 1];
-  const CY = [0, 0, 1,  0,-1,  1,  1, -1,-1];
-  const OPP = [0, 3, 4, 1, 2, 7, 8, 5, 6];
+let visc = 0.015; // Viscosité très basse pour la turbulence
+let u0 = 0.1; 
+let running = true;
+let contrast = 2.0;
 
-  // État physique / paramètres ajustables
-  let viscosity = 0.015;   // ν, très faible pour voir des structures fines
-  let u0        = 0.1;     // vitesse d’entrée (en unités lattice)
-  let contrast  = 2.0;     // contraste de la fumée
-  let running   = true;    // pause / lecture
+let airfoilX = Nx * 0.25;
+let airfoilY = Ny * 0.5;
+let isDragging = false;
 
-  // Position du profil (déplaçable à la souris)
-  let airfoilX = Nx * 0.25;
-  let airfoilY = Ny * 0.5;
-  let isDragging = false;
+// Arrays
+let f = new Float32Array(Nx*Ny*Q);
+let fNew = new Float32Array(Nx*Ny*Q);
+let rho = new Float32Array(Nx*Ny);
+let ux = new Float32Array(Nx*Ny);
+let uy = new Float32Array(Nx*Ny);
+let mask = new Uint8Array(Nx*Ny);
+let imgBuf = new ArrayBuffer(Nx*Ny*4);
+let img32 = new Uint32Array(imgBuf);
 
-  // ======================================================
-  // 2. TABLEAUX LBM & RENDU
-  // ======================================================
-  const size = Nx * Ny;
+const w=[4/9,1/9,1/9,1/9,1/9,1/36,1/36,1/36,1/36];
+const cx=[0,1,0,-1,0,1,-1,-1,1], cy=[0,0,1,0,-1,1,1,-1,-1];
+const opp=[0,3,4,1,2,7,8,5,6];
+let airfoilPath = new Path2D();
 
-  // Fonctions de distribution
-  let f    = new Float32Array(size * Q);
-  let fNew = new Float32Array(size * Q);
-
-  // Grandeurs macroscopiques
-  let rho = new Float32Array(size);
-  let ux  = new Float32Array(size);
-  let uy  = new Float32Array(size);
-
-  // Masque de géométrie (1 = solide, 0 = fluide)
-  let mask = new Uint8Array(size);
-
-  // Buffer d’image (ABGR 32 bits)
-  const imgBuf = new ArrayBuffer(size * 4);
-  const img32  = new Uint32Array(imgBuf);
-
-  // Chemin canvas pour dessiner le profil
-  let airfoilPath = new Path2D();
-
-  // ======================================================
-  // 3. GÉOMÉTRIE : PROFIL DE JOUKOWSKY + MASQUE
-  // ======================================================
-  function buildGeometry() {
-    mask.fill(0);
-    airfoilPath = new Path2D();
-
-    const aoaDeg = parseFloat(document.getElementById('aoa').value);
-    const aoa    = -aoaDeg * Math.PI / 180;  // rotation du profil
-
-    const chord = Nx * 0.4;  // longueur de corde en pixels lattice
-
-    // Paramètres “cercle générateur” pour un profil assez fin
-    const thickness = 0.12;
-    const camber    = 0.10;
-    const beta      = 2.0 * camber;
-    const eps       = thickness * 0.8;
-
-    const R   = Math.sqrt((1 + eps) ** 2 + beta ** 2);
-    const z0x = -eps;
-    const z0y =  beta;
-
-    const Np = 200;
-    const pts = [];
-
-    // Contour du profil via transformation de Joukowsky
-    for (let i = 0; i <= Np; i++) {
-      const theta = (2 * Math.PI * i) / Np;
-
-      const zx = z0x + R * Math.cos(theta);
-      const zy = z0y + R * Math.sin(theta);
-      let denom = zx * zx + zy * zy;
-      if (denom < 1e-3) denom = 1e-3;
-
-      const wx = zx * (1 + 1 / denom);
-      const wy = zy * (1 - 1 / denom);
-
-      // Rotation + mise à l’échelle + translation dans le domaine
-      const xr = (wx * Math.cos(aoa) - wy * Math.sin(aoa)) * (chord / 4) + airfoilX;
-      const yr = (wx * Math.sin(aoa) + wy * Math.cos(aoa)) * (chord / 4) + airfoilY;
-
-      pts.push({ x: xr, y: yr });
+function init() {
+  for(let i=0; i<Nx*Ny; i++) {
+    rho[i] = 1; 
+    ux[i] = mask[i] ? 0 : u0; 
+    uy[i] = 0;
+    let u2 = ux[i]**2 + uy[i]**2;
+    for(let k=0; k<Q; k++) {
+      let eu = cx[k]*ux[i] + cy[k]*uy[i];
+      f[i*Q+k] = w[k] * rho[i] * (1 + 3*eu + 4.5*eu*eu - 1.5*u2);
     }
+  }
+}
 
-    // Bornes pour limiter le remplissage
-    let minX = Nx, maxX = 0, minY = Ny, maxY = 0;
-    for (const p of pts) {
-      if (p.x < minX) minX = p.x;
-      if (p.x > maxX) maxX = p.x;
-      if (p.y < minY) minY = p.y;
-      if (p.y > maxY) maxY = p.y;
-    }
-    minX = Math.max(0, Math.floor(minX));
-    maxX = Math.min(Nx, Math.ceil(maxX));
-    minY = Math.max(0, Math.floor(minY));
-    maxY = Math.min(Ny, Math.ceil(maxY));
+function buildGeo() {
+  mask.fill(0);
+  airfoilPath = new Path2D();
+  const aoa = -parseFloat(document.getElementById('aoa').value) * Math.PI / 180;
+  const chord = Nx * 0.4;
+  
+  // Profil Joukowsky fin
+  let th = 0.12; 
+  let cm = 0.1; 
+  let be = cm * 2; 
+  let ep = th * 0.8;
+  let R = Math.sqrt((1+ep)**2 + be**2);
+  let z0x = -ep, z0y = be;
+  
+  let points = [];
+  const Np = 200;
 
-    // Remplissage polygonal (ray casting) pour le masque solide
-    for (let y = minY; y < maxY; y++) {
-      for (let x = minX; x < maxX; x++) {
-        let inside = false;
-        for (let i = 0, j = Np - 1; i < Np; j = i++) {
-          const pi = pts[i], pj = pts[j];
-          const intersect = ((pi.y > y) !== (pj.y > y)) &&
-                            (x < (pj.x - pi.x) * (y - pi.y) / (pj.y - pi.y) + pi.x);
-          if (intersect) inside = !inside;
-        }
-        if (inside) {
-          mask[x + y * Nx] = 1;
-        }
-      }
-    }
-
-    // Construction du Path2D pour affichage
-    airfoilPath.moveTo(pts[0].x, pts[0].y);
-    for (let i = 1; i < pts.length; i++) {
-      airfoilPath.lineTo(pts[i].x, pts[i].y);
-    }
-    airfoilPath.closePath();
+  for(let i=0; i<=Np; i++) {
+    let t = 2 * Math.PI * i / Np;
+    let zx = z0x + R * Math.cos(t);
+    let zy = z0y + R * Math.sin(t);
+    let den = zx*zx + zy*zy; if(den<0.001) den=0.001;
+    let wx = zx * (1 + 1/den);
+    let wy = zy * (1 - 1/den);
+    let rx = (wx * Math.cos(aoa) - wy * Math.sin(aoa)) * (chord/4) + airfoilX;
+    let ry = (wx * Math.sin(aoa) + wy * Math.cos(aoa)) * (chord/4) + airfoilY;
+    points.push({x: rx, y: ry});
   }
 
-  // ======================================================
-  // 4. INITIALISATION LBM
-  // ======================================================
-  function initLBM() {
-    // vitesse d’entrée (Mach * c_s, c_s ≈ 1/√3 ≈ 0.577)
-    const machSlider = parseFloat(document.getElementById('mach').value);
-    u0        = machSlider * 0.577;
-    viscosity = parseFloat(document.getElementById('visc').value);
-    contrast  = parseFloat(document.getElementById('cont').value);
+  // Masque physique
+  let minX=Nx, maxX=0, minY=Ny, maxY=0;
+  points.forEach(p => {
+    if(p.x<minX) minX=p.x; if(p.x>maxX) maxX=p.x;
+    if(p.y<minY) minY=p.y; if(p.y>maxY) maxY=p.y;
+  });
+  minX=Math.max(0,Math.floor(minX)); maxX=Math.min(Nx,Math.ceil(maxX));
+  minY=Math.max(0,Math.floor(minY)); maxY=Math.min(Ny,Math.ceil(maxY));
 
-    for (let i = 0; i < size; i++) {
-      rho[i] = 1.0;
-      ux[i]  = mask[i] ? 0.0 : u0;
-      uy[i]  = 0.0;
-
-      const u2 = ux[i] * ux[i] + uy[i] * uy[i];
-      const base = rho[i];
-
-      const idx = i * Q;
-      for (let k = 0; k < Q; k++) {
-        const eu = CX[k] * ux[i] + CY[k] * uy[i];
-        f[idx + k] = W[k] * base * (1 + 3 * eu + 4.5 * eu * eu - 1.5 * u2);
+  for(let y=minY; y<maxY; y++) {
+    for(let x=minX; x<maxX; x++) {
+      let inside = false;
+      for(let i=0, j=Np-1; i<Np; j=i++) {
+        if (((points[i].y>y) != (points[j].y>y)) &&
+            (x < (points[j].x-points[i].x) * (y-points[i].y) / (points[j].y-points[i].y) + points[i].x)) {
+          inside = !inside;
+        }
       }
+      if(inside) mask[x + y*Nx] = 1;
     }
   }
 
-  // ======================================================
-  // 5. UNE ÉTAPE LBM : COLLISION + STREAMING + C.L.
-  // ======================================================
-  function lbmStep() {
-    const tau = 0.5 + 3 * viscosity;
-    const omega = 1.0 / tau;
+  airfoilPath.moveTo(points[0].x, points[0].y);
+  for(let i=1; i<points.length; i++) airfoilPath.lineTo(points[i].x, points[i].y);
+  airfoilPath.closePath();
+}
 
-    // ---------- Collision + calcul ρ, u ----------
-    for (let i = 0; i < size; i++) {
-      if (mask[i]) continue;
+function step() {
+  let tau = 0.5 + 3 * visc;
+  let om = 1.0 / tau;
+  
+  for(let i=0; i<Nx*Ny; i++) {
+    if(mask[i]) continue;
+    let idx = i*Q;
+    let r=0, u=0, v=0;
+    r = f[idx]+f[idx+1]+f[idx+2]+f[idx+3]+f[idx+4]+f[idx+5]+f[idx+6]+f[idx+7]+f[idx+8];
+    u = (f[idx+1]-f[idx+3]+f[idx+5]-f[idx+6]-f[idx+7]+f[idx+8]) / r;
+    v = (f[idx+2]-f[idx+4]+f[idx+5]+f[idx+6]-f[idx+7]-f[idx+8]) / r;
+    
+    if(isNaN(u) || Math.abs(u)>0.8) { init(); return; } // Anti-crash
 
-      const idx = i * Q;
-
-      // densité
-      let r = 0;
-      for (let k = 0; k < Q; k++) r += f[idx + k];
-
-      let u = (
-        f[idx + 1] - f[idx + 3] +
-        f[idx + 5] - f[idx + 6] -
-        f[idx + 7] + f[idx + 8]
-      ) / r;
-
-      let v = (
-        f[idx + 2] - f[idx + 4] +
-        f[idx + 5] + f[idx + 6] -
-        f[idx + 7] - f[idx + 8]
-      ) / r;
-
-      // garde-fou numérique
-      if (!Number.isFinite(u) || Math.abs(u) > 1.0 || !Number.isFinite(r) || r <= 0) {
-        initLBM();
-        return;
-      }
-
-      rho[i] = r;
-      ux[i]  = u;
-      uy[i]  = v;
-
-      const u2 = u * u + v * v;
-
-      // relaxation BGK
-      for (let k = 0; k < Q; k++) {
-        const eu  = CX[k] * u + CY[k] * v;
-        const feq = W[k] * r * (1 + 3 * eu + 4.5 * eu * eu - 1.5 * u2);
-        f[idx + k] += omega * (feq - f[idx + k]);
-      }
+    rho[i] = r; ux[i] = u; uy[i] = v;
+    let u2 = u*u + v*v;
+    for(let k=0; k<Q; k++) {
+      let eu = cx[k]*u + cy[k]*v;
+      let feq = w[k] * r * (1 + 3*eu + 4.5*eu*eu - 1.5*u2);
+      f[idx+k] += om * (feq - f[idx+k]);
     }
+  }
 
-    // ---------- Streaming + bounce-back ----------
-    fNew.fill(0);
-
-    for (let y = 0; y < Ny; y++) {
-      for (let x = 0; x < Nx; x++) {
-        const i = x + y * Nx;
-        if (mask[i]) continue;
-
-        const idx = i * Q;
-        for (let k = 0; k < Q; k++) {
-          const nx = x + CX[k];
-          const ny = y + CY[k];
-
-          if (nx >= 0 && nx < Nx && ny >= 0 && ny < Ny) {
-            const ni = nx + ny * Nx;
-            const nIdx = ni * Q;
-
-            if (mask[ni]) {
-              // rebond instantané sur mur
-              fNew[idx + OPP[k]] = f[idx + k];
-            } else {
-              fNew[nIdx + k] = f[idx + k];
-            }
-          }
+  for(let y=0; y<Ny; y++) {
+    for(let x=0; x<Nx; x++) {
+      let i = x + y*Nx;
+      if(mask[i]) continue;
+      for(let k=0; k<Q; k++) {
+        let nx = x + cx[k], ny = y + cy[k];
+        if(nx>=0 && nx<Nx && ny>=0 && ny<Ny) {
+          let ni = nx + ny*Nx;
+          if(mask[ni]) fNew[i*Q + opp[k]] = f[i*Q+k]; 
+          else fNew[ni*Q + k] = f[i*Q+k];
         }
       }
     }
-
-    // ---------- Conditions aux limites entrée / sortie ----------
-    const u2in = u0 * u0;
-
-    // entrée à gauche (profil de vitesse uniforme)
-    for (let y = 0; y < Ny; y++) {
-      const i = y * Nx;
-      if (mask[i]) continue;
-
-      const idx = i * Q;
-      for (let k = 0; k < Q; k++) {
-        const eu = CX[k] * u0;
-        fNew[idx + k] = W[k] * (1 + 3 * eu + 4.5 * eu * eu - 1.5 * u2in);
-      }
+  }
+  
+  let u2in = u0*u0;
+  for(let y=0; y<Ny; y++) {
+    let i = y*Nx;
+    if(mask[i]) continue;
+    for(let k=0; k<Q; k++) {
+      let eu = cx[k]*u0;
+      fNew[i*Q+k] = w[k] * (1 + 3*eu + 4.5*eu*eu - 1.5*u2in);
     }
+  }
+  for(let y=0; y<Ny; y++) {
+    let i = (Nx-1) + y*Nx;
+    if(!mask[i]) { for(let k=0; k<Q; k++) fNew[i*Q+k] = fNew[(i-1)*Q+k]; }
+  }
+  let t = f; f = fNew; fNew = t;
+}
 
-    // sortie à droite : extrapolation simple
-    for (let y = 0; y < Ny; y++) {
-      const iRight = (Nx - 1) + y * Nx;
-      const iLeft  = (Nx - 2) + y * Nx;
-      if (mask[iRight]) continue;
-
-      const idxR = iRight * Q;
-      const idxL = iLeft  * Q;
-      for (let k = 0; k < Q; k++) {
-        fNew[idxR + k] = fNew[idxL + k];
-      }
+// --- RENDER SMOKE (VORTICITY) ---
+function draw() {
+  // C'est ici que la magie opère pour la vidéo 2
+  // Au lieu de la vitesse brute, on calcule la "Vorticité" (le tourbillonnement)
+  
+  for(let y=1; y<Ny-1; y++) {
+    for(let x=1; x<Nx-1; x++) {
+      let i = x + y*Nx;
+      
+      if(mask[i]) { img32[i] = 0xFF000000; continue; }
+      
+      // Calcul du Curl (Tourbillon) : du/dy - dv/dx
+      // C'est ce qui donne les détails filandreux
+      let curl = (ux[i+Nx] - ux[i-Nx]) - (uy[i+1] - uy[i-1]);
+      
+      // On combine la vitesse et le curl pour l'effet "fumée"
+      let speed = Math.sqrt(ux[i]**2 + uy[i]**2);
+      let val = Math.abs(curl * 5.0) + (speed * 0.2);
+      
+      // Contraste extrême
+      val = val * contrast;
+      if(val > 1) val = 1;
+      
+      // Palette Noir & Blanc bleuté (Style "Encre dans l'eau")
+      let r, g, b;
+      
+      // Fond noir, fumée cyan/blanche
+      // Plus c'est intense, plus c'est blanc
+      r = Math.floor(val * 150);
+      g = Math.floor(val * 240);
+      b = Math.floor(val * 255);
+      
+      // Alpha fix à 255
+      img32[i] = (255 << 24) | (b << 16) | (g << 8) | r;
     }
-
-    // swap des buffers
-    const tmp = f;
-    f = fNew;
-    fNew = tmp;
   }
 
-  // ======================================================
-  // 6. RENDU “SMOKE / INK” BASÉ SUR LA VORTICITÉ
-  // ======================================================
-  function renderSmoke() {
-    // calcul local de la vorticité + intensité de fumée
-    for (let y = 1; y < Ny - 1; y++) {
-      for (let x = 1; x < Nx - 1; x++) {
-        const i = x + y * Nx;
+  createImageBitmap(new ImageData(new Uint8ClampedArray(imgBuf), Nx, Ny)).then(spr => {
+    let W = cvs.width = window.innerWidth;
+    let H = cvs.height = window.innerHeight;
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = "high";
+    
+    // Dessin fond noir
+    ctx.fillStyle = "black";
+    ctx.fillRect(0,0,W,H);
+    
+    // Dessin fumée
+    ctx.drawImage(spr, 0, 0, W, H);
+    
+    // Dessin Aile
+    let scX = W / Nx;
+    let scY = H / Ny;
+    ctx.save();
+    ctx.scale(scX, scY);
+    ctx.fillStyle = "#000"; // Aile noire
+    ctx.strokeStyle = "#22d3ee"; // Contour néon cyan
+    ctx.lineWidth = 1.5/scX;
+    ctx.fill(airfoilPath);
+    ctx.stroke(airfoilPath);
+    ctx.restore();
+  });
+}
 
-        if (mask[i]) {
-          // obstacle (ailes) = noir plein
-          img32[i] = 0xFF000000;
-          continue;
-        }
-
-        // ωz ≈ du/dy - dv/dx (schéma central 1er ordre)
-        const du_dy = ux[i + Nx] - ux[i - Nx];
-        const dv_dx = uy[i + 1]  - uy[i - 1];
-        const curl  = du_dy - dv_dx;
-
-        const speed = Math.hypot(ux[i], uy[i]);
-        let val     = Math.abs(curl * 5.0) + speed * 0.2;
-
-        val *= contrast;
-        if (val > 1.0) val = 1.0;
-
-        // palette cyan/blanc sur fond noir
-        const r = Math.floor(val * 150);
-        const g = Math.floor(val * 240);
-        const b = Math.floor(val * 255);
-
-        img32[i] = (255 << 24) | (b << 16) | (g << 8) | r;
-      }
-    }
-
-    // Conversion vers ImageData et dessin mis à l’échelle
-    const imgData = new ImageData(new Uint8ClampedArray(imgBuf), Nx, Ny);
-
-    createImageBitmap(imgData).then(bitmap => {
-      const Wview = canvas.width  = window.innerWidth;
-      const Hview = canvas.height = window.innerHeight;
-
-      ctx.imageSmoothingEnabled  = true;
-      ctx.imageSmoothingQuality  = 'high';
-
-      ctx.fillStyle = 'black';
-      ctx.fillRect(0, 0, Wview, Hview);
-
-      // champ fumée
-      ctx.drawImage(bitmap, 0, 0, Wview, Hview);
-
-      // aile par-dessus
-      const scaleX = Wview / Nx;
-      const scaleY = Hview / Ny;
-
-      ctx.save();
-      ctx.scale(scaleX, scaleY);
-      ctx.fillStyle   = '#000';
-      ctx.strokeStyle = '#22d3ee';
-      ctx.lineWidth   = 1.5 / scaleX;
-      ctx.fill(airfoilPath);
-      ctx.stroke(airfoilPath);
-      ctx.restore();
-    });
+function loop() {
+  if(running) {
+    for(let k=0; k<8; k++) step();
+    draw();
   }
+  requestAnimationFrame(loop);
+}
 
-  // ======================================================
-  // 7. BOUCLE PRINCIPALE
-  // ======================================================
-  function loop() {
-    if (running) {
-      // plusieurs pas LBM par frame pour un écoulement plus rapide
-      for (let k = 0; k < 8; k++) lbmStep();
-      renderSmoke();
-    }
-    requestAnimationFrame(loop);
+// Inputs
+['mach','visc','aoa','cont'].forEach(id => {
+  document.getElementById(id).addEventListener('input', e => {
+    let val = e.target.value;
+    document.getElementById('v-'+id).innerText = val + (id=='aoa'?'°':'');
+    if(id=='mach') u0 = val * 0.577;
+    else if(id=='visc') visc = parseFloat(val);
+    else if(id=='cont') contrast = parseFloat(val);
+    else { buildGeo(); for(let i=0;i<Nx*Ny;i++)if(mask[i]){ux[i]=0;uy[i]=0;} }
+  });
+});
+
+cvs.addEventListener('mousedown', e => {
+  let rect = cvs.getBoundingClientRect();
+  let mx = (e.clientX - rect.left) * (Nx/cvs.width);
+  let my = (e.clientY - rect.top) * (Ny/cvs.height);
+  if((mx-airfoilX)**2 + (my-airfoilY)**2 < 900) isDragging = true;
+});
+window.addEventListener('mousemove', e => {
+  if(isDragging) {
+    let rect = cvs.getBoundingClientRect();
+    airfoilX = Math.max(20, Math.min(Nx-20, (e.clientX-rect.left)*(Nx/cvs.width)));
+    airfoilY = Math.max(20, Math.min(Ny-20, (e.clientY-rect.top)*(Ny/cvs.height)));
+    buildGeo();
+    for(let i=0;i<Nx*Ny;i++)if(mask[i]){ux[i]=0;uy[i]=0;rho[i]=1;}
   }
+});
+window.addEventListener('mouseup', () => isDragging = false);
 
-  // ======================================================
-  // 8. INTERACTIONS UI (SLIDERS + DRAG PROFIL)
-  // ======================================================
-  function bindUI() {
-    const sliders = ['mach', 'visc', 'aoa', 'cont'];
+document.getElementById('rst').onclick = init;
+document.getElementById('pse').onclick = () => running = !running;
 
-    sliders.forEach(id => {
-      const slider   = document.getElementById(id);
-      const label    = document.getElementById('v-' + id);
-
-      slider.addEventListener('input', () => {
-        const val = slider.value;
-        label.textContent = val + (id === 'aoa' ? '°' : '');
-
-        if (id === 'mach') {
-          u0 = parseFloat(val) * 0.577;
-        } else if (id === 'visc') {
-          viscosity = parseFloat(val);
-        } else if (id === 'cont') {
-          contrast = parseFloat(val);
-        } else if (id === 'aoa') {
-          // angle → on reconstruit la géométrie
-          buildGeometry();
-          // on remet proprement les cellules solides
-          for (let i = 0; i < size; i++) {
-            if (mask[i]) {
-              ux[i] = 0;
-              uy[i] = 0;
-              rho[i] = 1;
-            }
-          }
-        }
-      });
-    });
-
-    // Déplacement du profil à la souris
-    canvas.addEventListener('mousedown', e => {
-      const rect = canvas.getBoundingClientRect();
-      const mx = (e.clientX - rect.left) * (Nx / canvas.width);
-      const my = (e.clientY - rect.top)  * (Ny / canvas.height);
-      const dist2 = (mx - airfoilX) ** 2 + (my - airfoilY) ** 2;
-      if (dist2 < 30 * 30) {
-        isDragging = true;
-      }
-    });
-
-    window.addEventListener('mousemove', e => {
-      if (!isDragging) return;
-
-      const rect = canvas.getBoundingClientRect();
-      airfoilX = Math.max(20, Math.min(Nx - 20,
-        (e.clientX - rect.left) * (Nx / canvas.width)
-      ));
-      airfoilY = Math.max(20, Math.min(Ny - 20,
-        (e.clientY - rect.top) * (Ny / canvas.height)
-      ));
-
-      buildGeometry();
-      for (let i = 0; i < size; i++) {
-        if (mask[i]) {
-          ux[i]  = 0;
-          uy[i]  = 0;
-          rho[i] = 1;
-        }
-      }
-    });
-
-    window.addEventListener('mouseup', () => {
-      isDragging = false;
-    });
-
-    // Boutons Reset / Pause
-    document.getElementById('rst').addEventListener('click', () => {
-      initLBM();
-    });
-
-    document.getElementById('pse').addEventListener('click', () => {
-      running = !running;
-      document.getElementById('pse').textContent = running ? 'Pause' : 'Resume';
-    });
-  }
-
-  // ======================================================
-  // 9. LANCEMENT
-  // ======================================================
-  buildGeometry();
-  initLBM();
-  bindUI();
-  loop();
+buildGeo();
+init();
+loop();
 </script>
-
 </body>
 </html>
