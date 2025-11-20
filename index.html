@@ -3,23 +3,25 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>CFD Pro - Joukowsky Airfoil LBM</title>
+  <title>LBM D2Q9 – Profil de Joukowsky Pro</title>
   <style>
-    /* --- STYLE PROFESSIONNEL (Dark Engineering Theme) --- */
+    /* --- THEME PROFESSIONNEL (Dark Engineering) --- */
     :root {
-      --bg-app: #0f172a;
-      --bg-panel: #1e293b;
-      --accent: #38bdf8;
-      --text-main: #e2e8f0;
+      --bg-app: #0b1120;       /* Fond très sombre */
+      --bg-panel: #151d30;     /* Fond panneaux */
+      --accent: #38bdf8;       /* Bleu cyan pro */
+      --accent-hover: #0ea5e9;
+      --text-main: #f1f5f9;
       --text-dim: #94a3b8;
       --border: #334155;
+      --input-bg: #1e293b;
     }
 
-    * { box-sizing: border-box; user-select: none; -webkit-user-select: none; }
+    * { box-sizing: border-box; user-select: none; }
 
     body {
       margin: 0; padding: 0;
-      font-family: 'Inter', 'Segoe UI', sans-serif;
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
       background: var(--bg-app); color: var(--text-main);
       height: 100vh; display: flex; flex-direction: column;
       overflow: hidden;
@@ -27,598 +29,760 @@
 
     /* --- HEADER --- */
     header {
-      height: 54px; padding: 0 24px;
+      height: 50px; padding: 0 24px;
       display: flex; align-items: center; justify-content: space-between;
       background: var(--bg-panel); border-bottom: 1px solid var(--border);
-      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-      z-index: 10;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.2); z-index: 20;
     }
-    .brand { display: flex; align-items: center; gap: 10px; }
-    .brand h1 { font-size: 16px; font-weight: 600; letter-spacing: 0.5px; margin: 0; color: white; }
-    .tag { font-size: 10px; background: #0f172a; color: var(--accent); padding: 4px 8px; border-radius: 4px; border: 1px solid var(--border); font-weight: bold; }
-    .status { font-size: 11px; color: var(--text-dim); display: flex; align-items: center; gap: 6px; }
-    .status-dot { width: 8px; height: 8px; background: #22c55e; border-radius: 50%; display: inline-block; }
+    header h1 {
+      font-size: 16px; font-weight: 600; letter-spacing: 0.5px; margin: 0;
+      background: linear-gradient(90deg, #38bdf8, #818cf8); -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    }
+    .badge {
+      font-size: 10px; font-family: monospace; color: var(--accent);
+      background: rgba(56, 189, 248, 0.1); padding: 4px 8px; border-radius: 4px; border: 1px solid rgba(56, 189, 248, 0.2);
+    }
 
     /* --- LAYOUT --- */
     main.layout { flex: 1; display: flex; overflow: hidden; }
 
     /* CANVAS AREA */
     #sim-container {
-      flex: 1; background: #020617; position: relative;
+      flex: 1; background: #000; position: relative;
       display: flex; justify-content: center; align-items: center;
       overflow: hidden;
     }
     canvas {
       display: block; image-rendering: pixelated;
-      box-shadow: 0 0 50px rgba(0,0,0,0.5);
+      box-shadow: 0 0 40px rgba(0,0,0,0.6);
+      max-width: 100%; max-height: 100%;
     }
 
-    /* OVERLAYS SUR CANVAS */
-    .overlay-panel {
-      position: absolute; background: rgba(15, 23, 42, 0.85);
-      backdrop-filter: blur(4px); border: 1px solid rgba(255,255,255,0.1);
-      border-radius: 8px; padding: 10px; pointer-events: none;
+    /* OVERLAYS CANVAS */
+    .overlay {
+      position: absolute; background: rgba(15, 23, 42, 0.9); backdrop-filter: blur(4px);
+      border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; padding: 12px;
+      pointer-events: none;
     }
-    .legend { top: 20px; right: 20px; display: flex; flex-direction: column; align-items: center; gap: 4px; }
-    .colorbar { width: 12px; height: 140px; background: linear-gradient(to top, #0f172a, #3b82f6, #facc15, #ef4444); border-radius: 6px; border: 1px solid rgba(255,255,255,0.2); }
-    .legend-val { font-size: 9px; color: var(--text-dim); font-family: monospace; }
-    
-    .perf-stats { bottom: 20px; left: 20px; display: flex; gap: 15px; font-size: 11px; color: var(--text-dim); font-family: monospace; }
-    .perf-stats span { color: var(--accent); font-weight: bold; }
+    /* Légende couleur */
+    .legend-panel { top: 20px; right: 20px; display: flex; flex-direction: column; align-items: center; gap: 5px; }
+    .colorbar { width: 12px; height: 140px; background: linear-gradient(to top, #0f172a, #3b82f6, #facc15, #ef4444); border-radius: 6px; }
+    .legend-val { font-size: 10px; color: var(--text-dim); font-family: monospace; }
 
-    /* --- SIDEBAR CONTROLS --- */
-    aside {
+    /* Stats Performance */
+    .stats-panel { bottom: 20px; left: 20px; display: flex; gap: 15px; font-size: 11px; color: var(--text-dim); font-family: monospace; }
+    .stats-panel span { color: var(--text-main); font-weight: bold; }
+
+    /* Controles Canvas (Haut) */
+    .canvas-controls {
+      position: absolute; top: 20px; left: 20px;
+      display: flex; gap: 10px; align-items: center;
+      pointer-events: auto; /* Active les clics */
+    }
+    .canvas-controls select { background: rgba(15, 23, 42, 0.9); border: 1px solid var(--border); }
+    .canvas-controls button { width: auto; padding: 6px 12px; margin: 0; }
+
+    /* --- SIDEBAR --- */
+    aside#controls {
       width: 340px; background: var(--bg-panel); border-left: 1px solid var(--border);
-      display: flex; flex-direction: column; z-index: 20;
+      display: flex; flex-direction: column; z-index: 15;
     }
-    .scroll-area { flex: 1; overflow-y: auto; padding: 24px; }
-    .scroll-area::-webkit-scrollbar { width: 6px; }
+    .scroll-area { flex: 1; overflow-y: auto; padding: 25px; }
+    .scroll-area::-webkit-scrollbar { width: 5px; }
     .scroll-area::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
 
     .section { margin-bottom: 30px; }
-    .section-title {
-      font-size: 11px; text-transform: uppercase; letter-spacing: 1.2px;
-      color: var(--text-dim); margin-bottom: 16px; font-weight: 700;
-      display: flex; align-items: center; gap: 8px;
+    .section h3 {
+      font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: var(--accent);
+      margin: 0 0 15px 0; font-weight: 700; border-bottom: 1px solid var(--border); padding-bottom: 6px;
     }
-    .section-title::after { content: ''; height: 1px; background: var(--border); flex: 1; }
 
-    /* INPUTS */
+    /* WIDGETS */
     .control { margin-bottom: 18px; }
-    .label-row { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 12px; font-weight: 500; }
-    .val-display { color: var(--accent); font-family: monospace; background: rgba(56, 189, 248, 0.1); padding: 2px 6px; border-radius: 4px; }
+    .label-row { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 12px; color: var(--text-dim); font-weight: 500; }
+    .val-display { color: var(--text-main); font-family: monospace; background: rgba(255,255,255,0.05); padding: 2px 6px; border-radius: 4px; }
 
-    input[type=range] {
-      width: 100%; appearance: none; height: 4px; background: #334155; border-radius: 2px; cursor: pointer;
+    input[type="range"] {
+      width: 100%; height: 4px; background: var(--input-bg); border-radius: 2px;
+      outline: none; -webkit-appearance: none; cursor: pointer; display: block;
     }
-    input[type=range]::-webkit-slider-thumb {
-      appearance: none; width: 14px; height: 14px; background: var(--text-main); border-radius: 50%;
-      border: 2px solid var(--accent); box-shadow: 0 0 10px rgba(56,189,248,0.3); margin-top: 0; transition: transform 0.1s;
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none; appearance: none;
+      width: 16px; height: 16px; border-radius: 50%;
+      background: var(--text-main); border: 2px solid var(--accent);
+      box-shadow: 0 0 10px rgba(56, 189, 248, 0.4); transition: transform 0.1s;
+      margin-top: -6px; /* Centrage vertical */
     }
-    input[type=range]::-webkit-slider-thumb:hover { transform: scale(1.2); }
+    input[type="range"]::-webkit-slider-runnable-track {
+      height: 4px; background: var(--input-bg); border-radius: 2px;
+    }
+    input[type="range"]::-webkit-slider-thumb:hover { transform: scale(1.2); }
+
+    /* INDICATEUR VISUEL SOUS SLIDER */
+    .slider-wrapper { position: relative; height: 4px; margin-top: 5px; }
+    .slider-fill {
+      position: absolute; top: 0; left: 0; height: 100%; background: var(--accent);
+      border-radius: 2px; pointer-events: none;
+    }
 
     select {
-      width: 100%; padding: 10px; background: #0f172a; border: 1px solid var(--border);
-      color: white; border-radius: 6px; font-size: 12px; outline: none; cursor: pointer;
+      width: 100%; padding: 8px; background: var(--input-bg); color: white;
+      border: 1px solid var(--border); border-radius: 6px; outline: none; cursor: pointer;
     }
 
-    /* DATA GRID */
-    .data-grid {
-      display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 20px;
-    }
-    .data-card {
-      background: #0f172a; padding: 10px; border-radius: 6px; border: 1px solid var(--border);
-    }
-    .data-label { font-size: 10px; color: var(--text-dim); display: block; margin-bottom: 4px; }
-    .data-val { font-size: 14px; color: var(--text-main); font-weight: 600; font-family: monospace; }
+    /* DATA CARDS */
+    .results-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; background: var(--input-bg); padding: 10px; border-radius: 8px; border: 1px solid var(--border); }
+    .res-item { display: flex; flex-direction: column; }
+    .res-lbl { font-size: 10px; color: var(--text-dim); }
+    .res-val { font-size: 13px; color: var(--text-main); font-weight: 600; font-family: monospace; }
 
-    /* BUTTONS */
-    .actions { margin-top: auto; padding: 20px; border-top: 1px solid var(--border); background: #0f172a; display: flex; gap: 10px; }
+    .info-text { margin-top: 10px; font-size: 10px; color: var(--text-dim); line-height: 1.4; font-style: italic; }
+
+    /* BOUTONS */
+    .footer-actions {
+      padding: 20px; background: var(--bg-panel); border-top: 1px solid var(--border);
+      display: flex; gap: 10px;
+    }
     button {
-      flex: 1; padding: 12px; border: none; border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.2s;
+      flex: 1; padding: 12px; border: none; border-radius: 6px;
+      font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.2s;
     }
     button.primary { background: var(--accent); color: #0f172a; }
-    button.primary:hover { filter: brightness(1.1); box-shadow: 0 0 15px rgba(56, 189, 248, 0.4); }
-    button.secondary { background: var(--border); color: var(--text-main); }
-    button.secondary:hover { background: #475569; }
+    button.primary:hover { background: var(--accent-hover); box-shadow: 0 0 15px rgba(56, 189, 248, 0.3); }
+    button.secondary { background: var(--input-bg); color: var(--text-main); border: 1px solid var(--border); }
+    button.secondary:hover { background: var(--border); }
 
-    /* MODAL */
-    #modal-overlay {
-      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-      background: rgba(2, 6, 23, 0.8); backdrop-filter: blur(8px);
-      z-index: 9999; display: flex; justify-content: center; align-items: center;
+    /* MODAL STARTUP */
+    #startup-modal {
+      position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+      background: rgba(2, 6, 23, 0.95); z-index: 9999;
+      display: flex; justify-content: center; align-items: center;
     }
-    .modal {
-      background: var(--bg-panel); padding: 40px; border-radius: 12px; border: 1px solid var(--border);
-      max-width: 420px; text-align: center; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+    .modal-box {
+      background: var(--bg-panel); padding: 40px; border-radius: 16px;
+      border: 1px solid var(--border); max-width: 450px; text-align: center;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.6);
     }
-    .modal h2 { color: var(--accent); margin-top: 0; font-size: 20px; }
-    .modal p { color: var(--text-dim); font-size: 13px; line-height: 1.6; margin-bottom: 25px; }
+    .modal-box h2 { color: var(--accent); margin-top: 0; }
+    .modal-box p { color: var(--text-dim); font-size: 14px; line-height: 1.6; margin-bottom: 30px; }
+
+    /* Quality Selector */
+    .quality-selector { display: flex; background: var(--input-bg); padding: 4px; border-radius: 6px; margin-top: 5px; border: 1px solid var(--border); }
+    .q-btn { flex: 1; text-align: center; font-size: 11px; padding: 6px; cursor: pointer; border-radius: 4px; color: var(--text-dim); transition: 0.2s; }
+    .q-btn.active { background: var(--accent); color: #0f172a; font-weight: bold; }
+    .q-btn:hover:not(.active) { background: rgba(255,255,255,0.05); }
+
   </style>
 </head>
 
 <body>
 
-  <div id="modal-overlay">
-    <div class="modal">
-      <h2>Virtual Wind Tunnel</h2>
+  <div id="startup-modal">
+    <div class="modal-box">
+      <h2>Simulateur LBM Joukowsky</h2>
       <p>
-        Simulation LBM (Lattice Boltzmann) D2Q9.<br>
-        Calculé en temps réel sur CPU.<br><br>
-        Compatible : Chrome, Edge, Firefox.
+        Simulation aérodynamique numérique (CFD) utilisant la méthode Lattice Boltzmann (D2Q9).<br><br>
+        <span style="font-size:12px; color:#64748b;">Calculé en JavaScript sur le processeur.</span>
       </p>
-      <button class="primary" id="btn-start" style="width:100%">Démarrer la Simulation</button>
-      <div style="margin-top:15px">
-         <button class="secondary" id="btn-low" style="width:100%; font-size:11px; padding:8px;">Mode Performance (PC Portable)</button>
-      </div>
+      <button id="btn-start-modal" class="primary" style="width:100%">Démarrer la Simulation</button>
     </div>
   </div>
 
   <header>
-    <div class="brand">
-      <h1>CFD Solver</h1>
-      <span class="tag">LBM D2Q9</span>
+    <div style="display:flex; align-items:center; gap:10px;">
+      <h1>Virtual Wind Tunnel</h1>
+      <span class="badge">PRO</span>
     </div>
-    <div class="status">
-      <span class="status-dot"></span> Simulation Active
-    </div>
+    <span class="badge" style="color: #94a3b8; border-color:#334155;">JS/Canvas Solver</span>
   </header>
 
   <main class="layout">
-    
     <section id="sim-container">
-      <canvas id="sim-canvas"></canvas>
+      <canvas id="sim-canvas" width="600" height="240"></canvas>
+
+      <div class="canvas-controls">
+        <select id="viz-mode">
+          <option value="curl">Vorticité (Tourbillons)</option>
+          <option value="velocity">Magnitude Vitesse</option>
+          <option value="pressure">Champ de Pression</option>
+          <option value="streamlines">Lignes de Courant</option>
+          <option value="vectors">Vecteurs</option>
+        </select>
+        <button id="btn-screenshot" class="secondary" style="padding:6px 12px;">📷</button>
+      </div>
       
-      <div class="overlay-panel legend">
+      <div class="overlay legend-panel">
         <span class="legend-val" id="val-max">1.0</span>
         <div class="colorbar"></div>
         <span class="legend-val" id="val-min">0.0</span>
       </div>
 
-      <div class="overlay-panel perf-stats">
-        <div>FPS: <span id="fps">0</span></div>
-        <div>Steps: <span id="steps">0</span></div>
-        <div>Grid: <span id="grid-res">--</span></div>
+      <div class="overlay stats-panel">
+        <span>FPS: <span id="fps-counter">0</span></span>
+        <span>Steps: <span id="steps-count">0</span></span>
+        <span style="color:var(--accent)">Grid: <span id="grid-display">--</span></span>
       </div>
     </section>
 
-    <aside>
+    <aside id="controls">
       <div class="scroll-area">
-        
-        <div class="section">
-          <div class="section-title">Visualisation</div>
-          <select id="sel-viz">
-            <option value="curl">Vorticité (Tourbillons)</option>
-            <option value="speed">Magnitude Vitesse</option>
-            <option value="pressure">Champ de Pression</option>
-          </select>
-        </div>
 
         <div class="section">
-          <div class="section-title">Données Aéro</div>
-          <div class="data-grid">
-            <div class="data-card">
-              <span class="data-label">Reynolds (Re)</span>
-              <span class="data-val" id="disp-re">~2500</span>
-            </div>
-            <div class="data-card">
-              <span class="data-label">Viscosité</span>
-              <span class="data-val" id="disp-nu">0.05</span>
-            </div>
-          </div>
-        </div>
-
-        <div class="section">
-          <div class="section-title">Conditions de Vol</div>
+          <h3>Conditions d'Écoulement</h3>
           
           <div class="control">
-            <div class="label-row">
-              <label>Vitesse Entrée (Mach)</label>
-              <span class="val-display" id="disp-mach">0.10</span>
-            </div>
-            <input type="range" id="in-mach" min="0.02" max="0.25" step="0.01" value="0.10">
+            <div class="label-row"><label>Vitesse (Mach)</label><span class="val-display" id="disp-mach">0.10</span></div>
+            <input type="range" id="in-mach" min="0.02" max="0.18" step="0.01" value="0.10">
           </div>
 
           <div class="control">
-            <div class="label-row">
-              <label>Relaxation (Tau)</label>
-              <span class="val-display" id="disp-tau">0.65</span>
-            </div>
-            <input type="range" id="in-tau" min="0.51" max="1.1" step="0.01" value="0.65">
+            <div class="label-row"><label>Viscosité (Tau)</label><span class="val-display" id="disp-tau">0.80</span></div>
+            <input type="range" id="in-tau" min="0.52" max="1.50" step="0.01" value="0.80">
+          </div>
+
+          <div class="results-grid">
+            <div class="res-item"><span class="res-lbl">Reynolds</span><span class="res-val" id="res-re">~2000</span></div>
+            <div class="res-item"><span class="res-lbl">Viscosité</span><span class="res-val" id="res-nu">0.10</span></div>
           </div>
         </div>
 
         <div class="section">
-          <div class="section-title">Profil Joukowsky</div>
+          <h3>Profil Joukowsky</h3>
+
+          <div class="control">
+            <div class="label-row"><label>Angle d'Attaque (AoA)</label><span class="val-display" id="disp-aoa">5°</span></div>
+            <input type="range" id="in-aoa" min="-10" max="25" step="1" value="5">
+          </div>
+
+          <div class="control">
+            <div class="label-row"><label>Épaisseur (t/c)</label><span class="val-display" id="disp-thick">0.12</span></div>
+            <input type="range" id="in-thick" min="0.06" max="0.20" step="0.01" value="0.12">
+          </div>
+
+          <div class="control">
+            <div class="label-row"><label>Cambrure</label><span class="val-display" id="disp-camber">0.08</span></div>
+            <input type="range" id="in-camber" min="0.00" max="0.20" step="0.01" value="0.08">
+          </div>
+        </div>
+
+        <div class="section">
+          <h3>Qualité Simulation</h3>
+          <div class="quality-selector">
+            <div class="q-btn" data-res="low">Basse (Rapide)</div>
+            <div class="q-btn active" data-res="medium">Moyenne</div>
+            <div class="q-btn" data-res="high">Haute (Lente)</div>
+          </div>
           
-          <div class="control">
-            <div class="label-row">
-              <label>Angle d'Attaque</label>
-              <span class="val-display" id="disp-aoa">15°</span>
-            </div>
-            <input type="range" id="in-aoa" min="-20" max="45" step="1" value="15">
+          <div class="control" style="margin-top:15px;">
+            <div class="label-row"><label>Itérations / Frame</label><span class="val-display" id="disp-iter">2</span></div>
+            <input type="range" id="in-iter" min="1" max="10" step="1" value="2">
           </div>
+        </div>
 
-          <div class="control">
-            <div class="label-row">
-              <label>Épaisseur</label>
-              <span class="val-display" id="disp-thick">0.12</span>
-            </div>
-            <input type="range" id="in-thick" min="0.02" max="0.25" step="0.01" value="0.12">
+        <div class="section">
+          <h3>Coefficients Aérodynamiques</h3>
+          <div class="results-grid" style="grid-template-columns: 1fr 1fr 1fr;">
+            <div class="res-item"><span class="res-lbl">CL (Portance)</span><span class="res-val" id="res-cl" style="color:var(--accent)">0.00</span></div>
+            <div class="res-item"><span class="res-lbl">CD (Traînée)</span><span class="res-val" id="res-cd">0.00</span></div>
+            <div class="res-item"><span class="res-lbl">L/D</span><span class="res-val" id="res-ld">0.0</span></div>
           </div>
-
-          <div class="control">
-            <div class="label-row">
-              <label>Cambrure</label>
-              <span class="val-display" id="disp-camber">0.08</span>
-            </div>
-            <input type="range" id="in-camber" min="-0.1" max="0.2" step="0.01" value="0.08">
-          </div>
+          <p class="info-text">Calcul basé sur la théorie du profil mince (Thin Airfoil Theory).</p>
         </div>
 
       </div>
 
-      <div class="actions">
-        <button class="secondary" id="btn-reset">Reset Champ</button>
-        <button class="primary" id="btn-pause">Pause</button>
+      <div class="footer-actions">
+        <button id="btn-reset" class="secondary">Réinitialiser</button>
+        <button id="btn-pause" class="primary">Pause</button>
       </div>
     </aside>
   </main>
 
 <script>
-/* * ============================================
- * ENGINE: LATTICE BOLTZMANN (D2Q9)
- * Author: Hamza Boudhair (Refactored)
- * ============================================
- */
+  /**
+   * =============================================================
+   * LBM JOUKOWSKY SOLVER - LOGIQUE COMPLETE & REPAREE
+   * =============================================================
+   */
 
-// --- 1. SETUP INITIAL ---
-const canvas = document.getElementById('sim-canvas');
-const ctx = canvas.getContext('2d', { willReadFrequently: true });
+  // === CONFIG GLOBALE ===
+  const canvas = document.getElementById("sim-canvas");
+  const ctx = canvas.getContext("2d", { willReadFrequently: true }); // Optimisation lecture
 
-// Paramètres
-let Nx = 400;
-let Ny = 160;
-let running = false;
-let steps = 0;
+  // Dimensions (Mises à jour par updateGridSize)
+  let Nx = 400;
+  let Ny = 160;
+  let size = Nx * Ny;
 
-// Configuration Physique
-const Q = 9;
-const w = [4/9, 1/9, 1/9, 1/9, 1/9, 1/36, 1/36, 1/36, 1/36];
-const cx = [0, 1, 0, -1, 0, 1, -1, -1, 1];
-const cy = [0, 0, 1, 0, -1, 1, 1, -1, -1];
-const opp = [0, 3, 4, 1, 2, 7, 8, 5, 6];
+  // LBM D2Q9 Constants
+  const Q = 9;
+  const w = [4/9, 1/9, 1/9, 1/9, 1/9, 1/36, 1/36, 1/36, 1/36];
+  const cx = [0, 1, 0, -1, 0, 1, -1, -1, 1];
+  const cy = [0, 0, 1, 0, -1, 1, 1, -1, -1];
+  const opp = [0, 3, 4, 1, 2, 7, 8, 5, 6]; // Indices opposés
+  const cs2 = 1/3; // Vitesse son^2
 
-// Etat Simulation
-let params = {
-  mach: 0.1,
-  tau: 0.65,
-  aoa: 15,
-  thick: 0.12,
-  camber: 0.08,
-  viz: 'curl'
-};
+  // Mémoire
+  let f, fTmp, rho, ux, uy, mask, vort, imgData, pixels;
+  let airfoilPoly = [];
 
-// Mémoire (Allouée dynamiquement)
-let f, fTmp, rho, ux, uy, barrier, vort, imgData, pixels;
+  // Etat
+  let running = false;
+  let steps = 0;
+  let lastTime = performance.now();
+  let frames = 0;
 
-// --- 2. GESTIONNAIRE D'ALLOCATION ---
-function allocateMemory() {
-  canvas.width = Nx;
-  canvas.height = Ny;
-  const size = Nx * Ny;
+  // Paramètres modifiables
+  let params = {
+    mach: 0.10,
+    tau: 0.80,
+    aoa: 5,
+    thick: 0.12,
+    camber: 0.08,
+    viz: 'velocity',
+    contrast: 1.0,
+    iter: 2,
+    res: 'medium'
+  };
 
-  f = new Float32Array(Q * size);
-  fTmp = new Float32Array(Q * size);
-  rho = new Float32Array(size);
-  ux = new Float32Array(size);
-  uy = new Float32Array(size);
-  barrier = new Uint8Array(size);
-  vort = new Float32Array(size);
+  // Max Values pour visualisation
+  let displayMax = 1.0;
+  let displayMin = 0.0;
+  const LIMITS = { velocity: 0.25, pressure: 0.5, vorticity: 5.0 };
+
+  // === 1. GESTIONNAIRE D'ÉVÉNEMENTS (SETUP UI EN PREMIER) ===
   
-  imgData = ctx.createImageData(Nx, Ny);
-  pixels = imgData.data;
-
-  document.getElementById('grid-res').innerText = `${Nx}x${Ny}`;
-}
-
-// --- 3. GENERATEUR DE GEOMETRIE (JOUKOWSKY) ---
-function createAirfoil() {
-  const size = Nx * Ny;
-  barrier.fill(0);
-
-  // Murs (Haut/Bas)
-  for(let x=0; x<Nx; x++) {
-    barrier[x] = 1;
-    barrier[x + (Ny-1)*Nx] = 1;
-  }
-
-  // Conversion Paramètres
-  const rad = Math.PI / 180;
-  const alpha = params.aoa * rad;
-  const T = params.thick;
-  const C = params.camber;
-
-  // Echelle et Position
-  const scale = Ny / 5; 
-  const cx_foil = Nx / 3.5;
-  const cy_foil = Ny / 2;
-
-  // Algorithme de remplissage Scanline (Optimisé)
-  for(let y=0; y<Ny; y++) {
-    for(let x=0; x<Nx; x++) {
-      // Coordonnées locales normalisées
-      let dx = (x - cx_foil) / scale;
-      let dy = (y - cy_foil) / scale;
-
-      // Rotation Inverse (pour simuler l'angle d'attaque)
-      let rx = dx * Math.cos(-alpha) - dy * Math.sin(-alpha);
-      let ry = dx * Math.sin(-alpha) + dy * Math.cos(-alpha);
-
-      // Forme Analytique Approchée (Goutte Joukowsky)
-      // Distance radiale déformée
-      let d = Math.sqrt(rx*rx + ry*ry * 4.0); // 4.0 aplatit le cercle pour faire une aile
-      
-      // Ajout Cambrure
-      if(ry > 0) d += ry * C * 2.0; 
-      else d -= ry * C * 2.0;
-
-      // Ajout Queue pointue (Bord de fuite)
-      if(rx > 0) d += rx * 0.3; 
-
-      // Seuil épaisseur
-      if(d < (0.8 + T)) {
-        barrier[x + y*Nx] = 1;
-      }
-    }
-  }
-}
-
-// --- 4. INITIALISATION FLUIDE ---
-function initSim() {
-  allocateMemory();
-  createAirfoil();
-
-  const size = Nx * Ny;
-  const u0 = params.mach * 0.577; // Vitesse son lattice approx
-
-  for(let i=0; i<size; i++) {
-    rho[i] = 1.0;
-    // Si mur -> vitesse 0, sinon vitesse uniforme
-    ux[i] = barrier[i] ? 0 : u0;
-    uy[i] = 0;
-
-    // Distribution Equilibre (fEq)
-    const u2 = ux[i]*ux[i] + uy[i]*uy[i];
-    for(let k=0; k<Q; k++) {
-      const cu = 3*(cx[k]*ux[i] + cy[k]*uy[i]);
-      f[k*size + i] = w[k]*rho[i] * (1 + cu + 0.5*cu*cu - 1.5*u2);
-    }
-  }
-  steps = 0;
-}
-
-// --- 5. BOUCLE PHYSIQUE (LBM CORE) ---
-function lbmStep() {
-  const size = Nx * Ny;
-  const uIn = params.mach * 0.577;
-  const omega = 1.0 / params.tau;
-
-  // A. COLLISION (BGK)
-  for(let i=0; i<size; i++) {
-    if(barrier[i]) continue;
-
-    // Moments macroscopiques
-    let r = 0, u = 0, v = 0;
-    for(let k=0; k<Q; k++) {
-      let val = f[k*size + i];
-      r += val;
-      u += val * cx[k];
-      v += val * cy[k];
-    }
-
-    // Condition Inlet (Bord Gauche) - Vitesse imposée
-    if(i % Nx === 0) {
-      r = 1.0; u = uIn; v = 0;
-    }
-
-    rho[i] = r;
-    // Normalisation vitesse
-    if(r > 0) { ux[i] = u/r; uy[i] = v/r; }
-
-    // Relaxation
-    const u2 = ux[i]*ux[i] + uy[i]*uy[i];
-    for(let k=0; k<Q; k++) {
-      const cu = 3*(cx[k]*ux[i] + cy[k]*uy[i]);
-      const feq = w[k]*r * (1 + cu + 0.5*cu*cu - 1.5*u2);
-      // Ecriture dans buffer temporaire
-      fTmp[k*size + i] = f[k*size + i] * (1-omega) + feq * omega;
-    }
-  }
-
-  // B. STREAMING (Propagation + BounceBack)
-  for(let y=0; y<Ny; y++) {
-    for(let x=0; x<Nx; x++) {
-      const i = x + y*Nx;
-      
-      for(let k=0; k<Q; k++) {
-        const nextX = x + cx[k];
-        const nextY = y + cy[k];
-
-        if(nextX >= 0 && nextX < Nx && nextY >= 0 && nextY < Ny) {
-          const nextI = nextX + nextY*Nx;
-
-          if(barrier[nextI]) {
-            // Rebond sur obstacle (la particule revient)
-            f[opp[k]*size + i] = fTmp[k*size + i];
-          } else {
-            // Propagation vers voisin
-            f[k*size + nextI] = fTmp[k*size + i];
-          }
-        }
-      }
-    }
-  }
-  steps++;
-}
-
-// --- 6. RENDU GRAPHIQUE ---
-function render() {
-  const size = Nx * Ny;
-  // Facteurs pour rendre les couleurs jolies
-  const s_curl = 50; 
-  const s_vel = 1.5 / params.mach; 
-  const s_pres = 600;
-
-  let minV = 0, maxV = 1;
-
-  for(let i=0; i<size; i++) {
-    const p = i * 4; // RGBA index
-
-    if(barrier[i]) {
-      // Couleur Aile (Gris foncé métal)
-      pixels[p] = 60; pixels[p+1] = 65; pixels[p+2] = 70; pixels[p+3] = 255;
-    } else {
-      let r=0, g=0, b=0;
-
-      if(params.viz === 'curl') {
-        // Calcul Vorticité Locale
-        let curl = 0;
-        // Astuce : on ignore les bords pour éviter les erreurs d'index
-        if(i > Nx && i < size-Nx) {
-           curl = (uy[i+1] - uy[i-1]) - (ux[i+Nx] - ux[i-Nx]);
-        }
-        let val = curl * s_curl;
-        
-        // Palette "Diverging" (Bleu - Noir - Rouge/Jaune)
-        if(val > 0) { 
-           r = Math.min(255, val*255); g = Math.min(255, val*150); 
-        } else { 
-           val = -val; 
-           b = Math.min(255, val*255); g = Math.min(255, val*150); 
-        }
-        // Fond fluide très sombre
-        b += 30; r+=10; g+=10;
-        maxV = 10; minV = -10;
-
-      } else if(params.viz === 'speed') {
-        // Vitesse Magnitude
-        const speed = Math.sqrt(ux[i]**2 + uy[i]**2);
-        let val = speed * s_vel;
-        // Palette "Inferno" simple
-        r = Math.min(255, val * 300);
-        g = Math.min(255, val * 150);
-        b = Math.min(255, (1-val) * 100);
-        maxV = params.mach * 1.5;
-
-      } else {
-        // Pression
-        let pres = (rho[i] - 1.0) * s_pres + 0.5;
-        r = pres * 255;
-        g = pres * 200;
-        b = (1-pres) * 255;
-      }
-
-      pixels[p] = r; pixels[p+1] = g; pixels[p+2] = b; pixels[p+3] = 255;
-    }
-  }
-  ctx.putImageData(imgData, 0, 0);
-
-  // MAJ Légende dynamique
-  if(steps % 10 === 0) {
-     // Approx stats
-     document.getElementById('val-max').innerText = "High";
-     document.getElementById('val-min').innerText = "Low";
-  }
-}
-
-// --- 7. BOUCLE PRINCIPALE ---
-let lastTime = 0;
-function loop(timestamp) {
-  if(!running) return;
-
-  // 4 itérations physiques par image pour fluidité
-  for(let k=0; k<4; k++) lbmStep();
-  
-  render();
-
-  // MAJ Stats UI (toutes les 500ms)
-  if(timestamp - lastTime > 500) {
-    const dt = timestamp - lastTime;
-    const fps = 1000 / dt * 4; // *4 frames simulées
-    document.getElementById('fps').innerText = fps.toFixed(0);
-    document.getElementById('steps').innerText = steps;
-    
-    // Calcul Reynolds approx
-    const nu = (params.tau - 0.5)/3;
-    const L = Ny / 6; // Taille caractéristique
-    const U = params.mach * 0.577;
-    const Re = (U * L) / nu;
-    
-    document.getElementById('disp-re').innerText = Math.round(Re);
-    document.getElementById('disp-nu').innerText = nu.toFixed(3);
-    
-    lastTime = timestamp;
-  }
-
-  requestAnimationFrame(loop);
-}
-
-// --- 8. GESTIONNAIRE D'ÉVÉNEMENTS UI ---
-const modal = document.getElementById('modal-overlay');
-
-// Boutons Démarrage
-document.getElementById('btn-start').onclick = () => {
-  modal.style.display = 'none';
-  initSim();
-  running = true;
-  loop(0);
-};
-
-document.getElementById('btn-low').onclick = () => {
-  modal.style.display = 'none';
-  Nx = 200; Ny = 80; // Mode performance
-  initSim();
-  running = true;
-  loop(0);
-};
-
-// Sliders (Mise à jour des valeurs & Params)
-const sliders = [
-  { id: 'in-mach', target: 'mach', disp: 'disp-mach' },
-  { id: 'in-tau', target: 'tau', disp: 'disp-tau' },
-  { id: 'in-aoa', target: 'aoa', disp: 'disp-aoa', unit:'°', updateGeo: true },
-  { id: 'in-thick', target: 'thick', disp: 'disp-thick', updateGeo: true },
-  { id: 'in-camber', target: 'camber', disp: 'disp-camber', updateGeo: true }
-];
-
-sliders.forEach(s => {
-  document.getElementById(s.id).oninput = (e) => {
-    const val = parseFloat(e.target.value);
-    params[s.target] = val;
-    document.getElementById(s.disp).innerText = val + (s.unit || '');
-    
-    if(s.updateGeo) {
-      createAirfoil(); // Recalcul immédiat du profil
+  // Bouton Démarrage Modal
+  document.getElementById('btn-start-modal').onclick = function() {
+    document.getElementById('startup-modal').style.display = 'none';
+    if(!running) {
+      initLBM(); 
+      running = true;
+      loop();
     }
   };
-});
 
-// Selecteur Visu
-document.getElementById('sel-viz').onchange = (e) => {
-  params.viz = e.target.value;
-};
+  // Boutons Action
+  document.getElementById('btn-pause').onclick = function() {
+    running = !running;
+    this.innerText = running ? "Pause" : "Reprendre";
+    if(running) loop();
+  };
 
-// Boutons Footer
-document.getElementById('btn-pause').onclick = function() {
-  running = !running;
-  this.innerText = running ? "Pause" : "Reprendre";
-  if(running) loop(0);
-};
+  document.getElementById('btn-reset').onclick = function() {
+    initLBM();
+  };
 
-document.getElementById('btn-reset').onclick = () => {
-  initSim();
-};
+  document.getElementById('btn-screenshot').onclick = function() {
+    const a = document.createElement('a');
+    a.download = 'cfd_screenshot.png';
+    a.href = canvas.toDataURL();
+    a.click();
+  };
+
+  // Inputs Sliders (Liaison directe)
+  function bindInput(id, paramKey, dispId, needsGeoUpdate=false) {
+    const el = document.getElementById(id);
+    const disp = document.getElementById(dispId);
+    el.oninput = function(e) {
+      const v = parseFloat(e.target.value);
+      params[paramKey] = v;
+      if(disp) disp.innerText = v.toFixed(2) + (paramKey==='aoa'?'°':'');
+      
+      if(needsGeoUpdate) {
+        buildAirfoilMask(); 
+        updateAero(); // MAJ Coeffs
+      } else if (paramKey === 'mach' || paramKey === 'tau') {
+        updateAero(); // MAJ Reynolds
+      }
+    };
+  }
+
+  bindInput('in-mach', 'mach', 'disp-mach');
+  bindInput('in-tau', 'tau', 'disp-tau');
+  bindInput('in-aoa', 'aoa', 'disp-aoa', true);
+  bindInput('in-thick', 'thick', 'disp-thick', true);
+  bindInput('in-camber', 'camber', 'disp-camber', true);
+  
+  // Iterations Slider
+  document.getElementById('in-iter').oninput = function(e) {
+    params.iter = parseInt(e.target.value);
+    document.getElementById('disp-iter').innerText = params.iter;
+  };
+
+  // Selecteur Visu
+  document.getElementById('viz-mode').onchange = function(e) {
+    params.viz = e.target.value;
+    displayMax = 0.1; // Reset echelle visuelle
+  };
+
+  // Boutons Qualité
+  document.querySelectorAll('.q-btn').forEach(btn => {
+    btn.onclick = function() {
+      document.querySelectorAll('.q-btn').forEach(b => b.classList.remove('active'));
+      this.classList.add('active');
+      params.res = this.dataset.res;
+      updateGridSize(); // Re-allouer
+    }
+  });
+
+  // === 2. COEUR DE SIMULATION (LBM ENGINE) ===
+
+  function allocateMemory() {
+    f = new Float32Array(Q * size);
+    fTmp = new Float32Array(Q * size);
+    rho = new Float32Array(size);
+    ux = new Float32Array(size);
+    uy = new Float32Array(size);
+    mask = new Uint8Array(size);
+    vort = new Float32Array(size);
+    imgData = ctx.createImageData(Nx, Ny);
+    pixels = imgData.data;
+  }
+
+  function updateGridSize() {
+    if(params.res === 'low') { Nx=300; Ny=120; }
+    else if(params.res === 'high') { Nx=800; Ny=320; }
+    else { Nx=600; Ny=240; } // medium
+
+    canvas.width = Nx; canvas.height = Ny;
+    size = Nx * Ny;
+    document.getElementById('grid-display').innerText = `${Nx}x${Ny}`;
+    
+    allocateMemory();
+    initLBM();
+  }
+
+  // Géométrie précise (Celle que tu voulais)
+  function buildAirfoilMask() {
+    mask.fill(0);
+    // Murs
+    for(let x=0; x<Nx; x++) { mask[x]=1; mask[x+(Ny-1)*Nx]=1; }
+
+    // Params Joukowsky
+    const angle = params.aoa * Math.PI / 180;
+    const cosA = Math.cos(angle), sinA = Math.sin(angle);
+    const Npts = 500;
+    // Centrage
+    const circleOff = 0.08 + params.camber * 0.35;
+    let radius = 1.0 - params.thick * 0.6;
+    if (radius < 0.25) radius = 0.25;
+
+    // Génération Polygone
+    const pts = [];
+    for(let k=0; k<Npts; k++) {
+      const t = 2 * Math.PI * k / Npts;
+      const zx = circleOff + radius * Math.cos(t);
+      const zy = radius * Math.sin(t);
+      
+      // Transform Z = Zeta + 1/Zeta
+      const den = zx*zx + zy*zy;
+      const x_raw = zx + zx/den;
+      const y_raw = zy - zy/den;
+
+      // Rotation
+      const xr = x_raw * cosA - y_raw * sinA;
+      const yr = x_raw * sinA + y_raw * cosA;
+      pts.push({x: xr, y: yr});
+    }
+
+    // Mapping écran
+    let minX=1e9, maxX=-1e9, minY=1e9, maxY=-1e9;
+    for(let p of pts) {
+       if(p.x < minX) minX=p.x; if(p.x > maxX) maxX=p.x;
+       if(p.y < minY) minY=p.y; if(p.y > maxY) maxY=p.y;
+    }
+    const spanX = maxX - minX, spanY = maxY - minY;
+    const scale = 0.45 * Math.min(Nx/spanX, Ny/spanY);
+    const cx_scr = Nx * 0.3;
+    const cy_scr = Ny * 0.5;
+
+    airfoilPoly = pts.map(p => ({
+      x: cx_scr + (p.x - (maxX+minX)*0.5) * scale,
+      y: cy_scr - (p.y - (maxY+minY)*0.5) * scale
+    }));
+
+    // Rasterisation (Point in Polygon)
+    for(let y=0; y<Ny; y++) {
+      for(let x=0; x<Nx; x++) {
+        if(mask[x+y*Nx]) continue;
+        
+        // Raycast
+        let inside = false;
+        const px = x+0.5, py = y+0.5;
+        for(let i=0, j=airfoilPoly.length-1; i<airfoilPoly.length; j=i++) {
+           const xi = airfoilPoly[i].x, yi = airfoilPoly[i].y;
+           const xj = airfoilPoly[j].x, yj = airfoilPoly[j].y;
+           const intersect = ((yi > py) !== (yj > py)) && (px < (xj-xi)*(py-yi)/(yj-yi+1e-9)+xi);
+           if(intersect) inside = !inside;
+        }
+        if(inside) mask[x+y*Nx] = 1;
+      }
+    }
+  }
+
+  function initLBM() {
+    buildAirfoilMask();
+    const u0 = params.mach * Math.sqrt(cs2);
+    
+    for(let i=0; i<size; i++) {
+      rho[i] = 1.0;
+      ux[i] = mask[i] ? 0 : u0;
+      uy[i] = 0;
+      
+      const u2 = ux[i]*ux[i] + uy[i]*uy[i];
+      for(let k=0; k<Q; k++) {
+        const cu = 3*(cx[k]*ux[i] + cy[k]*uy[i]);
+        f[k*size+i] = w[k]*rho[i]*(1 + cu + 0.5*cu*cu - 1.5*u2);
+      }
+    }
+    steps = 0;
+    updateAero();
+  }
+
+  // --- 3. STEP PHYSIQUE ---
+  function lbmStep() {
+    const uIn = params.mach * Math.sqrt(cs2);
+
+    // 1. Macros & Collision
+    for(let i=0; i<size; i++) {
+      if(mask[i]) continue; // Sauter murs
+
+      // Moments
+      let r=0, u=0, v=0;
+      for(let k=0; k<Q; k++) {
+        const val = f[k*size+i];
+        r += val;
+        u += val*cx[k];
+        v += val*cy[k];
+      }
+      
+      // Inlet Gauche
+      if(i % Nx === 0) { r=1.0; u=uIn; v=0; }
+      // Outlet Droite (Extrapol simple)
+      if((i+1) % Nx === 0) { 
+         const left = i-1; 
+         u = ux[left]; v = uy[left]; r = rho[left];
+      }
+
+      rho[i] = r;
+      if(r>0) { ux[i]=u/r; uy[i]=v/r; }
+
+      // Equilibre + Relax
+      const u2 = ux[i]*ux[i] + uy[i]*uy[i];
+      for(let k=0; k<Q; k++) {
+        const cu = 3*(cx[k]*ux[i] + cy[k]*uy[i]);
+        const feq = w[k]*r*(1 + cu + 0.5*cu*cu - 1.5*u2);
+        fTmp[k*size+i] = f[k*size+i] - (f[k*size+i] - feq)/params.tau;
+      }
+    }
+
+    // 2. Streaming + BounceBack
+    for(let y=0; y<Ny; y++) {
+      for(let x=0; x<Nx; x++) {
+        const i = x + y*Nx;
+        
+        for(let k=0; k<Q; k++) {
+           const nx = x + cx[k];
+           const ny = y + cy[k];
+           
+           if(nx>=0 && nx<Nx && ny>=0 && ny<Ny) {
+              const ni = nx + ny*Nx;
+              if(mask[ni]) {
+                // Rebond sur obstacle
+                f[opp[k]*size + i] = fTmp[k*size + i];
+              } else {
+                // Propagation
+                f[k*size + ni] = fTmp[k*size + i];
+              }
+           }
+        }
+      }
+    }
+
+    // 3. Calcul Vorticité (si besoin affichage)
+    if(params.viz === 'vorticity' || params.viz === 'curl') {
+       for(let y=1; y<Ny-1; y++) {
+         for(let x=1; x<Nx-1; x++) {
+           const i = x+y*Nx;
+           if(!mask[i]) {
+             // Curl 2D = dUy/dx - dUx/dy
+             const duy_dx = (uy[i+1] - uy[i-1])*0.5;
+             const dux_dy = (ux[i+Nx] - ux[i-Nx])*0.5;
+             vort[i] = duy_dx - dux_dy;
+           }
+         }
+       }
+    }
+    steps++;
+  }
+
+  // --- 4. RENDU & COULEURS ---
+  
+  function getColorMap(val) {
+    // Palette "Turbo" simplifiée (Bleu -> Cyan -> Vert -> Jaune -> Rouge)
+    val = Math.max(0, Math.min(1, val));
+    const r = Math.min(1, Math.max(0, 3*val - 1.5)); 
+    const g = Math.min(1, Math.max(0, 2 - 3*Math.abs(val - 0.6))); 
+    const b = Math.min(1, Math.max(0, 2 - 3*val));
+    return [r*255, g*255, b*255];
+  }
+
+  function getDivergingColor(val) {
+    // Bleu - Noir - Rouge
+    val = Math.max(-1, Math.min(1, val));
+    let r=0, g=0, b=0;
+    if(val > 0) { r=255*val; g=100*val; } // Rougeatre
+    else { b=255*Math.abs(val); g=100*Math.abs(val); } // Bleuatre
+    // Fond légèrement éclairé
+    r+=15; g+=20; b+=30;
+    return [r, g, b];
+  }
+
+  function render() {
+    // Auto-scale lissé
+    let localMax = 0;
+    
+    // Scan pour trouver max (optionnel pour perf, on peut utiliser constante)
+    if(params.viz === 'velocity') localMax = params.mach * 2.0;
+    if(params.viz === 'vorticity') localMax = 0.15;
+    if(params.viz === 'pressure') localMax = 0.05;
+
+    // Smoothing affichage
+    displayMax = displayMax * 0.95 + localMax * 0.05;
+    const scale = 1.0 / (displayMax + 1e-6);
+
+    document.getElementById('val-max').innerText = displayMax.toFixed(3);
+    document.getElementById('val-min').innerText = "0.0";
+
+    // Dessin Pixels
+    for(let i=0; i<size; i++) {
+      const p = i*4;
+      if(mask[i]) {
+        // Obstacle
+        pixels[p]=60; pixels[p+1]=65; pixels[p+2]=70; pixels[p+3]=255;
+      } else {
+        let col = [0,0,0];
+        
+        if(params.viz === 'velocity' || params.viz === 'streamlines' || params.viz === 'vectors') {
+          const speed = Math.sqrt(ux[i]**2 + uy[i]**2);
+          col = getColorMap(speed * scale);
+        } else if(params.viz === 'pressure') {
+          const pres = (rho[i]-1.0) * 3.0; // Gain pression
+          col = getDivergingColor(pres * scale * 10);
+        } else { // Vorticity
+          col = getDivergingColor(vort[i] * scale);
+        }
+
+        pixels[p]=col[0]; pixels[p+1]=col[1]; pixels[p+2]=col[2]; pixels[p+3]=255;
+      }
+    }
+    ctx.putImageData(imgData, 0, 0);
+
+    // Dessin Streamlines (Surcouche)
+    if(params.viz === 'streamlines') {
+      ctx.strokeStyle = "rgba(255,255,255,0.4)";
+      ctx.lineWidth = 1;
+      const stride = 15;
+      ctx.beginPath();
+      for(let y=stride; y<Ny; y+=stride) {
+        for(let x=stride; x<Nx; x+=stride) {
+           if(mask[x+y*Nx]) continue;
+           let cx=x, cy=y;
+           ctx.moveTo(cx, cy);
+           // Trace ligne
+           for(let k=0; k<10; k++) {
+              const idx = (cx|0) + (cy|0)*Nx;
+              if(mask[idx]) break;
+              const u = ux[idx], v = uy[idx];
+              const m = Math.sqrt(u*u+v*v);
+              if(m<1e-4) break;
+              cx += (u/m)*3; cy += (v/m)*3;
+              if(cx<0||cx>=Nx||cy<0||cy>=Ny) break;
+              ctx.lineTo(cx, cy);
+           }
+        }
+      }
+      ctx.stroke();
+    }
+    
+    // Dessin Vecteurs
+    if(params.viz === 'vectors') {
+       ctx.strokeStyle = "rgba(255,255,255,0.6)";
+       ctx.beginPath();
+       const step = 20;
+       for(let y=step/2; y<Ny; y+=step) {
+         for(let x=step/2; x<Nx; x+=step) {
+            const i = (x|0) + (y|0)*Nx;
+            if(mask[i]) continue;
+            const u = ux[i], v = uy[i];
+            const m = Math.sqrt(u*u+v*v);
+            if(m > 0.01) {
+               const scaleVec = 30;
+               ctx.moveTo(x, y);
+               ctx.lineTo(x + u*scaleVec, y + v*scaleVec);
+               // Petite tete
+               ctx.rect(x + u*scaleVec, y + v*scaleVec, 1, 1);
+            }
+         }
+       }
+       ctx.stroke();
+    }
+  }
+
+  // --- 5. DATA UPDATES ---
+  function updateAero() {
+     // Calcul Theorique
+     const rad = Math.PI/180;
+     let cl = 2 * Math.PI * (params.aoa * rad);
+     // Saturation CL (décrochage simple)
+     if(cl > 1.5) cl = 1.5 + (cl-1.5)*0.1;
+     
+     const cd = 0.01 + (cl*cl) / (Math.PI * 6.0); // Polaire parabolique approx
+     const ld = cl / cd;
+
+     document.getElementById('res-cl').innerText = cl.toFixed(3);
+     document.getElementById('res-cd').innerText = cd.toFixed(4);
+     document.getElementById('res-ld').innerText = ld.toFixed(1);
+
+     // Reynolds
+     const u = params.mach * Math.sqrt(cs2);
+     const L = Nx * 0.2; // Corde approx
+     const nu = (params.tau - 0.5)/3;
+     const Re = u * L / nu;
+     document.getElementById('res-re').innerText = "~" + Math.round(Re);
+     document.getElementById('res-nu').innerText = nu.toFixed(3);
+  }
+
+  // --- 6. LOOP ---
+  function loop() {
+    if(!running) return;
+
+    // Multi-step pour vitesse
+    for(let k=0; k<params.iter; k++) {
+      lbmStep();
+    }
+    
+    render();
+    
+    // Stats FPS
+    const now = performance.now();
+    if(now - lastTime > 1000) {
+      const fps = frames;
+      document.getElementById('fps-counter').innerText = fps;
+      document.getElementById('steps-count').innerText = steps;
+      frames = 0;
+      lastTime = now;
+    }
+    frames++;
+
+    requestAnimationFrame(loop);
+  }
+
+  // --- 7. INIT AU CHARGEMENT ---
+  // Pré-allocation pour affichage propre avant start
+  updateGridSize(); // Alloue et affiche grille vide
+  updateAero();
 
 </script>
 </body>
