@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Flow Simulator - Advanced CFD</title>
+  <title>Flow Simulator by Hamza Boudhair</title>
   <style>
     :root {
       --color-bg-primary: #0f172a;
@@ -11,19 +11,14 @@
       --color-text: #e2e8f0;
       --color-primary: #06b6d4;
       --color-accent: #10b981;
-      --color-danger: #ef4444;
     }
 
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
+    * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; }
 
     body {
       background: var(--color-bg-primary);
       color: var(--color-text);
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
       height: 100vh;
       overflow: hidden;
     }
@@ -35,6 +30,7 @@
       padding: 20px;
     }
 
+    /* ZONE CANVAS */
     .canvas-wrapper {
       flex: 1;
       background: #000;
@@ -45,12 +41,9 @@
       position: relative;
     }
 
-    canvas {
-      width: 100%;
-      height: 100%;
-      display: block;
-    }
+    canvas { width: 100%; height: 100%; display: block; }
 
+    /* BARRE LATÉRALE */
     .sidebar {
       width: 320px;
       background: var(--color-surface);
@@ -59,138 +52,106 @@
       border: 1px solid rgba(6, 182, 212, 0.1);
       overflow-y: auto;
       box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
-      <div class="info-box">
-      💡 <strong>Tip:</strong> Increase viscosity...
-    </div>
-
-    <div class="credits">
-      Développé avec passion par <br>
-      <a href="#" target="_blank">Hamza Boudhair</a>
-    </div>
-    </div> </div>
+      display: flex;
+      flex-direction: column;
     }
 
-    /* Custom Scrollbar */
+    /* Scrollbar custom */
     .sidebar::-webkit-scrollbar { width: 6px; }
-    .sidebar::-webkit-scrollbar-track { background: rgba(255, 255, 255, 0.05); border-radius: 3px; }
+    .sidebar::-webkit-scrollbar-track { background: rgba(255, 255, 255, 0.05); }
     .sidebar::-webkit-scrollbar-thumb { background: var(--color-primary); border-radius: 3px; }
 
     h1 {
-      font-size: 18px;
-      margin-bottom: 24px;
-      color: var(--color-primary);
-      text-transform: uppercase;
-      letter-spacing: 2px;
-      font-weight: 700;
+      font-size: 18px; margin-bottom: 24px; color: var(--color-primary);
+      text-transform: uppercase; letter-spacing: 1px; font-weight: 800;
+      border-bottom: 1px solid rgba(6, 182, 212, 0.2); padding-bottom: 15px;
     }
 
     h3 {
-      font-size: 12px;
-      text-transform: uppercase;
-      letter-spacing: 1px;
-      color: rgba(255, 255, 255, 0.6);
-      margin-top: 20px;
-      margin-bottom: 12px;
-      font-weight: 600;
+      font-size: 11px; text-transform: uppercase; letter-spacing: 1px;
+      color: rgba(255, 255, 255, 0.5); margin-top: 20px; margin-bottom: 10px; font-weight: 600;
     }
 
     .control-group { margin-bottom: 16px; }
 
     .label-row {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 6px;
-      font-size: 12px;
+      display: flex; justify-content: space-between; margin-bottom: 6px; font-size: 12px;
     }
-
-    .label-row label { font-weight: 500; color: rgba(255, 255, 255, 0.8); }
+    .label-row label { color: #cbd5e1; font-weight: 500; }
     .value { color: var(--color-primary); font-weight: 700; font-family: 'Monaco', monospace; }
 
+    /* Sliders */
     input[type="range"] {
-      width: 100%;
-      height: 5px;
-      border-radius: 3px;
-      background: rgba(255, 255, 255, 0.1);
-      outline: none;
-      -webkit-appearance: none;
+      width: 100%; height: 5px; border-radius: 3px;
+      background: rgba(255, 255, 255, 0.1); outline: none; -webkit-appearance: none;
     }
-
     input[type="range"]::-webkit-slider-thumb {
-      -webkit-appearance: none;
-      width: 14px; height: 14px;
-      border-radius: 50%;
-      background: var(--color-primary);
-      cursor: pointer;
+      -webkit-appearance: none; width: 16px; height: 16px; border-radius: 50%;
+      background: var(--color-primary); cursor: pointer;
       border: 2px solid var(--color-bg-primary);
-      box-shadow: 0 0 8px rgba(6, 182, 212, 0.4);
+      box-shadow: 0 0 10px rgba(6, 182, 212, 0.5);
+      transition: transform 0.1s;
+    }
+    input[type="range"]::-webkit-slider-thumb:hover { transform: scale(1.2); }
+
+    /* Dropdown */
+    select {
+      width: 100%; padding: 8px; background: rgba(0,0,0,0.2);
+      color: #fff; border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 6px; font-size: 12px; outline: none;
     }
 
+    /* Boutons */
     .button-group { display: flex; gap: 8px; margin-top: 20px; }
-
+    
     button {
-      flex: 1;
-      padding: 10px 16px;
-      background: var(--color-primary);
-      color: var(--color-bg-primary);
-      border: none;
-      border-radius: 8px;
-      font-weight: 600;
-      font-size: 12px;
-      text-transform: uppercase;
-      cursor: pointer;
-      transition: all 0.2s ease;
+      flex: 1; padding: 10px; background: var(--color-primary);
+      color: #000; border: none; border-radius: 6px;
+      font-weight: 700; font-size: 11px; text-transform: uppercase;
+      cursor: pointer; transition: all 0.2s;
     }
+    button:hover { filter: brightness(1.1); transform: translateY(-1px); }
+    button:active { transform: translateY(0); }
 
-    button:hover { background: #22d3ee; box-shadow: 0 0 15px rgba(6, 182, 212, 0.4); }
-    button:active { transform: scale(0.98); }
-    button.secondary { background: rgba(6, 182, 212, 0.2); color: var(--color-primary); border: 1px solid var(--color-primary); }
-    button.secondary:hover { background: rgba(6, 182, 212, 0.3); }
-
-    .info-box {
-      background: rgba(16, 185, 129, 0.1);
-      border-left: 3px solid var(--color-accent);
-      padding: 12px;
-      border-radius: 6px;
-      font-size: 11px;
-      margin-top: 20px;
-      line-height: 1.5;
-      color: rgba(255, 255, 255, 0.7);
+    button.secondary {
+      background: transparent; color: var(--color-primary);
+      border: 1px solid var(--color-primary);
     }
+    button.secondary:hover { background: rgba(6, 182, 212, 0.1); }
 
-    .preset-buttons { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 12px; }
-    .preset-buttons button { padding: 8px 12px; font-size: 11px; }
+    .preset-buttons { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; margin-top: 10px; }
+    .preset-buttons button { padding: 6px; font-size: 10px; }
 
+    /* Stats Panel */
     .stats {
-      margin-top: 20px;
-      padding: 12px;
-      background: rgba(255, 255, 255, 0.05);
-      border-radius: 8px;
-      font-size: 11px;
-      font-family: 'Monaco', monospace;
+      margin-top: 20px; padding: 12px;
+      background: rgba(0, 0, 0, 0.2); border-radius: 8px;
+      font-size: 11px; font-family: 'Monaco', monospace;
     }
-
-    .stat-line { display: flex; justify-content: space-between; margin-bottom: 6px; color: rgba(255, 255, 255, 0.6); }
-    .stat-line:last-child { margin-bottom: 0; }
-    .stat-value { color: var(--color-primary); font-weight: 700; }
+    .stat-line { display: flex; justify-content: space-between; margin-bottom: 4px; color: #94a3b8; }
+    .stat-value { color: #e2e8f0; }
 
     .hint {
-      position: absolute;
-      bottom: 20px;
-      left: 20px;
-      font-size: 12px;
-      color: rgba(255, 255, 255, 0.4);
+      position: absolute; bottom: 20px; left: 20px;
+      font-size: 12px; color: rgba(255, 255, 255, 0.4);
       pointer-events: none;
     }
-    
-    select {
-      width: 100%; padding: 8px; 
-      background: rgba(255,255,255,0.1); 
-      color: var(--color-primary); 
-      border: 1px solid rgba(6,182,212,0.3); 
-      border-radius: 6px; 
-      font-size: 12px;
-      outline: none;
+
+    /* --- SIGNATURE HAMZA BOUDHAIR --- */
+    .credits {
+      margin-top: auto; /* Pousse en bas */
+      padding-top: 20px;
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+      text-align: center;
+      font-size: 11px;
+      color: #64748b;
+      line-height: 1.6;
+    }
+    .credits span {
+      color: var(--color-primary);
+      font-weight: 700;
+      font-size: 13px;
+      letter-spacing: 0.5px;
     }
   </style>
 </head>
@@ -199,59 +160,46 @@
 <div class="container">
   <div class="canvas-wrapper">
     <canvas id="canvas"></canvas>
-    <div class="hint">🖱️ Drag airfoil | Space to pause</div>
+    <div class="hint">🖱️ Drag airfoil to move | Space to pause</div>
   </div>
 
   <div class="sidebar">
-    <h1>⚙️ Flow Control</h1>
+    <h1>🌊 CFD Studio</h1>
 
-    <h3>Simulation</h3>
+    <h3>Simulation Mode</h3>
     <div class="control-group">
-      <div class="label-row"><label>Simulation Type</label></div>
       <select id="simType">
-        <option value="vorticity">Vorticity Field</option>
-        <option value="velocity">Velocity Magnitude</option>
-        <option value="pressure">Pressure Field</option>
+        <option value="vorticity">🌀 Vorticity (Turbulence)</option>
+        <option value="velocity">💨 Velocity Speed</option>
+        <option value="pressure">⚡ Pressure Field</option>
       </select>
     </div>
 
-    <h3>Flow Parameters</h3>
+    <h3>Parameters</h3>
     <div class="control-group">
-      <div class="label-row"><label>Flow Speed (Mach)</label><span class="value" id="machVal">0.20</span></div>
-      <input type="range" id="machSlider" min="0.05" max="0.5" step="0.01" value="0.20">
+      <div class="label-row"><label>Wind Speed (Mach)</label><span class="value" id="machVal">0.20</span></div>
+      <input type="range" id="machSlider" min="0.05" max="0.4" step="0.01" value="0.20">
     </div>
     <div class="control-group">
       <div class="label-row"><label>Viscosity</label><span class="value" id="viscVal">0.020</span></div>
       <input type="range" id="viscSlider" min="0.005" max="0.1" step="0.005" value="0.020">
     </div>
     <div class="control-group">
-      <div class="label-row"><label>Angle of Attack (°)</label><span class="value" id="aoaVal">12</span></div>
+      <div class="label-row"><label>Angle of Attack</label><span class="value" id="aoaVal">12°</span></div>
       <input type="range" id="aoaSlider" min="-45" max="45" step="1" value="12">
     </div>
-
-    <h3>Rendering</h3>
     <div class="control-group">
       <div class="label-row"><label>Contrast</label><span class="value" id="contrastVal">2.0</span></div>
       <input type="range" id="contrastSlider" min="1.0" max="5.0" step="0.1" value="2.0">
     </div>
-    <div class="control-group">
-      <div class="label-row"><label>Color Scheme</label></div>
-      <select id="colorScheme">
-        <option value="cyan">Cyan Heat</option>
-        <option value="plasma">Plasma</option>
-        <option value="grayscale">Grayscale</option>
-        <option value="jet">Jet</option>
-      </select>
-    </div>
 
-    <h3>Presets</h3>
+    <h3>Quick Presets</h3>
     <div class="preset-buttons">
       <button class="secondary" onclick="applyPreset('cruise')">Cruise</button>
       <button class="secondary" onclick="applyPreset('stall')">Stall</button>
-      <button class="secondary" onclick="applyPreset('hover')">Hover</button>
+      <button class="secondary" onclick="applyPreset('turb')">Turbulence</button>
     </div>
 
-    <h3>Controls</h3>
     <div class="button-group">
       <button onclick="resetSimulation()">Reset</button>
       <button class="secondary" id="pauseBtn" onclick="togglePause()">Pause</button>
@@ -259,13 +207,13 @@
 
     <div class="stats">
       <div class="stat-line"><span>FPS:</span><span class="stat-value" id="fpsCounter">60</span></div>
-      <div class="stat-line"><span>Reynolds:</span><span class="stat-value" id="reynoldsVal">~50k</span></div>
-      <div class="stat-line"><span>Grid:</span><span class="stat-value" id="gridVal">400×200</span></div>
-      <div class="stat-line"><span>Status:</span><span class="stat-value" id="statusVal">Running</span></div>
+      <div class="stat-line"><span>Resolution:</span><span class="stat-value">400x200</span></div>
+      <div class="stat-line"><span>Method:</span><span class="stat-value">LBM D2Q9</span></div>
     </div>
 
-    <div class="info-box">
-      💡 <strong>Tip:</strong> Increase viscosity for smoother flow, decrease for more turbulence. Drag the airfoil to interact.
+    <div class="credits">
+      Interactive Simulation<br>
+      Created by <span>Hamza Boudhair</span>
     </div>
   </div>
 </div>
@@ -274,22 +222,21 @@
   const canvas = document.getElementById('canvas');
   const ctx = canvas.getContext('2d', { alpha: false });
 
-  // --- Simulation Constants ---
+  // --- CONFIGURATION ---
   let Nx = 400, Ny = 200;
   const Q = 9;
   
-  // --- State Variables ---
+  // --- ETAT ---
   let running = true;
   let simType = 'vorticity';
-  let colorScheme = 'cyan';
   let visc = 0.020;
-  let u0 = 0.115;
+  let u0 = 0.115; // Mach 0.2 équivalent
   let contrast = 2.0;
   let airfoilX = Nx * 0.25;
   let airfoilY = Ny * 0.5;
   let isDragging = false;
 
-  // --- Arrays (Typed for performance) ---
+  // --- TABLEAUX MEMOIRE ---
   let f = new Float32Array(Nx * Ny * Q);
   let fNew = new Float32Array(Nx * Ny * Q);
   let rho = new Float32Array(Nx * Ny);
@@ -299,7 +246,7 @@
   let imgBuf = new ArrayBuffer(Nx * Ny * 4);
   let img32 = new Uint32Array(imgBuf);
 
-  // LBM Constants D2Q9
+  // LBM CONSTANTES
   const w = [4/9, 1/9, 1/9, 1/9, 1/9, 1/36, 1/36, 1/36, 1/36];
   const cx = [0, 1, 0, -1, 0, 1, -1, -1, 1];
   const cy = [0, 0, 1, 0, -1, 1, 1, -1, -1];
@@ -307,12 +254,10 @@
 
   let airfoilPath = new Path2D();
   
-  // FPS Counter
-  let frameCount = 0;
-  let lastFpsTime = Date.now();
-  let fps = 60;
+  // FPS
+  let frameCount = 0, lastFpsTime = Date.now();
 
-  // --- Initialization ---
+  // --- INIT ---
   function init() {
     for (let i = 0; i < Nx * Ny; i++) {
       rho[i] = 1;
@@ -326,7 +271,7 @@
     }
   }
 
-  // --- Geometry Builder (Joukowsky) ---
+  // --- GEOMETRIE (JOUKOWSKY) ---
   function buildGeo() {
     mask.fill(0);
     airfoilPath = new Path2D();
@@ -347,8 +292,7 @@
       let t = 2 * Math.PI * i / Np;
       let zx = z0x + R * Math.cos(t);
       let zy = z0y + R * Math.sin(t);
-      let den = zx * zx + zy * zy;
-      if (den < 0.001) den = 0.001;
+      let den = zx * zx + zy * zy; if (den < 0.001) den = 0.001;
       let wx = zx * (1 + 1 / den);
       let wy = zy * (1 - 1 / den);
       let rx = (wx * Math.cos(aoa) - wy * Math.sin(aoa)) * (chord / 4) + airfoilX;
@@ -356,18 +300,14 @@
       points.push({ x: rx, y: ry });
     }
 
-    // Fill Mask
+    // Remplissage Masque
     let minX = Nx, maxX = 0, minY = Ny, maxY = 0;
     points.forEach(p => {
-      if (p.x < minX) minX = p.x;
-      if (p.x > maxX) maxX = p.x;
-      if (p.y < minY) minY = p.y;
-      if (p.y > maxY) maxY = p.y;
+      if (p.x < minX) minX = p.x; if (p.x > maxX) maxX = p.x;
+      if (p.y < minY) minY = p.y; if (p.y > maxY) maxY = p.y;
     });
-    minX = Math.max(0, Math.floor(minX));
-    maxX = Math.min(Nx, Math.ceil(maxX));
-    minY = Math.max(0, Math.floor(minY));
-    maxY = Math.min(Ny, Math.ceil(maxY));
+    minX = Math.max(0, Math.floor(minX)); maxX = Math.min(Nx, Math.ceil(maxX));
+    minY = Math.max(0, Math.floor(minY)); maxY = Math.min(Ny, Math.ceil(maxY));
 
     for (let y = minY; y < maxY; y++) {
       for (let x = minX; x < maxX; x++) {
@@ -382,35 +322,32 @@
       }
     }
 
-    // Create Vector Path
+    // Chemin Vectoriel
     airfoilPath.moveTo(points[0].x, points[0].y);
     for (let i = 1; i < points.length; i++) airfoilPath.lineTo(points[i].x, points[i].y);
     airfoilPath.closePath();
   }
 
-  // --- Physics Step ---
+  // --- PHYSIQUE ---
   function step() {
     let tau = 0.5 + 3 * visc;
     let om = 1.0 / tau;
     
-    // Collision
     for (let i = 0; i < Nx * Ny; i++) {
       if (mask[i]) continue;
       let idx = i * Q;
-      let r = f[idx] + f[idx + 1] + f[idx + 2] + f[idx + 3] + f[idx + 4] + f[idx + 5] + f[idx + 6] + f[idx + 7] + f[idx + 8];
-      let u = (f[idx + 1] - f[idx + 3] + f[idx + 5] - f[idx + 6] - f[idx + 7] + f[idx + 8]) / r;
-      let v = (f[idx + 2] - f[idx + 4] + f[idx + 5] + f[idx + 6] - f[idx + 7] - f[idx + 8]) / r;
+      // Somme
+      let r = f[idx] + f[idx+1] + f[idx+2] + f[idx+3] + f[idx+4] + f[idx+5] + f[idx+6] + f[idx+7] + f[idx+8];
+      let u = (f[idx+1] - f[idx+3] + f[idx+5] - f[idx+6] - f[idx+7] + f[idx+8]) / r;
+      let v = (f[idx+2] - f[idx+4] + f[idx+5] + f[idx+6] - f[idx+7] - f[idx+8]) / r;
       
-      if (isNaN(u) || Math.abs(u) > 0.8) {
-        init(); // Auto reset on crash
-        return;
-      }
+      // Anti-Crash
+      if (isNaN(u) || Math.abs(u) > 0.8) { init(); return; }
       
-      rho[i] = r;
-      ux[i] = u;
-      uy[i] = v;
+      rho[i] = r; ux[i] = u; uy[i] = v;
       let u2 = u * u + v * v;
       
+      // Collision BGK
       for (let k = 0; k < Q; k++) {
         let eu = cx[k] * u + cy[k] * v;
         let feq = w[k] * r * (1 + 3 * eu + 4.5 * eu * eu - 1.5 * u2);
@@ -421,8 +358,7 @@
     // Streaming
     for (let y = 0; y < Ny; y++) {
       for (let x = 0; x < Nx; x++) {
-        let i = x + y * Nx;
-        if (mask[i]) continue;
+        let i = x + y * Nx; if (mask[i]) continue;
         for (let k = 0; k < Q; k++) {
           let nx = x + cx[k], ny = y + cy[k];
           if (nx >= 0 && nx < Nx && ny >= 0 && ny < Ny) {
@@ -434,83 +370,56 @@
       }
     }
 
-    // Boundary Conditions (Inlet)
+    // Conditions Limites
     let u2in = u0 * u0;
-    for (let y = 0; y < Ny; y++) {
-      let i = y * Nx;
-      if (mask[i]) continue;
+    for (let y = 0; y < Ny; y++) { // Entrée
+      let i = y * Nx; if (mask[i]) continue;
       for (let k = 0; k < Q; k++) {
         let eu = cx[k] * u0;
         fNew[i * Q + k] = w[k] * (1 + 3 * eu + 4.5 * eu * eu - 1.5 * u2in);
       }
     }
-    // Boundary Conditions (Outlet)
-    for (let y = 0; y < Ny; y++) {
+    for (let y = 0; y < Ny; y++) { // Sortie
       let i = (Nx - 1) + y * Nx;
-      if (!mask[i]) {
-        for (let k = 0; k < Q; k++) fNew[i * Q + k] = fNew[(i - 1) * Q + k];
-      }
+      if (!mask[i]) { for (let k = 0; k < Q; k++) fNew[i * Q + k] = fNew[(i - 1) * Q + k]; }
     }
 
-    let t = f;
-    f = fNew;
-    fNew = t;
+    let t = f; f = fNew; fNew = t;
   }
 
-  // --- Rendering Helpers ---
+  // --- COULEURS ---
   function getColor(val) {
     val = Math.max(0, Math.min(1, val));
     let r, g, b;
-
-    switch (colorScheme) {
-      case 'plasma':
-        let x = val * 3;
-        r = Math.floor((0.5 + 0.5 * Math.sin((x - 0.5) * Math.PI)) * 255);
-        g = Math.floor((0.5 + 0.5 * Math.sin(x * Math.PI)) * 255);
-        b = Math.floor((0.5 + 0.5 * Math.sin((x + 0.5) * Math.PI)) * 255);
-        break;
-      case 'grayscale':
-        r = g = b = Math.floor(val * 255);
-        break;
-      case 'jet':
-        if (val < 0.25) { r = 0; g = Math.floor(val * 4 * 255); b = 255; }
-        else if (val < 0.5) { r = 0; g = 255; b = Math.floor((1 - (val - 0.25) * 4) * 255); }
-        else if (val < 0.75) { r = Math.floor((val - 0.5) * 4 * 255); g = 255; b = 0; }
-        else { r = 255; g = Math.floor((1 - (val - 0.75) * 4) * 255); b = 0; }
-        break;
-      default: // cyan heat
-        r = Math.floor(val * 100);
-        g = Math.floor(val * 220);
-        b = Math.floor(val * 255);
-    }
+    // Palette Cyan "Glow"
+    r = Math.floor(val * 50);
+    g = Math.floor(val * 200);
+    b = Math.floor(val * 255);
+    // Blanc en saturation
+    if(val > 0.8) { r=255; g=255; b=255; }
+    
     return (255 << 24) | (b << 16) | (g << 8) | r;
   }
 
-  // --- Main Draw Loop ---
+  // --- DESSIN ---
   function draw() {
     for (let y = 1; y < Ny - 1; y++) {
       for (let x = 1; x < Nx - 1; x++) {
         let i = x + y * Nx;
-        
-        if (mask[i]) {
-          img32[i] = 0xFF000000; // Transparent for vector overlay
-          continue;
-        }
+        if (mask[i]) { img32[i] = 0xFF000000; continue; }
         
         let val = 0;
-        
         if (simType === 'vorticity') {
           let curl = (ux[i + Nx] - ux[i - Nx]) - (uy[i + 1] - uy[i - 1]);
-          let speed = Math.sqrt(ux[i] * ux[i] + uy[i] * uy[i]);
+          let speed = Math.sqrt(ux[i]**2 + uy[i]**2);
           val = Math.abs(curl * 5.0) + (speed * 0.2);
         } else if (simType === 'velocity') {
-          val = Math.sqrt(ux[i] * ux[i] + uy[i] * uy[i]) * 3;
-        } else if (simType === 'pressure') {
-          val = Math.abs(rho[i] - 1) * 10;
+          val = Math.sqrt(ux[i]**2 + uy[i]**2) * 3;
+        } else {
+          val = Math.abs(rho[i] - 1) * 15;
         }
         
-        val = val * contrast;
-        img32[i] = getColor(val);
+        img32[i] = getColor(val * contrast);
       }
     }
 
@@ -519,148 +428,104 @@
       let H = canvas.height = canvas.clientHeight;
       
       ctx.imageSmoothingEnabled = true;
-      ctx.imageSmoothingQuality = 'high';
-      
-      // Background
       ctx.fillStyle = 'black';
       ctx.fillRect(0, 0, W, H);
-      
-      // Fluid
       ctx.drawImage(spr, 0, 0, W, H);
       
-      // Vector Airfoil
-      let scX = W / Nx;
-      let scY = H / Ny;
+      // Dessin Aile Vectorielle
+      let scX = W / Nx, scY = H / Ny;
       ctx.save();
       ctx.scale(scX, scY);
-      ctx.fillStyle = '#000';
+      ctx.fillStyle = '#0f172a';
       ctx.strokeStyle = '#06b6d4';
       ctx.lineWidth = 1.5 / scX;
       ctx.shadowColor = '#06b6d4';
-      ctx.shadowBlur = 10;
+      ctx.shadowBlur = 15;
       ctx.fill(airfoilPath);
       ctx.stroke(airfoilPath);
       ctx.restore();
     });
   }
 
-  // --- Animation Loop ---
   function loop() {
-    if (running) {
-      for (let k = 0; k < 8; k++) step();
-    }
+    if (running) { for (let k = 0; k < 8; k++) step(); }
     draw();
-    
     frameCount++;
-    let now = Date.now();
-    if (now - lastFpsTime >= 1000) {
-      fps = frameCount;
-      frameCount = 0;
-      lastFpsTime = now;
-      document.getElementById('fpsCounter').textContent = fps;
+    if (Date.now() - lastFpsTime >= 1000) {
+      document.getElementById('fpsCounter').textContent = frameCount;
+      frameCount = 0; lastFpsTime = Date.now();
     }
-    
     requestAnimationFrame(loop);
   }
 
-  // --- Interaction Handlers ---
-  function resetSimulation() {
-    init();
-    document.getElementById('statusVal').textContent = 'Ready';
-  }
-
-  function togglePause() {
-    running = !running;
-    const btn = document.getElementById('pauseBtn');
-    btn.textContent = running ? 'Pause' : 'Resume';
-    document.getElementById('statusVal').textContent = running ? 'Running' : 'Paused';
-  }
-
-  function applyPreset(preset) {
-    switch (preset) {
-      case 'cruise':
-        document.getElementById('machSlider').value = 0.25;
-        document.getElementById('viscSlider').value = 0.02;
-        document.getElementById('aoaSlider').value = 5;
-        break;
-      case 'stall':
-        document.getElementById('machSlider').value = 0.15;
-        document.getElementById('viscSlider').value = 0.05;
-        document.getElementById('aoaSlider').value = 25;
-        break;
-      case 'hover':
-        document.getElementById('machSlider').value = 0.1;
-        document.getElementById('viscSlider').value = 0.03;
-        document.getElementById('aoaSlider').value = 12;
-        break;
-    }
-    updateSliders();
-  }
-
+  // --- INTERACTION UI ---
   function updateSliders() {
     u0 = parseFloat(document.getElementById('machSlider').value) * 0.577;
     visc = parseFloat(document.getElementById('viscSlider').value);
     contrast = parseFloat(document.getElementById('contrastSlider').value);
     simType = document.getElementById('simType').value;
-    colorScheme = document.getElementById('colorScheme').value;
     
     document.getElementById('machVal').textContent = document.getElementById('machSlider').value;
     document.getElementById('viscVal').textContent = document.getElementById('viscSlider').value;
-    document.getElementById('aoaVal').textContent = document.getElementById('aoaSlider').value;
+    document.getElementById('aoaVal').textContent = document.getElementById('aoaSlider').value + "°";
     document.getElementById('contrastVal').textContent = document.getElementById('contrastSlider').value;
     
     buildGeo();
-    // Clear fluid inside obstacle
-    for (let i = 0; i < Nx * Ny; i++) {
-      if (mask[i]) { ux[i] = 0; uy[i] = 0; rho[i] = 1; }
+    for (let i = 0; i < Nx * Ny; i++) if (mask[i]) { ux[i]=0; uy[i]=0; rho[i]=1; }
+  }
+
+  function applyPreset(name) {
+    if(name=='cruise'){
+      document.getElementById('machSlider').value = 0.25;
+      document.getElementById('viscSlider').value = 0.02;
+      document.getElementById('aoaSlider').value = 5;
+    } else if(name=='stall') {
+      document.getElementById('machSlider').value = 0.15;
+      document.getElementById('viscSlider').value = 0.04;
+      document.getElementById('aoaSlider').value = 25;
+    } else { // turb
+      document.getElementById('machSlider').value = 0.25;
+      document.getElementById('viscSlider').value = 0.005;
+      document.getElementById('aoaSlider').value = 15;
     }
+    updateSliders();
+  }
+
+  function resetSimulation() { init(); }
+  function togglePause() {
+    running = !running;
+    document.getElementById('pauseBtn').textContent = running ? "PAUSE" : "RESUME";
   }
 
   // Listeners
-  document.getElementById('machSlider').addEventListener('input', updateSliders);
-  document.getElementById('viscSlider').addEventListener('input', updateSliders);
-  document.getElementById('aoaSlider').addEventListener('input', updateSliders);
-  document.getElementById('contrastSlider').addEventListener('input', updateSliders);
-  document.getElementById('simType').addEventListener('change', updateSliders);
-  document.getElementById('colorScheme').addEventListener('change', () => {
-    colorScheme = document.getElementById('colorScheme').value;
+  ['machSlider','viscSlider','aoaSlider','contrastSlider'].forEach(id=>{
+    document.getElementById(id).addEventListener('input', updateSliders);
   });
+  document.getElementById('simType').addEventListener('change', updateSliders);
 
-  // Mouse Drag
+  // Dragging
   canvas.addEventListener('mousedown', e => {
     let rect = canvas.getBoundingClientRect();
     let mx = (e.clientX - rect.left) * (Nx / rect.width);
     let my = (e.clientY - rect.top) * (Ny / rect.height);
-    if ((mx - airfoilX) ** 2 + (my - airfoilY) ** 2 < 900) isDragging = true;
+    if ((mx-airfoilX)**2 + (my-airfoilY)**2 < 900) isDragging = true;
   });
-
   window.addEventListener('mousemove', e => {
     if (isDragging) {
       let rect = canvas.getBoundingClientRect();
       airfoilX = Math.max(20, Math.min(Nx - 20, (e.clientX - rect.left) * (Nx / rect.width)));
       airfoilY = Math.max(20, Math.min(Ny - 20, (e.clientY - rect.top) * (Ny / rect.height)));
       buildGeo();
-      for (let i = 0; i < Nx * Ny; i++) {
-        if (mask[i]) { ux[i] = 0; uy[i] = 0; rho[i] = 1; }
-      }
+      for (let i = 0; i < Nx * Ny; i++) if (mask[i]) { ux[i]=0; uy[i]=0; rho[i]=1; }
     }
   });
-
   window.addEventListener('mouseup', () => isDragging = false);
-  
-  document.addEventListener('keydown', e => {
-    if (e.code === 'Space') {
-      e.preventDefault();
-      togglePause();
-    }
-  });
+  document.addEventListener('keydown', e => { if(e.code==='Space') togglePause(); });
 
   // Start
   buildGeo();
   init();
   loop();
 </script>
-
 </body>
 </html>
-
