@@ -3,40 +3,39 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>LBM Simulation - Video Match</title>
+  <title>LBM Blue Stable</title>
   <style>
     /* =========================================
-       STYLE UI & LAYOUT (IDENTIQUE VIDÉO)
+       STYLE UI: THÈME "DEEP BLUE" (Comme l'image)
        ========================================= */
     * { box-sizing: border-box; user-select: none; font-family: 'Segoe UI', sans-serif; }
 
     body {
       margin: 0; padding: 0;
-      background-color: #000;
+      background-color: #000510; /* Fond très sombre bleu nuit */
       height: 100vh; overflow: hidden;
       display: flex; align-items: center; justify-content: center;
     }
 
     canvas {
       display: block; width: 100%; height: 100%;
-      /* Rendu pixelisé pour performance max */
-      image-rendering: pixelated; 
+      image-rendering: auto; /* Lissage activé pour un dégradé propre */
     }
 
-    /* Panneau de contrôle "Glassmorphism" */
+    /* Panneau de contrôle Flottant */
     #controls {
       position: absolute;
-      top: 20px; right: 20px;
-      width: 340px;
+      top: 30px; right: 30px;
+      width: 320px;
       padding: 25px;
       
-      /* Effet Verre Sombre */
-      background: rgba(15, 20, 35, 0.75);
-      backdrop-filter: blur(12px);
-      -webkit-backdrop-filter: blur(12px);
-      border: 1px solid rgba(255, 255, 255, 0.08);
-      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6);
-      border-radius: 12px;
+      /* Style Glassmorphism Bleu Sombre */
+      background: rgba(10, 15, 40, 0.75);
+      backdrop-filter: blur(15px);
+      -webkit-backdrop-filter: blur(15px);
+      border: 1px solid rgba(100, 150, 255, 0.1);
+      box-shadow: 0 20px 60px rgba(0, 0, 10, 0.6);
+      border-radius: 16px;
       z-index: 100;
       color: #fff;
     }
@@ -44,19 +43,21 @@
     #controls h2 {
       margin: 0 0 20px 0; font-size: 14px; font-weight: 700;
       color: #60a5fa; text-transform: uppercase; letter-spacing: 1px;
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+      padding-bottom: 10px;
     }
 
-    .control-group { margin-bottom: 15px; }
+    .control-group { margin-bottom: 18px; }
 
     .label-row {
       display: flex; justify-content: space-between;
       font-size: 11px; color: #94a3b8; margin-bottom: 8px;
-      font-weight: 500;
+      font-weight: 600;
     }
 
     .value-text { color: #fff; font-weight: 700; }
 
-    /* Sliders personnalisés (Style Cyan) */
+    /* Sliders bleus */
     input[type="range"] {
       width: 100%; height: 4px;
       background: rgba(255,255,255,0.1);
@@ -65,32 +66,39 @@
 
     input[type="range"]::-webkit-slider-thumb {
       -webkit-appearance: none;
-      width: 14px; height: 14px;
-      background: #22d3ee; /* Cyan électrique */
+      width: 16px; height: 16px;
+      background: #3b82f6; /* Bleu électrique */
       border: 2px solid #0f172a;
-      border-radius: 50%; margin-top: -5px;
-      box-shadow: 0 0 10px rgba(34, 211, 238, 0.4);
+      border-radius: 50%; margin-top: -6px;
+      box-shadow: 0 0 10px rgba(59, 130, 246, 0.6);
       transition: transform 0.1s;
     }
-    input[type="range"]:hover::-webkit-slider-thumb { transform: scale(1.2); }
+    input[type="range"]:hover::-webkit-slider-thumb { transform: scale(1.15); }
 
     .btn-row { display: flex; gap: 10px; margin-top: 25px; }
 
     button {
-      flex: 1; padding: 10px; border: none; border-radius: 6px;
+      flex: 1; padding: 10px; border: none; border-radius: 8px;
       font-size: 11px; font-weight: 600; cursor: pointer; text-transform: uppercase;
       transition: all 0.2s;
+      background: rgba(255,255,255,0.08); color: #cbd5e1;
+      border: 1px solid rgba(255,255,255,0.05);
     }
-
-    button.primary { background: rgba(255,255,255,0.1); color: white; border: 1px solid rgba(255,255,255,0.1); }
-    button.primary:hover { background: rgba(255,255,255,0.2); }
+    button:hover { background: rgba(255,255,255,0.15); color: #fff; }
     
-    button.active { background: #22d3ee; color: #000; box-shadow: 0 0 15px rgba(34,211,238,0.4); }
-
     .stats {
       margin-top: 15px; padding-top: 15px;
-      border-top: 1px solid rgba(255,255,255,0.1);
-      font-size: 10px; color: #64748b; font-family: monospace;
+      border-top: 1px solid rgba(255,255,255,0.05);
+      font-size: 10px; color: #506080; font-family: monospace;
+      display: flex; justify-content: space-between;
+    }
+
+    /* Alerte Crash */
+    #crash-alert {
+      position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%);
+      background: rgba(220, 38, 38, 0.9); color: white;
+      padding: 10px 20px; border-radius: 30px; font-size: 12px; font-weight: bold;
+      display: none; box-shadow: 0 5px 20px rgba(0,0,0,0.5); pointer-events: none;
     }
   </style>
 </head>
@@ -98,141 +106,129 @@
 
   <canvas id="sim-canvas"></canvas>
 
+  <div id="crash-alert">⚠️ Instabilité détectée - Redémarrage automatique</div>
+
   <div id="controls">
     <h2>LBM Channel Flow (LES)</h2>
 
     <div class="control-group">
-      <div class="label-row"><span>Flow Speed (Mach)</span><span class="value-text" id="mach-val">0.15</span></div>
-      <input type="range" id="mach" min="0.05" max="0.4" step="0.01" value="0.15">
+      <div class="label-row"><span>Flow Speed (Mach)</span><span class="value-text" id="mach-val">0.12</span></div>
+      <input type="range" id="mach" min="0.05" max="0.3" step="0.01" value="0.12">
     </div>
 
     <div class="control-group">
-      <div class="label-row"><span>Viscosity (Stability)</span><span class="value-text" id="visc-val">0.020</span></div>
-      <input type="range" id="viscosity" min="0.005" max="0.1" step="0.001" value="0.020">
+      <div class="label-row"><span>Viscosity (Stability)</span><span class="value-text" id="visc-val">0.030</span></div>
+      <input type="range" id="viscosity" min="0.01" max="0.1" step="0.001" value="0.030">
     </div>
 
     <div class="control-group">
-      <div class="label-row"><span>Angle of Attack</span><span class="value-text" id="aoa-val">12°</span></div>
-      <input type="range" id="aoa" min="-30" max="30" step="1" value="12">
+      <div class="label-row"><span>Angle of Attack</span><span class="value-text" id="aoa-val">8°</span></div>
+      <input type="range" id="aoa" min="-20" max="20" step="1" value="8">
     </div>
 
     <div class="control-group">
       <div class="label-row"><span>Airfoil Thickness</span><span class="value-text" id="thick-val">0.12</span></div>
-      <input type="range" id="thickness" min="0.01" max="0.20" step="0.01" value="0.12">
+      <input type="range" id="thickness" min="0.02" max="0.20" step="0.01" value="0.12">
     </div>
 
     <div class="control-group">
-      <div class="label-row"><span>Camber</span><span class="value-text" id="camber-val">0.15</span></div>
-      <input type="range" id="camber" min="0" max="0.3" step="0.01" value="0.15">
+      <div class="label-row"><span>Camber</span><span class="value-text" id="camber-val">0.05</span></div>
+      <input type="range" id="camber" min="0" max="0.2" step="0.01" value="0.05">
     </div>
 
     <div class="control-group">
-      <div class="label-row"><span>Contrast</span><span class="value-text" id="contrast-val">1.0</span></div>
-      <input type="range" id="contrast" min="0.5" max="3.0" step="0.1" value="1.0">
+      <div class="label-row"><span>Contrast</span><span class="value-text" id="contrast-val">1.4</span></div>
+      <input type="range" id="contrast" min="0.5" max="3.0" step="0.1" value="1.4">
     </div>
 
     <div class="btn-row">
-      <button class="primary" id="reset-btn">Reset Flow</button>
-      <button class="primary" id="pause-btn">Pause</button>
+      <button id="reset-btn">Reset Flow</button>
+      <button id="pause-btn">Pause</button>
     </div>
 
     <div class="stats">
-      Steps: <span id="step-count">0</span><br>
-      Grid: 400x200 | LBM D2Q9
+      <span id="step-count">Steps: 0</span>
+      <span>Resolution: 400x200</span>
     </div>
   </div>
 
 <script>
   // ======================================================
-  // 1. CONFIGURATION HAUTE PERFORMANCE
+  // 1. MOTEUR LBM STABLE
   // ======================================================
   const canvas = document.getElementById("sim-canvas");
-  const ctx = canvas.getContext("2d", { alpha: false });
+  const ctx = canvas.getContext("2d", { alpha: false }); // Optimisation
 
   // Paramètres Simulation
-  let Nx = 400; 
-  let Ny = 200;
+  const Nx = 400; 
+  const Ny = 200;
   const Q = 9;
   
-  // Variables Physiques
-  let viscosity = 0.02;
+  // Paramètres Physiques (Valeurs par défaut stables)
+  let viscosity = 0.03;
   let u0 = 0.1;  
-  let contrast = 1.0;
-  let stepsPerFrame = 10; // Vitesse d'animation
+  let contrast = 1.4;
+  let stepsPerFrame = 8;
   let paused = false;
   let steps = 0;
 
-  // Tableaux Mémoire (TypedArrays)
+  // Tableaux (TypedArrays)
   let f = new Float32Array(Nx * Ny * Q);
   let fNew = new Float32Array(Nx * Ny * Q);
   let rho = new Float32Array(Nx * Ny);
   let ux = new Float32Array(Nx * Ny);
   let uy = new Float32Array(Nx * Ny);
-  let mask = new Uint8Array(Nx * Ny); // 1 = mur, 0 = fluide
+  let mask = new Uint8Array(Nx * Ny);
   
-  // Buffer Graphique (Pour écriture directe des pixels)
+  // Buffer Image (Ecriture directe)
   let imageBuffer = new ArrayBuffer(Nx * Ny * 4);
-  let imageData32 = new Uint32Array(imageBuffer); // Ecriture 32-bit (ABGR)
+  let imageData32 = new Uint32Array(imageBuffer);
 
-  // Constantes LBM
   const w = [4/9, 1/9, 1/9, 1/9, 1/9, 1/36, 1/36, 1/36, 1/36];
   const cx = [0, 1, 0, -1, 0, 1, -1, -1, 1];
   const cy = [0, 0, 1, 0, -1, 1, 1, -1, -1];
   const opp = [0, 3, 4, 1, 2, 7, 8, 5, 6];
 
   // ======================================================
-  // 2. GÉNÉRATION DU PROFIL (JOUKOWSKY)
+  // 2. GEOMETRIE JOUKOWSKY
   // ======================================================
   function createAirfoil() {
     mask.fill(0);
-    
     const aoa = -parseFloat(document.getElementById("aoa").value) * Math.PI / 180;
     const thick = parseFloat(document.getElementById("thickness").value);
     const camb = parseFloat(document.getElementById("camber").value);
     
-    const chord = Nx * 0.4;
-    const cx0 = Nx * 0.3;
+    const chord = Nx * 0.45;
+    const cx0 = Nx * 0.35;
     const cy0 = Ny * 0.5;
     
-    // Scanline rasterization pour remplir le profil
-    // On utilise une transformation analytique
+    let poly = [];
+    const nPoints = 300;
     
-    // Centre et rayon du cercle générateur
+    // Paramètres cercle transformé
     const beta = camb * 2.0; 
     const epsilon = thick * 0.8;
     const R = Math.sqrt((1+epsilon)**2 + beta**2);
     const z0x = -epsilon;
     const z0y = beta;
 
-    // On teste chaque point de la grille (Approche Brute mais simple pour < 100k cellules)
-    for (let y = 0; y < Ny; y++) {
-      for (let x = 0; x < Nx; x++) {
-        // Transformation inverse approximative ou scan polygone
-        // Ici méthode Polygonale pour précision
-      }
-    }
-
-    // Méthode Polygonale (Plus fiable)
-    let poly = [];
-    const steps = 300;
-    for(let i=0; i<steps; i++) {
-      const theta = 2 * Math.PI * i / steps;
+    for(let i=0; i<nPoints; i++) {
+      const theta = 2 * Math.PI * i / nPoints;
       const zx = z0x + R * Math.cos(theta);
       const zy = z0y + R * Math.sin(theta);
       
-      // Joukowsky
       const den = zx*zx + zy*zy;
-      if(den < 0.0001) continue;
+      if(den < 0.001) continue;
       const wx = zx * (1 + 1/den);
       const wy = zy * (1 - 1/den);
       
-      // Rotation & Scale
+      // Rotation et Translation
       const rx = (wx * Math.cos(aoa) - wy * Math.sin(aoa)) * (chord/4) + cx0;
       const ry = (wx * Math.sin(aoa) + wy * Math.cos(aoa)) * (chord/4) + cy0;
       poly.push({x: rx, y: ry});
     }
 
-    // Ray-casting pour remplir le masque
+    // Remplissage (Scanline)
     for (let y = 0; y < Ny; y++) {
       for (let x = 0; x < Nx; x++) {
         let inside = false;
@@ -251,12 +247,12 @@
     u0 = parseFloat(document.getElementById("mach").value) * 0.577;
     viscosity = parseFloat(document.getElementById("viscosity").value);
     
+    // Reset fluide
     for(let i=0; i<Nx*Ny; i++) {
       rho[i] = 1.0;
       ux[i] = mask[i] ? 0 : u0;
       uy[i] = 0;
       
-      // Equilibre
       const u2 = ux[i]*ux[i] + uy[i]*uy[i];
       for(let k=0; k<Q; k++) {
         const eu = cx[k]*ux[i] + cy[k]*uy[i];
@@ -264,29 +260,42 @@
       }
     }
     steps = 0;
+    
+    // Cacher l'alerte crash si elle était visible
+    document.getElementById("crash-alert").style.display = "none";
   }
 
   // ======================================================
-  // 3. MOTEUR LBM (CORE)
+  // 3. BOUCLE PHYSIQUE + SÉCURITÉ
   // ======================================================
   function simulate() {
     const tau = 0.5 + 3 * viscosity;
     const omega = 1.0 / tau;
+    let maxVel = 0;
 
-    // COLLISION
+    // Collision BGK
     for(let i=0; i<Nx*Ny; i++) {
       if(mask[i]) continue;
 
       let r = 0, u = 0, v = 0;
       const idx = i*Q;
       
-      for(let k=0; k<Q; k++) r += f[idx+k];
+      // Calcul Densité et Vitesse
+      r = f[idx] + f[idx+1] + f[idx+2] + f[idx+3] + f[idx+4] + f[idx+5] + f[idx+6] + f[idx+7] + f[idx+8];
       u = (f[idx+1] - f[idx+3] + f[idx+5] - f[idx+6] - f[idx+7] + f[idx+8]) / r;
       v = (f[idx+2] - f[idx+4] + f[idx+5] + f[idx+6] - f[idx+7] - f[idx+8]) / r;
       
+      // CHECK DE STABILITÉ (Anti-Crash)
+      // Si la vitesse dépasse 0.8 (Mach approx) ou si NaN -> Reset
+      if (isNaN(u) || Math.abs(u) > 0.8) {
+        triggerCrashRecovery();
+        return;
+      }
+
       rho[i] = r; ux[i] = u; uy[i] = v;
       
       const u2 = u*u + v*v;
+      // Relaxation
       for(let k=0; k<Q; k++) {
         const eu = cx[k]*u + cy[k]*v;
         const feq = w[k] * r * (1 + 3*eu + 4.5*eu*eu - 1.5*u2);
@@ -294,7 +303,7 @@
       }
     }
 
-    // STREAMING (Propagation + Bounce-Back)
+    // Streaming
     for(let y=0; y<Ny; y++) {
       for(let x=0; x<Nx; x++) {
         const i = x + y*Nx;
@@ -309,15 +318,14 @@
             if(mask[ni]) {
               fNew[i*Q + opp[k]] = f[i*Q + k]; // Rebond
             } else {
-              fNew[ni*Q + k] = f[i*Q + k]; // Propage
+              fNew[ni*Q + k] = f[i*Q + k]; // Propagation
             }
           }
         }
       }
     }
 
-    // CONDITIONS LIMITES
-    // Entrée (Gauche)
+    // Inlet (Gauche)
     const u2in = u0*u0;
     for(let y=0; y<Ny; y++) {
       const i = y*Nx;
@@ -329,7 +337,7 @@
       }
     }
     
-    // Sortie (Droite)
+    // Outlet (Droite) - Copie simple
     for(let y=0; y<Ny; y++) {
       const i = (Nx-1) + y*Nx;
       if(!mask[i]) {
@@ -337,24 +345,35 @@
       }
     }
 
-    // Swap
     let t = f; f = fNew; fNew = t;
     steps++;
   }
 
+  function triggerCrashRecovery() {
+    const alert = document.getElementById("crash-alert");
+    alert.style.display = "block";
+    alert.textContent = "⚠️ Instabilité ! Ralentissement auto...";
+    
+    // Réduire la vitesse pour stabiliser
+    const machInput = document.getElementById("mach");
+    machInput.value = (parseFloat(machInput.value) * 0.8).toFixed(2);
+    machInput.dispatchEvent(new Event("input"));
+    
+    init(); // Restart
+    
+    setTimeout(() => { alert.style.display = "none"; }, 2000);
+  }
+
   // ======================================================
-  // 4. RENDU GRAPHIQUE TYPE "TURBO" (VIDEO STYLE)
+  // 4. RENDU VISUEL "DEEP BLUE" (MONOCHROMATIQUE)
   // ======================================================
   function render() {
-    // Normalisation de la vitesse pour la couleur
-    // Dans la vidéo : Bleu = Lent, Cyan = Moyen, Jaune/Rouge = Rapide
-    const maxSpeed = u0 * (2.5 / contrast); 
+    const maxSpeed = u0 * (2.2 / contrast); 
 
-    let ptr = 0; // Index pixel
     for(let i=0; i<Nx*Ny; i++) {
       if(mask[i]) {
-        // Obstacle BLANC/GRIS
-        imageData32[i] = 0xFFE0E0E0; // ABGR (Little Endian) -> Gris clair
+        // Obstacle BLANC LÉGÈREMENT GRIS (Antialiasing simulé)
+        imageData32[i] = 0xFFEAEAEA; 
         continue;
       }
 
@@ -362,63 +381,39 @@
       let t = v / maxSpeed;
       if(t > 1.0) t = 1.0;
 
-      // PALETTE "TURBO" SIMPLIFIÉE (Bleu -> Cyan -> Vert -> Jaune -> Rouge)
-      // C'est ce qui donne le look de la vidéo
+      // PALETTE BLEUE PERSONNALISÉE
+      // Fond: Bleu très sombre (R=0, G=10, B=40)
+      // Milieu: Bleu Roi (R=20, G=80, B=200)
+      // Haut: Cyan/Blanc (R=100, G=200, B=255)
+      
       let r, g, b;
 
-      // Cette logique approxime la carte thermique de la vidéo
-      if (t < 0.25) {
-          // Bleu profon -> Cyan
-          // t: 0 -> 0.25
-          // B: 255, G: 0 -> 255
-          const x = t * 4.0;
-          r = 0;
-          g = Math.floor(255 * x);
-          b = 255;
-      } else if (t < 0.5) {
-          // Cyan -> Vert
-          // t: 0.25 -> 0.5
-          // B: 255 -> 0, G: 255
-          const x = (t - 0.25) * 4.0;
-          r = 0;
-          g = 255;
-          b = Math.floor(255 * (1.0 - x));
-      } else if (t < 0.75) {
-          // Vert -> Jaune
-          // t: 0.5 -> 0.75
-          // R: 0 -> 255, G: 255
-          const x = (t - 0.5) * 4.0;
-          r = Math.floor(255 * x);
-          g = 255;
-          b = 0;
+      if (t < 0.5) {
+        // De Sombre à Bleu
+        let localT = t * 2.0;
+        r = Math.floor(0 + 20 * localT);
+        g = Math.floor(10 + 70 * localT);
+        b = Math.floor(40 + 160 * localT);
       } else {
-          // Jaune -> Rouge
-          // t: 0.75 -> 1.0
-          // G: 255 -> 0, R: 255
-          const x = (t - 0.75) * 4.0;
-          r = 255;
-          g = Math.floor(255 * (1.0 - x));
-          b = 0;
+        // De Bleu à Blanc/Cyan
+        let localT = (t - 0.5) * 2.0;
+        r = Math.floor(20 + 180 * localT);
+        g = Math.floor(80 + 175 * localT);
+        b = 255; // Reste bleu max
       }
 
-      // Format binaire ABGR pour Canvas (Little Endian)
+      // ABGR format
       imageData32[i] = (255 << 24) | (b << 16) | (g << 8) | r;
     }
 
-    // Dessin final
     ctx.putImageData(new ImageData(new Uint8ClampedArray(imageBuffer), Nx, Ny), 0, 0);
-    
-    // Mise à l'échelle automatique CSS (le canvas HTML s'étire)
-    document.getElementById("step-count").innerText = steps;
+    document.getElementById("step-count").innerText = "Steps: " + steps;
   }
 
   // ======================================================
   // 5. UI & BOUCLE
   // ======================================================
-  
   function resize() {
-    // On garde une résolution interne fixe pour la stabilité physique (400x200)
-    // Le CSS étire le canvas en plein écran
     canvas.width = Nx;
     canvas.height = Ny;
   }
@@ -431,16 +426,16 @@
     requestAnimationFrame(loop);
   }
 
-  // Initialisation
   createAirfoil();
   init();
   resize();
   loop();
 
-  // Listeners
+  // Gestion des inputs
   const inputs = ["mach", "viscosity", "aoa", "thickness", "camber", "contrast"];
   inputs.forEach(id => {
-    document.getElementById(id).addEventListener("input", (e) => {
+    const el = document.getElementById(id);
+    el.addEventListener("input", (e) => {
       const val = e.target.value;
       const suffix = (id === "aoa") ? "°" : "";
       document.getElementById(id+"-val").innerText = val + suffix;
@@ -453,20 +448,16 @@
         contrast = parseFloat(val);
         if(paused) render();
       } else {
-        // Changement de géométrie
         createAirfoil();
-        // On nettoie la vitesse dans l'obstacle
         for(let i=0; i<Nx*Ny; i++) if(mask[i]) { ux[i]=0; uy[i]=0; }
       }
     });
   });
 
-  document.getElementById("reset-btn").addEventListener("click", () => { init(); });
-  
+  document.getElementById("reset-btn").addEventListener("click", init);
   document.getElementById("pause-btn").addEventListener("click", function() {
     paused = !paused;
     this.innerText = paused ? "Resume" : "Pause";
-    this.classList.toggle("active");
   });
 
 </script>
