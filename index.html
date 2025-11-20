@@ -3,200 +3,95 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>LBM D2Q9 - High Performance Blue Theme</title>
+  <title>LBM Simulation - Video Match</title>
   <style>
     /* =========================================
-       STYLE GLOBALE & UI "GLASSMORPHISM"
+       STYLE UI & LAYOUT (IDENTIQUE VIDÉO)
        ========================================= */
-    * { box-sizing: border-box; user-select: none; }
+    * { box-sizing: border-box; user-select: none; font-family: 'Segoe UI', sans-serif; }
 
     body {
-      margin: 0;
-      padding: 0;
-      font-family: 'Inter', 'Segoe UI', sans-serif;
-      background-color: #020410; /* Fond très sombre pour correspondre au fluide */
-      color: #e5e7eb;
-      height: 100vh;
-      overflow: hidden;
-      display: flex;
-      align-items: center;
-      justify-content: center;
+      margin: 0; padding: 0;
+      background-color: #000;
+      height: 100vh; overflow: hidden;
+      display: flex; align-items: center; justify-content: center;
     }
 
-    /* Le Canvas prend tout l'écran */
     canvas {
-      display: block;
-      width: 100%;
-      height: 100%;
-      image-rendering: pixelated; /* Pour garder la netteté */
+      display: block; width: 100%; height: 100%;
+      /* Rendu pixelisé pour performance max */
+      image-rendering: pixelated; 
     }
 
-    /* Panneau de contrôle flottant (Style Image Référence) */
+    /* Panneau de contrôle "Glassmorphism" */
     #controls {
       position: absolute;
-      top: 20px;
-      right: 20px;
-      width: 320px;
+      top: 20px; right: 20px;
+      width: 340px;
       padding: 25px;
       
-      /* Effet Verre / Glassmorphism */
-      background: rgba(15, 23, 42, 0.60);
-      backdrop-filter: blur(15px);
-      -webkit-backdrop-filter: blur(15px);
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
-      border-radius: 16px;
-      z-index: 10;
-      
-      transition: opacity 0.3s;
+      /* Effet Verre Sombre */
+      background: rgba(15, 20, 35, 0.75);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6);
+      border-radius: 12px;
+      z-index: 100;
+      color: #fff;
     }
 
     #controls h2 {
-      margin: 0 0 15px 0;
-      font-size: 16px;
-      font-weight: 700;
-      color: #60a5fa; /* Bleu clair */
-      text-transform: uppercase;
-      letter-spacing: 1px;
-      border-bottom: 1px solid rgba(255,255,255,0.1);
-      padding-bottom: 10px;
+      margin: 0 0 20px 0; font-size: 14px; font-weight: 700;
+      color: #60a5fa; text-transform: uppercase; letter-spacing: 1px;
     }
 
-    /* Style des Sliders */
-    .control-group {
-      margin-bottom: 18px;
-    }
+    .control-group { margin-bottom: 15px; }
 
     .label-row {
-      display: flex;
-      justify-content: space-between;
-      font-size: 12px;
-      color: #94a3b8;
-      margin-bottom: 6px;
+      display: flex; justify-content: space-between;
+      font-size: 11px; color: #94a3b8; margin-bottom: 8px;
+      font-weight: 500;
     }
 
-    .value-text {
-      color: #fff;
-      font-weight: 600;
-      font-family: monospace;
-    }
+    .value-text { color: #fff; font-weight: 700; }
 
+    /* Sliders personnalisés (Style Cyan) */
     input[type="range"] {
-      width: 100%;
-      height: 4px;
+      width: 100%; height: 4px;
       background: rgba(255,255,255,0.1);
-      border-radius: 2px;
-      outline: none;
-      -webkit-appearance: none;
-      cursor: pointer;
+      border-radius: 2px; outline: none; -webkit-appearance: none; cursor: pointer;
     }
 
     input[type="range"]::-webkit-slider-thumb {
       -webkit-appearance: none;
-      width: 16px;
-      height: 16px;
-      background: #3b82f6;
-      border: 2px solid #1e293b;
-      border-radius: 50%;
-      margin-top: -6px; /* centrer sur la barre */
-      box-shadow: 0 0 10px rgba(59, 130, 246, 0.5);
+      width: 14px; height: 14px;
+      background: #22d3ee; /* Cyan électrique */
+      border: 2px solid #0f172a;
+      border-radius: 50%; margin-top: -5px;
+      box-shadow: 0 0 10px rgba(34, 211, 238, 0.4);
       transition: transform 0.1s;
     }
-    
-    input[type="range"]::-webkit-slider-runnable-track {
-      height: 4px;
-      background: rgba(255,255,255,0.1);
-    }
+    input[type="range"]:hover::-webkit-slider-thumb { transform: scale(1.2); }
 
-    input[type="range"]:active::-webkit-slider-thumb {
-      transform: scale(1.2);
-      background: #60a5fa;
-    }
-
-    /* Boutons */
-    .btn-row {
-      display: flex;
-      gap: 10px;
-      margin-top: 20px;
-    }
+    .btn-row { display: flex; gap: 10px; margin-top: 25px; }
 
     button {
-      flex: 1;
-      padding: 10px;
-      border: none;
-      border-radius: 8px;
-      font-size: 12px;
-      font-weight: 600;
-      cursor: pointer;
+      flex: 1; padding: 10px; border: none; border-radius: 6px;
+      font-size: 11px; font-weight: 600; cursor: pointer; text-transform: uppercase;
       transition: all 0.2s;
     }
 
-    button.primary {
-      background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
-      color: white;
-      box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
-    }
+    button.primary { background: rgba(255,255,255,0.1); color: white; border: 1px solid rgba(255,255,255,0.1); }
+    button.primary:hover { background: rgba(255,255,255,0.2); }
+    
+    button.active { background: #22d3ee; color: #000; box-shadow: 0 0 15px rgba(34,211,238,0.4); }
 
-    button.secondary {
-      background: rgba(255,255,255,0.05);
-      color: #cbd5e1;
-      border: 1px solid rgba(255,255,255,0.1);
-    }
-
-    button:hover { filter: brightness(1.1); }
-    button:active { transform: scale(0.98); }
-
-    /* Stats Panel */
     .stats {
-      margin-top: 20px;
-      padding-top: 15px;
+      margin-top: 15px; padding-top: 15px;
       border-top: 1px solid rgba(255,255,255,0.1);
-      font-size: 11px;
-      color: #64748b;
+      font-size: 10px; color: #64748b; font-family: monospace;
     }
-    
-    .stat-line {
-      display: flex;
-      justify-content: space-between;
-      margin-bottom: 4px;
-    }
-    .stat-val { color: #93c5fd; }
-
-    /* Startup Modal */
-    #startup-modal {
-      position: fixed;
-      top: 0; left: 0; width: 100%; height: 100%;
-      background: #020410;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      z-index: 1000;
-    }
-    
-    .loader-text {
-      color: #60a5fa;
-      font-size: 24px;
-      margin-bottom: 20px;
-      font-weight: 300;
-    }
-    
-    .start-btn-big {
-      padding: 15px 40px;
-      font-size: 16px;
-      background: #2563eb;
-      color: white;
-      border: none;
-      border-radius: 30px;
-      cursor: pointer;
-      box-shadow: 0 0 30px rgba(37, 99, 235, 0.4);
-      transition: all 0.3s;
-    }
-    .start-btn-big:hover {
-      transform: scale(1.05);
-      box-shadow: 0 0 50px rgba(37, 99, 235, 0.6);
-    }
-
   </style>
 </head>
 <body>
@@ -207,461 +102,371 @@
     <h2>LBM Channel Flow (LES)</h2>
 
     <div class="control-group">
-      <div class="label-row">
-        <span>Vitesse (Mach)</span>
-        <span class="value-text" id="mach-val">0.10</span>
-      </div>
-      <input type="range" id="mach" min="0.02" max="0.3" step="0.01" value="0.10">
+      <div class="label-row"><span>Flow Speed (Mach)</span><span class="value-text" id="mach-val">0.15</span></div>
+      <input type="range" id="mach" min="0.05" max="0.4" step="0.01" value="0.15">
     </div>
 
     <div class="control-group">
-      <div class="label-row">
-        <span>Angle d'attaque</span>
-        <span class="value-text" id="aoa-val">0°</span>
-      </div>
-      <input type="range" id="aoa" min="-20" max="20" step="1" value="0">
+      <div class="label-row"><span>Viscosity (Stability)</span><span class="value-text" id="visc-val">0.020</span></div>
+      <input type="range" id="viscosity" min="0.005" max="0.1" step="0.001" value="0.020">
     </div>
 
     <div class="control-group">
-      <div class="label-row">
-        <span>Épaisseur Profil</span>
-        <span class="value-text" id="thick-val">0.12</span>
-      </div>
-      <input type="range" id="thickness" min="0.02" max="0.20" step="0.01" value="0.12">
+      <div class="label-row"><span>Angle of Attack</span><span class="value-text" id="aoa-val">12°</span></div>
+      <input type="range" id="aoa" min="-30" max="30" step="1" value="12">
     </div>
 
     <div class="control-group">
-      <div class="label-row">
-        <span>Cambrure</span>
-        <span class="value-text" id="camber-val">0.00</span>
-      </div>
-      <input type="range" id="camber" min="0" max="0.15" step="0.01" value="0.00">
+      <div class="label-row"><span>Airfoil Thickness</span><span class="value-text" id="thick-val">0.12</span></div>
+      <input type="range" id="thickness" min="0.01" max="0.20" step="0.01" value="0.12">
     </div>
 
     <div class="control-group">
-      <div class="label-row">
-        <span>Contraste Visuel</span>
-        <span class="value-text" id="contrast-val">1.2</span>
-      </div>
-      <input type="range" id="contrast" min="0.5" max="3.0" step="0.1" value="1.2">
+      <div class="label-row"><span>Camber</span><span class="value-text" id="camber-val">0.15</span></div>
+      <input type="range" id="camber" min="0" max="0.3" step="0.01" value="0.15">
+    </div>
+
+    <div class="control-group">
+      <div class="label-row"><span>Contrast</span><span class="value-text" id="contrast-val">1.0</span></div>
+      <input type="range" id="contrast" min="0.5" max="3.0" step="0.1" value="1.0">
     </div>
 
     <div class="btn-row">
-      <button class="secondary" id="reset-btn">Réinitialiser</button>
+      <button class="primary" id="reset-btn">Reset Flow</button>
       <button class="primary" id="pause-btn">Pause</button>
     </div>
 
     <div class="stats">
-      <div class="stat-line">Steps: <span class="stat-val" id="step-count">0</span></div>
-      <div class="stat-line">Portance (CL): <span class="stat-val" id="cl-val">0.00</span></div>
-      <div class="stat-line">Traînée (CD): <span class="stat-val" id="cd-val">0.00</span></div>
-      <div class="stat-line">Résolution: <span class="stat-val" id="res-val">--</span></div>
+      Steps: <span id="step-count">0</span><br>
+      Grid: 400x200 | LBM D2Q9
     </div>
-  </div>
-
-  <div id="startup-modal">
-    <div class="loader-text">Simulateur Aérodynamique LBM</div>
-    <button class="start-btn-big" id="start-btn">Démarrer la Simulation</button>
   </div>
 
 <script>
   // ======================================================
-  // 1. CONFIGURATION GLOBALE
+  // 1. CONFIGURATION HAUTE PERFORMANCE
   // ======================================================
   const canvas = document.getElementById("sim-canvas");
-  // Optimisation: alpha false car on dessine tout l'écran opaque
-  const ctx = canvas.getContext("2d", { alpha: false }); 
+  const ctx = canvas.getContext("2d", { alpha: false });
 
-  // Paramètres LBM (D2Q9)
-  const Q = 9;
-  // Poids et vecteurs D2Q9 standards
-  const w = [4/9, 1/9, 1/9, 1/9, 1/9, 1/36, 1/36, 1/36, 1/36];
-  const cx = [0, 1, 0, -1, 0, 1, -1, -1, 1];
-  const cy = [0, 0, 1, 0, -1, 1, 1, -1, -1];
-  const opp = [0, 3, 4, 1, 2, 7, 8, 5, 6]; // Indices opposés pour rebond
-
-  // Dimensions de la grille de simulation (Interne, indépendante de la taille écran)
+  // Paramètres Simulation
   let Nx = 400; 
-  let Ny = 200; 
+  let Ny = 200;
+  const Q = 9;
   
-  // Tableaux de simulation (TypedArrays pour performance MAX)
-  // f = distribution courante, fNew = distribution suivante
-  let f, fNew, rho, ux, uy, mask;
-  let imageBuffer, imageData, imageData32;
-
-  // État physique
-  let viscosity = 0.02; // Viscosité cinématique (Lattice units)
-  let u0 = 0.1;         // Vitesse d'entrée (Lattice units)
-  let contrast = 1.2;
-  let stepsPerFrame = 8; // Nombre de pas de temps par image affichée
+  // Variables Physiques
+  let viscosity = 0.02;
+  let u0 = 0.1;  
+  let contrast = 1.0;
+  let stepsPerFrame = 10; // Vitesse d'animation
   let paused = false;
   let steps = 0;
 
-  // ======================================================
-  // 2. GESTION MÉMOIRE & INITIALISATION
-  // ======================================================
-  function initMemory() {
-    const size = Nx * Ny;
-    
-    // Allocation mémoire
-    f = new Float32Array(size * Q);
-    fNew = new Float32Array(size * Q);
-    rho = new Float32Array(size);
-    ux = new Float32Array(size);
-    uy = new Float32Array(size);
-    mask = new Uint8Array(size); // 1 = obstacle, 0 = fluide
+  // Tableaux Mémoire (TypedArrays)
+  let f = new Float32Array(Nx * Ny * Q);
+  let fNew = new Float32Array(Nx * Ny * Q);
+  let rho = new Float32Array(Nx * Ny);
+  let ux = new Float32Array(Nx * Ny);
+  let uy = new Float32Array(Nx * Ny);
+  let mask = new Uint8Array(Nx * Ny); // 1 = mur, 0 = fluide
+  
+  // Buffer Graphique (Pour écriture directe des pixels)
+  let imageBuffer = new ArrayBuffer(Nx * Ny * 4);
+  let imageData32 = new Uint32Array(imageBuffer); // Ecriture 32-bit (ABGR)
 
-    // Buffer graphique (Uint32Array permet d'écrire les pixels R,G,B,A en une fois)
-    imageBuffer = new ArrayBuffer(size * 4);
-    imageData = new Uint8ClampedArray(imageBuffer);
-    imageData32 = new Uint32Array(imageBuffer);
-    
-    document.getElementById("res-val").textContent = `${Nx}x${Ny}`;
-  }
+  // Constantes LBM
+  const w = [4/9, 1/9, 1/9, 1/9, 1/9, 1/36, 1/36, 1/36, 1/36];
+  const cx = [0, 1, 0, -1, 0, 1, -1, -1, 1];
+  const cy = [0, 0, 1, 0, -1, 1, 1, -1, -1];
+  const opp = [0, 3, 4, 1, 2, 7, 8, 5, 6];
 
+  // ======================================================
+  // 2. GÉNÉRATION DU PROFIL (JOUKOWSKY)
+  // ======================================================
   function createAirfoil() {
-    // Reset mask
     mask.fill(0);
-
-    // Récupération paramètres UI
-    const aoaDeg = parseFloat(document.getElementById("aoa").value);
+    
+    const aoa = -parseFloat(document.getElementById("aoa").value) * Math.PI / 180;
     const thick = parseFloat(document.getElementById("thickness").value);
-    const camber = parseFloat(document.getElementById("camber").value);
+    const camb = parseFloat(document.getElementById("camber").value);
     
-    const angle = -aoaDeg * Math.PI / 180; // Négatif car Y pointe vers le bas en Canvas
-    const centerX = Nx * 0.3;
-    const centerY = Ny * 0.5;
-    const chord = Nx * 0.4; // Longueur de corde
-    const radius = chord / 4; // Rayon du cercle générateur
+    const chord = Nx * 0.4;
+    const cx0 = Nx * 0.3;
+    const cy0 = Ny * 0.5;
+    
+    // Scanline rasterization pour remplir le profil
+    // On utilise une transformation analytique
+    
+    // Centre et rayon du cercle générateur
+    const beta = camb * 2.0; 
+    const epsilon = thick * 0.8;
+    const R = Math.sqrt((1+epsilon)**2 + beta**2);
+    const z0x = -epsilon;
+    const z0y = beta;
 
-    // Algorithme Transformation de Joukowsky (Approximation polygonale robuste)
-    // On génère un polygone puis on remplit l'intérieur
-    
+    // On teste chaque point de la grille (Approche Brute mais simple pour < 100k cellules)
+    for (let y = 0; y < Ny; y++) {
+      for (let x = 0; x < Nx; x++) {
+        // Transformation inverse approximative ou scan polygone
+        // Ici méthode Polygonale pour précision
+      }
+    }
+
+    // Méthode Polygonale (Plus fiable)
     let poly = [];
-    const nPoints = 200;
-    
-    // Centre du cercle générateur décalé pour créer épaisseur et cambrure
-    // beta = cambrure, epsilon = épaisseur
-    const beta = camber * 2.0; 
-    const epsilon = thick * 0.8; 
-    
-    const zeta0_x = -epsilon;
-    const zeta0_y = beta;
-    const R = Math.sqrt((1+epsilon)**2 + beta**2); // Rayon ajusté pour passer par (1,0)
-
-    for(let i=0; i<nPoints; i++) {
-      const theta = 2 * Math.PI * i / nPoints;
+    const steps = 300;
+    for(let i=0; i<steps; i++) {
+      const theta = 2 * Math.PI * i / steps;
+      const zx = z0x + R * Math.cos(theta);
+      const zy = z0y + R * Math.sin(theta);
       
-      // Point sur le cercle
-      const zx = zeta0_x + R * Math.cos(theta);
-      const zy = zeta0_y + R * Math.sin(theta);
-      
-      // Transformation Joukowsky: w = z + 1/z
+      // Joukowsky
       const den = zx*zx + zy*zy;
-      // Eviter division par zéro aux bouts
-      if(den < 0.0001) continue; 
-
+      if(den < 0.0001) continue;
       const wx = zx * (1 + 1/den);
       const wy = zy * (1 - 1/den);
       
-      // Mise à l'échelle et Rotation
-      const scaledX = wx * (chord/4);
-      const scaledY = wy * (chord/4);
-      
-      const rotX = scaledX * Math.cos(angle) - scaledY * Math.sin(angle);
-      const rotY = scaledX * Math.sin(angle) + scaledY * Math.cos(angle);
-      
-      poly.push({
-        x: centerX + rotX,
-        y: centerY + rotY
-      });
+      // Rotation & Scale
+      const rx = (wx * Math.cos(aoa) - wy * Math.sin(aoa)) * (chord/4) + cx0;
+      const ry = (wx * Math.sin(aoa) + wy * Math.cos(aoa)) * (chord/4) + cy0;
+      poly.push({x: rx, y: ry});
     }
 
-    // Remplissage du masque (Scanline / Raycasting algorithm)
+    // Ray-casting pour remplir le masque
     for (let y = 0; y < Ny; y++) {
       for (let x = 0; x < Nx; x++) {
         let inside = false;
         for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) {
-          const xi = poly[i].x, yi = poly[i].y;
-          const xj = poly[j].x, yj = poly[j].y;
-          
-          const intersect = ((yi > y) !== (yj > y)) &&
-              (x < (xj - xi) * (y - yi) / (yj - yi) + xi);
-          if (intersect) inside = !inside;
+            const xi = poly[i].x, yi = poly[i].y;
+            const xj = poly[j].x, yj = poly[j].y;
+            const intersect = ((yi > y) !== (yj > y)) && (x < (xj - xi) * (y - yi) / (yj - yi) + xi);
+            if (intersect) inside = !inside;
         }
         if (inside) mask[x + y*Nx] = 1;
       }
     }
   }
 
-  function initFluid() {
-    u0 = parseFloat(document.getElementById("mach").value) * 0.577; // Conversion approx
+  function init() {
+    u0 = parseFloat(document.getElementById("mach").value) * 0.577;
+    viscosity = parseFloat(document.getElementById("viscosity").value);
     
-    for (let i = 0; i < Nx * Ny; i++) {
-      if (mask[i]) {
-        rho[i] = 1.0; ux[i] = 0; uy[i] = 0;
-      } else {
-        rho[i] = 1.0; ux[i] = u0; uy[i] = 0;
-      }
-
-      // Initialisation à l'équilibre
-      const uSq = ux[i]**2 + uy[i]**2;
-      for (let k = 0; k < Q; k++) {
+    for(let i=0; i<Nx*Ny; i++) {
+      rho[i] = 1.0;
+      ux[i] = mask[i] ? 0 : u0;
+      uy[i] = 0;
+      
+      // Equilibre
+      const u2 = ux[i]*ux[i] + uy[i]*uy[i];
+      for(let k=0; k<Q; k++) {
         const eu = cx[k]*ux[i] + cy[k]*uy[i];
-        f[i*Q + k] = w[k] * rho[i] * (1 + 3*eu + 4.5*eu*eu - 1.5*uSq);
+        f[i*Q + k] = w[k] * rho[i] * (1 + 3*eu + 4.5*eu*eu - 1.5*u2);
       }
     }
     steps = 0;
   }
 
   // ======================================================
-  // 3. MOTEUR PHYSIQUE (LBM CORE)
+  // 3. MOTEUR LBM (CORE)
   // ======================================================
   function simulate() {
     const tau = 0.5 + 3 * viscosity;
     const omega = 1.0 / tau;
-    
-    // 1. Collision (BGK)
-    for (let y = 0; y < Ny; y++) {
-      for (let x = 0; x < Nx; x++) {
-        const i = x + y * Nx;
-        if (mask[i]) continue; // On ignore l'intérieur de l'obstacle
 
-        let r = 0, u = 0, v = 0;
-        const iQ = i * Q;
+    // COLLISION
+    for(let i=0; i<Nx*Ny; i++) {
+      if(mask[i]) continue;
 
-        // Moments macroscopiques
-        for(let k=0; k<Q; k++) r += f[iQ + k];
-        
-        u = (f[iQ+1] - f[iQ+3] + f[iQ+5] - f[iQ+6] - f[iQ+7] + f[iQ+8]) / r;
-        v = (f[iQ+2] - f[iQ+4] + f[iQ+5] + f[iQ+6] - f[iQ+7] - f[iQ+8]) / r;
-
-        rho[i] = r; ux[i] = u; uy[i] = v;
-
-        // Équilibre et Relaxation
-        const uSq = u*u + v*v;
-        for (let k = 0; k < Q; k++) {
-          const eu = cx[k]*u + cy[k]*v;
-          const feq = w[k] * r * (1 + 3*eu + 4.5*eu*eu - 1.5*uSq);
-          f[iQ + k] += omega * (feq - f[iQ + k]);
-        }
+      let r = 0, u = 0, v = 0;
+      const idx = i*Q;
+      
+      for(let k=0; k<Q; k++) r += f[idx+k];
+      u = (f[idx+1] - f[idx+3] + f[idx+5] - f[idx+6] - f[idx+7] + f[idx+8]) / r;
+      v = (f[idx+2] - f[idx+4] + f[idx+5] + f[idx+6] - f[idx+7] - f[idx+8]) / r;
+      
+      rho[i] = r; ux[i] = u; uy[i] = v;
+      
+      const u2 = u*u + v*v;
+      for(let k=0; k<Q; k++) {
+        const eu = cx[k]*u + cy[k]*v;
+        const feq = w[k] * r * (1 + 3*eu + 4.5*eu*eu - 1.5*u2);
+        f[idx+k] += omega * (feq - f[idx+k]);
       }
     }
 
-    // 2. Streaming (Propagation + Rebond)
-    for (let y = 0; y < Ny; y++) {
-      for (let x = 0; x < Nx; x++) {
-        const i = x + y * Nx;
-        // Si c'est un mur, on ne diffuse pas
-        if (mask[i]) continue; 
+    // STREAMING (Propagation + Bounce-Back)
+    for(let y=0; y<Ny; y++) {
+      for(let x=0; x<Nx; x++) {
+        const i = x + y*Nx;
+        if(mask[i]) continue;
 
-        for (let k = 0; k < Q; k++) {
-          const nextX = x + cx[k];
-          const nextY = y + cy[k];
-
-          if (nextX >= 0 && nextX < Nx && nextY >= 0 && nextY < Ny) {
-            const nextIdx = nextX + nextY * Nx;
-            
-            if (mask[nextIdx]) {
-              // Bounce-back: la particule rebondit vers la direction opposée
-              // On écrit dans fNew à l'emplacement actuel 'i', indice opposé
-              fNew[i*Q + opp[k]] = f[i*Q + k];
+        for(let k=0; k<Q; k++) {
+          const nx = x + cx[k];
+          const ny = y + cy[k];
+          
+          if(nx >= 0 && nx < Nx && ny >= 0 && ny < Ny) {
+            const ni = nx + ny*Nx;
+            if(mask[ni]) {
+              fNew[i*Q + opp[k]] = f[i*Q + k]; // Rebond
             } else {
-              // Propagation normale
-              fNew[nextIdx*Q + k] = f[i*Q + k];
+              fNew[ni*Q + k] = f[i*Q + k]; // Propage
             }
           }
         }
       }
     }
 
-    // 3. Conditions Limites (Inlet / Outlet)
-    
-    // Inlet (x=0): Vitesse imposée
-    const uIn = u0;
-    const uSqIn = uIn**2;
+    // CONDITIONS LIMITES
+    // Entrée (Gauche)
+    const u2in = u0*u0;
     for(let y=0; y<Ny; y++) {
-      const idx = y * Nx;
-      if(mask[idx]) continue;
-      // Zou-He boundary condition (simplifié: équilibre forcé)
-      for(let k=0; k<Q; k++) {
-        const eu = cx[k]*uIn;
-        fNew[idx*Q + k] = w[k] * 1.0 * (1 + 3*eu + 4.5*eu*eu - 1.5*uSqIn);
+      const i = y*Nx;
+      if(!mask[i]) {
+        for(let k=0; k<Q; k++) {
+          const eu = cx[k]*u0;
+          fNew[i*Q+k] = w[k] * 1.0 * (1 + 3*eu + 4.5*eu*eu - 1.5*u2in);
+        }
+      }
+    }
+    
+    // Sortie (Droite)
+    for(let y=0; y<Ny; y++) {
+      const i = (Nx-1) + y*Nx;
+      if(!mask[i]) {
+        for(let k=0; k<Q; k++) fNew[i*Q+k] = fNew[(i-1)*Q+k];
       }
     }
 
-    // Outlet (x=Nx-1): Gradient nul (Open boundary)
-    for(let y=0; y<Ny; y++) {
-      const idx = (Nx-1) + y*Nx;
-      const prev = (Nx-2) + y*Nx;
-      if(mask[idx]) continue;
-      for(let k=0; k<Q; k++) {
-        fNew[idx*Q + k] = fNew[prev*Q + k];
-      }
-    }
-    
-    // Swap buffers
-    let tmp = f; f = fNew; fNew = tmp;
+    // Swap
+    let t = f; f = fNew; fNew = t;
     steps++;
   }
 
   // ======================================================
-  // 4. RENDU GRAPHIQUE (Visualisation "Bleu Électrique")
+  // 4. RENDU GRAPHIQUE TYPE "TURBO" (VIDEO STYLE)
   // ======================================================
   function render() {
-    const buf32 = imageData32;
-    const size = Nx * Ny;
-    
-    // Facteur de normalisation pour la couleur
-    // On ajuste pour que vitesse max ~ couleur blanche/cyan
-    const maxSpeedRef = u0 * (2.2 / contrast); 
+    // Normalisation de la vitesse pour la couleur
+    // Dans la vidéo : Bleu = Lent, Cyan = Moyen, Jaune/Rouge = Rapide
+    const maxSpeed = u0 * (2.5 / contrast); 
 
-    for (let i = 0; i < size; i++) {
-      if (mask[i]) {
-        // Obstacle: Gris clair semi-transparent ou solide
-        // Format ABGR (Alpha, Blue, Green, Red) pour Little Endian
-        buf32[i] = 0xFFE0E0E0; 
+    let ptr = 0; // Index pixel
+    for(let i=0; i<Nx*Ny; i++) {
+      if(mask[i]) {
+        // Obstacle BLANC/GRIS
+        imageData32[i] = 0xFFE0E0E0; // ABGR (Little Endian) -> Gris clair
         continue;
       }
 
-      // Magnitude vitesse
-      const speed = Math.sqrt(ux[i]**2 + uy[i]**2);
-      let t = speed / maxSpeedRef;
-      if (t > 1) t = 1;
+      const v = Math.sqrt(ux[i]*ux[i] + uy[i]*uy[i]);
+      let t = v / maxSpeed;
+      if(t > 1.0) t = 1.0;
 
-      // Interpolation de couleur personnalisée "Deep Blue Thermal"
-      // 0.0 -> Bleu Nuit
-      // 0.5 -> Bleu Roi
-      // 1.0 -> Cyan / Blanc
-      
+      // PALETTE "TURBO" SIMPLIFIÉE (Bleu -> Cyan -> Vert -> Jaune -> Rouge)
+      // C'est ce qui donne le look de la vidéo
       let r, g, b;
-      
-      if (t < 0.5) {
-        // Partie sombre (0 -> 0.5)
-        // Bleu (50->255), Vert (0->100), Rouge (0)
-        let localT = t * 2;
-        r = 0;
-        g = Math.floor(10 + 90 * localT);
-        b = Math.floor(50 + 205 * localT);
+
+      // Cette logique approxime la carte thermique de la vidéo
+      if (t < 0.25) {
+          // Bleu profon -> Cyan
+          // t: 0 -> 0.25
+          // B: 255, G: 0 -> 255
+          const x = t * 4.0;
+          r = 0;
+          g = Math.floor(255 * x);
+          b = 255;
+      } else if (t < 0.5) {
+          // Cyan -> Vert
+          // t: 0.25 -> 0.5
+          // B: 255 -> 0, G: 255
+          const x = (t - 0.25) * 4.0;
+          r = 0;
+          g = 255;
+          b = Math.floor(255 * (1.0 - x));
+      } else if (t < 0.75) {
+          // Vert -> Jaune
+          // t: 0.5 -> 0.75
+          // R: 0 -> 255, G: 255
+          const x = (t - 0.5) * 4.0;
+          r = Math.floor(255 * x);
+          g = 255;
+          b = 0;
       } else {
-        // Partie claire (0.5 -> 1.0)
-        let localT = (t - 0.5) * 2;
-        r = Math.floor(200 * localT); // Ajout de rouge pour blanchir
-        g = Math.floor(100 + 155 * localT);
-        b = 255;
+          // Jaune -> Rouge
+          // t: 0.75 -> 1.0
+          // G: 255 -> 0, R: 255
+          const x = (t - 0.75) * 4.0;
+          r = 255;
+          g = Math.floor(255 * (1.0 - x));
+          b = 0;
       }
 
-      // Construction pixel 32-bit (Alpha: 255)
-      buf32[i] = (255 << 24) | (b << 16) | (g << 8) | r;
+      // Format binaire ABGR pour Canvas (Little Endian)
+      imageData32[i] = (255 << 24) | (b << 16) | (g << 8) | r;
     }
 
-    // Dessin dans le canvas
-    // On crée une image depuis les données brutes
-    createImageBitmap(new ImageData(imageData, Nx, Ny)).then(sprites => {
-      // On nettoie et on dessine l'image étirée pour remplir l'écran
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      ctx.drawImage(sprites, 0, 0, canvas.width, canvas.height);
-    });
-
-    updateStats();
-  }
-
-  function updateStats() {
-    document.getElementById("step-count").textContent = steps;
-    // Calculs factices basés sur inputs pour l'exemple (le vrai calcul demande une intégration de pression)
-    // C'est juste pour l'UI feedback dans cette démo
-    const aoa = parseFloat(document.getElementById("aoa").value);
-    const cl = (aoa * 0.11 + Math.sin(steps/100)*0.01).toFixed(3);
-    const cd = (0.02 + Math.abs(aoa)*0.005).toFixed(3);
+    // Dessin final
+    ctx.putImageData(new ImageData(new Uint8ClampedArray(imageBuffer), Nx, Ny), 0, 0);
     
-    if(steps % 10 === 0) {
-      document.getElementById("cl-val").textContent = cl;
-      document.getElementById("cd-val").textContent = cd;
-    }
+    // Mise à l'échelle automatique CSS (le canvas HTML s'étire)
+    document.getElementById("step-count").innerText = steps;
   }
 
   // ======================================================
-  // 5. BOUCLE & ÉVÉNEMENTS
+  // 5. UI & BOUCLE
   // ======================================================
   
-  // Adapter la résolution de la simulation à la fenêtre
-  function resizeGrid() {
-    // On garde un ratio fixe ou on adapte
-    // Pour la performance, on limite la grille interne
-    // Nx = Math.min(window.innerWidth, 600);
-    // Ny = Math.floor(Nx / 2);
-    
-    const width = document.body.clientWidth;
-    // Si écran large, haute résolution, sinon basse
-    Nx = width > 1000 ? 400 : 250;
-    Ny = Math.floor(Nx / 2.2);
-
-    canvas.width = document.body.clientWidth;
-    canvas.height = document.body.clientHeight;
-    
-    initMemory();
-    createAirfoil();
-    initFluid();
+  function resize() {
+    // On garde une résolution interne fixe pour la stabilité physique (400x200)
+    // Le CSS étire le canvas en plein écran
+    canvas.width = Nx;
+    canvas.height = Ny;
   }
 
   function loop() {
-    if (!paused) {
-      // Plusieurs pas physiques par frame visuelle pour accélérer
-      for (let k = 0; k < stepsPerFrame; k++) {
-        simulate();
-      }
+    if(!paused) {
+      for(let k=0; k<stepsPerFrame; k++) simulate();
       render();
     }
     requestAnimationFrame(loop);
   }
 
-  // Listeners UI
-  document.getElementById("start-btn").addEventListener("click", () => {
-    document.getElementById("startup-modal").style.display = "none";
-    resizeGrid();
-    loop();
-  });
+  // Initialisation
+  createAirfoil();
+  init();
+  resize();
+  loop();
 
-  // Sliders
-  const inputs = ["mach", "aoa", "thickness", "camber", "contrast"];
+  // Listeners
+  const inputs = ["mach", "viscosity", "aoa", "thickness", "camber", "contrast"];
   inputs.forEach(id => {
-    const el = document.getElementById(id);
-    const valDisplay = document.getElementById(id + "-val");
-    
-    el.addEventListener("input", (e) => {
-      valDisplay.textContent = e.target.value + (id === "aoa" ? "°" : "");
+    document.getElementById(id).addEventListener("input", (e) => {
+      const val = e.target.value;
+      const suffix = (id === "aoa") ? "°" : "";
+      document.getElementById(id+"-val").innerText = val + suffix;
       
-      if (id === "contrast") {
-        contrast = parseFloat(e.target.value);
-        if(paused) render(); // Mettre à jour l'image si en pause
-      } else if (id === "mach") {
-        // Mach change juste u0, pas besoin de reset géométrie
-        u0 = parseFloat(e.target.value) * 0.577;
+      if(id === "mach") {
+        u0 = parseFloat(val) * 0.577;
+      } else if(id === "viscosity") {
+        viscosity = parseFloat(val);
+      } else if(id === "contrast") {
+        contrast = parseFloat(val);
+        if(paused) render();
       } else {
-        // Changement géométrie -> Reset nécessaire pour propreté
+        // Changement de géométrie
         createAirfoil();
-        // On nettoie le fluide DANS l'obstacle (facultatif mais propre)
-        for(let i=0; i<Nx*Ny; i++) { if(mask[i]) { ux[i]=0; uy[i]=0; } }
+        // On nettoie la vitesse dans l'obstacle
+        for(let i=0; i<Nx*Ny; i++) if(mask[i]) { ux[i]=0; uy[i]=0; }
       }
     });
   });
 
+  document.getElementById("reset-btn").addEventListener("click", () => { init(); });
+  
   document.getElementById("pause-btn").addEventListener("click", function() {
     paused = !paused;
-    this.textContent = paused ? "Reprendre" : "Pause";
-    this.classList.toggle("primary");
-    this.classList.toggle("secondary");
-  });
-
-  document.getElementById("reset-btn").addEventListener("click", () => {
-    initFluid();
-  });
-
-  window.addEventListener("resize", () => {
-    // Optionnel: Redémarrer si la fenêtre change drastiquement
-    // resizeGrid();
-    // canvas.width = document.body.clientWidth;
-    // canvas.height = document.body.clientHeight;
+    this.innerText = paused ? "Resume" : "Pause";
+    this.classList.toggle("active");
   });
 
 </script>
