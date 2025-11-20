@@ -3,43 +3,42 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Simulation de Cube 3D</title>
+    <title>Simulation CFD - Méthode Lattice Boltzmann</title>
     <style>
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
         
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #1a2a6c, #b21f1f, #fdbb2d);
-            color: #fff;
+            background: linear-gradient(to right, #1a2a6c, #b21f1f, #fdbb2d);
+            color: white;
             min-height: 100vh;
             display: flex;
             flex-direction: column;
             align-items: center;
             padding: 20px;
-            overflow-x: hidden;
         }
         
         header {
             text-align: center;
             margin-bottom: 30px;
             width: 100%;
+            max-width: 1000px;
         }
         
         h1 {
             font-size: 2.8rem;
-            margin-bottom: 10px;
+            margin-bottom: 15px;
             text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
         }
         
         .subtitle {
             font-size: 1.2rem;
             opacity: 0.9;
-            max-width: 800px;
-            margin: 0 auto;
+            margin-bottom: 25px;
         }
         
         .container {
@@ -52,29 +51,36 @@
         }
         
         .simulation-container {
-            flex: 1;
+            flex: 2;
             min-width: 300px;
-            max-width: 600px;
-            height: 400px;
+            max-width: 700px;
+            height: 500px;
             background-color: rgba(0, 0, 0, 0.4);
             border-radius: 15px;
             overflow: hidden;
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            position: relative;
+        }
+        
+        #simulation-canvas {
+            width: 100%;
+            height: 100%;
+            display: block;
         }
         
         .controls {
             flex: 1;
             min-width: 300px;
-            max-width: 500px;
+            max-width: 400px;
             background-color: rgba(255, 255, 255, 0.1);
             backdrop-filter: blur(10px);
-            padding: 20px;
+            padding: 25px;
             border-radius: 15px;
             box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
         }
         
         .control-group {
-            margin-bottom: 20px;
+            margin-bottom: 25px;
         }
         
         h2 {
@@ -143,6 +149,18 @@
             margin-top: 20px;
         }
         
+        .info-panel {
+            margin-top: 20px;
+            padding: 15px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 10px;
+            font-size: 0.9rem;
+        }
+        
+        .info-panel p {
+            margin-bottom: 8px;
+        }
+        
         footer {
             margin-top: 40px;
             text-align: center;
@@ -165,225 +183,403 @@
 </head>
 <body>
     <header>
-        <h1>Simulation de Cube 3D</h1>
-        <p class="subtitle">Interagissez avec le cube en 3D en ajustant les paramètres ci-dessous. Vous pouvez le faire pivoter, modifier sa taille et changer ses couleurs.</p>
+        <h1>Simulation CFD Interactive</h1>
+        <p class="subtitle">Visualisation de l'écoulement autour d'un profil aérodynamique utilisant la méthode Lattice Boltzmann (LBM D2Q9)</p>
     </header>
     
     <div class="container">
-        <div class="simulation-container" id="cube-container">
-            <!-- La simulation 3D sera affichée ici -->
+        <div class="simulation-container">
+            <canvas id="simulation-canvas"></canvas>
         </div>
         
         <div class="controls">
             <div class="control-group">
-                <h2>Rotation</h2>
+                <h2>Paramètres du profil</h2>
                 <label>
-                    Rotation X: 
-                    <span class="value-display" id="rot-x-value">0</span>°
+                    Angle d'attaque: 
+                    <span class="value-display" id="angle-value">5</span>°
                 </label>
-                <input type="range" id="rotation-x" min="0" max="360" value="0">
+                <input type="range" id="angle" min="-15" max="15" value="5">
                 
                 <label>
-                    Rotation Y: 
-                    <span class="value-display" id="rot-y-value">0</span>°
+                    Cambrure: 
+                    <span class="value-display" id="camber-value">0.05</span>
                 </label>
-                <input type="range" id="rotation-y" min="0" max="360" value="0">
+                <input type="range" id="camber" min="0" max="0.1" step="0.01" value="0.05">
                 
                 <label>
-                    Rotation Z: 
-                    <span class="value-display" id="rot-z-value">0</span>°
+                    Épaisseur: 
+                    <span class="value-display" id="thickness-value">0.1</span>
                 </label>
-                <input type="range" id="rotation-z" min="0" max="360" value="0">
+                <input type="range" id="thickness" min="0.05" max="0.2" step="0.01" value="0.1">
             </div>
             
             <div class="control-group">
-                <h2>Dimensions</h2>
+                <h2>Paramètres d'écoulement</h2>
                 <label>
-                    Largeur: 
-                    <span class="value-display" id="width-value">1.0</span>
+                    Viscosité: 
+                    <span class="value-display" id="viscosity-value">0.02</span>
                 </label>
-                <input type="range" id="width" min="0.5" max="2" step="0.1" value="1.0">
+                <input type="range" id="viscosity" min="0.005" max="0.05" step="0.005" value="0.02">
                 
                 <label>
-                    Hauteur: 
-                    <span class="value-display" id="height-value">1.0</span>
+                    Vitesse: 
+                    <span class="value-display" id="velocity-value">0.1</span>
                 </label>
-                <input type="range" id="height" min="0.5" max="2" step="0.1" value="1.0">
-                
-                <label>
-                    Profondeur: 
-                    <span class="value-display" id="depth-value">1.0</span>
-                </label>
-                <input type="range" id="depth" min="0.5" max="2" step="0.1" value="1.0">
+                <input type="range" id="velocity" min="0.05" max="0.2" step="0.01" value="0.1">
             </div>
             
             <div class="button-group">
                 <button class="btn" id="reset-btn">Réinitialiser</button>
-                <button class="btn" id="color-btn">Changer Couleur</button>
-                <button class="btn" id="wireframe-btn">Basculer Fil de Fer</button>
+                <button class="btn" id="toggle-visualization">Changer Visualisation</button>
+            </div>
+            
+            <div class="info-panel">
+                <p>Visualisation: <span id="vis-type">Vitesse</span></p>
+                <p>FPS: <span id="fps-counter">0</span></p>
+                <p>Nombre d'itérations: <span id="iteration-counter">0</span></p>
             </div>
         </div>
     </div>
     
     <footer>
-        <p>Simulation 3D créée avec Three.js | Inspiré par les visualisations CFD</p>
+        <p>Simulation CFD utilisant la méthode Lattice Boltzmann (LBM D2Q9) | Démonstration pédagogique</p>
     </footer>
 
-    <!-- Chargement des bibliothèques Three.js -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script>
-        // Initialisation de la scène Three.js
-        let scene, camera, renderer, cube;
-        let isWireframe = false;
-        let cubeColor = 0x00aaff;
+        // Variables globales
+        let canvas, ctx;
+        let width = 700, height = 500;
+        let simulationWidth = 300, simulationHeight = 150;
+        let fpsElement, iterationElement, visTypeElement;
+        let frameCount = 0, lastTime = 0, fps = 0;
+        let iterationCount = 0;
+        let visualizationMode = 0; // 0: vitesse, 1: vorticity, 2: pression
         
+        // Paramètres de simulation
+        let params = {
+            angle: 5,
+            camber: 0.05,
+            thickness: 0.1,
+            viscosity: 0.02,
+            velocity: 0.1
+        };
+        
+        // Variables LBM
+        let nx, ny;
+        let f, f_next;
+        let rho, ux, uy;
+        let obstacles;
+        let forceField;
+        
+        // Constantes LBM D2Q9
+        const w = [4/9, 1/9, 1/9, 1/9, 1/9, 1/36, 1/36, 1/36, 1/36];
+        const cx = [0, 1, 0, -1, 0, 1, -1, -1, 1];
+        const cy = [0, 0, 1, 0, -1, 1, 1, -1, -1];
+        const opposite = [0, 3, 4, 1, 2, 7, 8, 5, 6];
+        const tau = 0.6;
+        
+        // Initialisation
         function init() {
-            // Création de la scène
-            scene = new THREE.Scene();
-            scene.background = new THREE.Color(0x111111);
+            canvas = document.getElementById('simulation-canvas');
+            ctx = canvas.getContext('2d');
+            canvas.width = width;
+            canvas.height = height;
             
-            // Création de la caméra
-            camera = new THREE.PerspectiveCamera(75, 
-                document.getElementById('cube-container').clientWidth / 
-                document.getElementById('cube-container').clientHeight, 
-                0.1, 1000
-            );
-            camera.position.z = 5;
+            fpsElement = document.getElementById('fps-counter');
+            iterationElement = document.getElementById('iteration-counter');
+            visTypeElement = document.getElementById('vis-type');
             
-            // Création du renderer
-            renderer = new THREE.WebGLRenderer({ antialias: true });
-            renderer.setSize(
-                document.getElementById('cube-container').clientWidth,
-                document.getElementById('cube-container').clientHeight
-            );
-            document.getElementById('cube-container').appendChild(renderer.domElement);
+            // Initialiser la simulation LBM
+            nx = simulationWidth;
+            ny = simulationHeight;
             
-            // Création du cube avec la géométrie et le matériau
-            const geometry = new THREE.BoxGeometry(1, 1, 1);
-            const material = new THREE.MeshPhongMaterial({ 
-                color: cubeColor,
-                shininess: 100
-            });
+            // Allouer les tableaux
+            f = new Array(9);
+            f_next = new Array(9);
+            for (let i = 0; i < 9; i++) {
+                f[i] = new Float32Array(nx * ny);
+                f_next[i] = new Float32Array(nx * ny);
+            }
             
-            cube = new THREE.Mesh(geometry, material);
-            scene.add(cube);
+            rho = new Float32Array(nx * ny);
+            ux = new Float32Array(nx * ny);
+            uy = new Float32Array(nx * ny);
+            obstacles = new Uint8Array(nx * ny);
+            forceField = new Float32Array(nx * ny);
             
-            // Ajout de lumières
-            const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
-            scene.add(ambientLight);
+            // Initialiser la simulation
+            resetSimulation();
             
-            const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
-            directionalLight.position.set(5, 5, 5);
-            scene.add(directionalLight);
-            
-            // Gestion du redimensionnement de la fenêtre
-            window.addEventListener('resize', onWindowResize, false);
-            
-            // Configuration des écouteurs d'événements pour les contrôles
+            // Configurer les écouteurs d'événements
             setupEventListeners();
             
-            // Démarrage de l'animation
-            animate();
-        }
-        
-        function animate() {
+            // Démarrer la boucle d'animation
             requestAnimationFrame(animate);
-            
-            // Animation de rotation automatique douce
-            cube.rotation.x += 0.005;
-            cube.rotation.y += 0.005;
-            
-            // Mise à jour des valeurs d'affichage
-            document.getElementById('rot-x-value').textContent = Math.round(cube.rotation.x * 180 / Math.PI % 360);
-            document.getElementById('rot-y-value').textContent = Math.round(cube.rotation.y * 180 / Math.PI % 360);
-            
-            renderer.render(scene, camera);
         }
         
-        function onWindowResize() {
-            camera.aspect = document.getElementById('cube-container').clientWidth / 
-                            document.getElementById('cube-container').clientHeight;
-            camera.updateProjectionMatrix();
-            renderer.setSize(
-                document.getElementById('cube-container').clientWidth,
-                document.getElementById('cube-container').clientHeight
-            );
+        function resetSimulation() {
+            iterationCount = 0;
+            
+            // Initialiser les distributions
+            for (let i = 0; i < 9; i++) {
+                for (let j = 0; j < nx * ny; j++) {
+                    f[i][j] = w[i];
+                    f_next[i][j] = w[i];
+                }
+            }
+            
+            // Initialiser les champs
+            for (let j = 0; j < nx * ny; j++) {
+                rho[j] = 1.0;
+                ux[j] = params.velocity;
+                uy[j] = 0;
+                obstacles[j] = 0;
+                forceField[j] = 0;
+            }
+            
+            // Créer le profil aérodynamique
+            createAirfoil();
+        }
+        
+        function createAirfoil() {
+            // Effacer les obstacles précédents
+            for (let j = 0; j < nx * ny; j++) {
+                obstacles[j] = 0;
+            }
+            
+            // Paramètres du profil Joukowsky
+            const centerX = nx * 0.3;
+            const centerY = ny * 0.5;
+            const radius = ny * 0.15;
+            const angleRad = params.angle * Math.PI / 180;
+            
+            // Créer le profil
+            for (let i = 0; i < nx; i++) {
+                for (let j = 0; j < ny; j++) {
+                    const dx = i - centerX;
+                    const dy = j - centerY;
+                    
+                    // Transformation de Joukowsky simplifiée
+                    let r = Math.sqrt(dx*dx + dy*dy);
+                    let theta = Math.atan2(dy, dx);
+                    
+                    // Appliquer l'angle d'attaque
+                    theta -= angleRad;
+                    
+                    // Appliquer la cambrure et l'épaisseur
+                    const a = radius * (1 + params.camber * 10);
+                    const b = radius * (1 + params.thickness * 5);
+                    
+                    // Équation de l'ellipse (simplification)
+                    const value = (dx*dx)/(a*a) + (dy*dy)/(b*b);
+                    
+                    if (value <= 1.0) {
+                        obstacles[i + j * nx] = 1;
+                    }
+                }
+            }
+        }
+        
+        function simulateLBM() {
+            // Étape de collision
+            for (let i = 0; i < nx * ny; i++) {
+                if (obstacles[i]) continue;
+                
+                // Calculer la densité et la vitesse
+                let density = 0;
+                let velX = 0;
+                let velY = 0;
+                
+                for (let j = 0; j < 9; j++) {
+                    density += f[j][i];
+                    velX += f[j][i] * cx[j];
+                    velY += f[j][i] * cy[j];
+                }
+                
+                rho[i] = density;
+                ux[i] = velX / density;
+                uy[i] = velY / density;
+                
+                // Force (simplifiée)
+                ux[i] += forceField[i] * 0.001;
+                
+                // Équilibre
+                let u2 = ux[i]*ux[i] + uy[i]*uy[i];
+                
+                for (let j = 0; j < 9; j++) {
+                    let cu = cx[j]*ux[i] + cy[j]*uy[i];
+                    let feq = w[j] * density * (1 + 3*cu + 4.5*cu*cu - 1.5*u2);
+                    f_next[j][i] = f[j][i] - (f[j][i] - feq) / tau;
+                }
+            }
+            
+            // Étape de propagation
+            for (let i = 0; i < nx * ny; i++) {
+                if (obstacles[i]) continue;
+                
+                for (let j = 0; j < 9; j++) {
+                    let nextX = (Math.floor(i % nx) + cx[j] + nx) % nx;
+                    let nextY = (Math.floor(i / nx) + cy[j] + ny) % ny;
+                    let nextIndex = nextX + nextY * nx;
+                    
+                    if (obstacles[nextIndex]) {
+                        // Conditions aux limites rebondissement
+                        f_next[opposite[j]][i] = f[j][i];
+                    } else {
+                        f[j][nextIndex] = f_next[j][i];
+                    }
+                }
+            }
+            
+            // Conditions aux limites d'entrée (vitesse constante)
+            for (let j = 0; j < ny; j++) {
+                let i = 0;
+                let index = i + j * nx;
+                
+                if (obstacles[index]) continue;
+                
+                ux[index] = params.velocity;
+                uy[index] = 0;
+                rho[index] = 1.0;
+                
+                let u2 = ux[index]*ux[index] + uy[index]*uy[index];
+                
+                for (let k = 0; k < 9; k++) {
+                    let cu = cx[k]*ux[index] + cy[k]*uy[index];
+                    f[k][index] = w[k] * rho[index] * (1 + 3*cu + 4.5*cu*cu - 1.5*u2);
+                }
+            }
+            
+            iterationCount++;
+        }
+        
+        function render() {
+            // Créer une image à partir des données de simulation
+            const imageData = ctx.createImageData(width, height);
+            const data = imageData.data;
+            
+            // Facteur d'échelle pour la visualisation
+            const scaleX = width / nx;
+            const scaleY = height / ny;
+            
+            for (let y = 0; y < height; y++) {
+                for (let x = 0; x < width; x++) {
+                    const simX = Math.floor(x / scaleX);
+                    const simY = Math.floor(y / scaleY);
+                    const index = simX + simY * nx;
+                    
+                    if (index >= 0 && index < nx * ny) {
+                        const pixelIndex = (y * width + x) * 4;
+                        
+                        if (obstacles[index]) {
+                            // Rendre les obstacles en gris
+                            data[pixelIndex] = 100;
+                            data[pixelIndex + 1] = 100;
+                            data[pixelIndex + 2] = 100;
+                            data[pixelIndex + 3] = 255;
+                        } else {
+                            // Visualisation basée sur le mode sélectionné
+                            let r, g, b;
+                            
+                            if (visualizationMode === 0) {
+                                // Vitesse - dégradé bleu à rouge
+                                const speed = Math.min(1, Math.sqrt(ux[index]*ux[index] + uy[index]*uy[index]) / 0.15);
+                                r = Math.floor(255 * speed);
+                                g = Math.floor(100 * speed);
+                                b = Math.floor(255 * (1 - speed));
+                            } else if (visualizationMode === 1) {
+                                // Vorticity - dégradé vert
+                                const vorticity = uy[index] - ux[index];
+                                const intensity = Math.min(1, Math.abs(vorticity) * 10);
+                                r = Math.floor(50 * intensity);
+                                g = Math.floor(200 * intensity);
+                                b = Math.floor(100 * intensity);
+                            } else {
+                                // Pression - dégradé bleu
+                                const pressure = rho[index] - 1.0;
+                                const intensity = Math.min(1, Math.abs(pressure) * 10);
+                                r = Math.floor(100 * intensity);
+                                g = Math.floor(150 * intensity);
+                                b = Math.floor(255 * intensity);
+                            }
+                            
+                            data[pixelIndex] = r;
+                            data[pixelIndex + 1] = g;
+                            data[pixelIndex + 2] = b;
+                            data[pixelIndex + 3] = 255;
+                        }
+                    }
+                }
+            }
+            
+            ctx.putImageData(imageData, 0, 0);
+        }
+        
+        function animate(timestamp) {
+            // Calculer le FPS
+            frameCount++;
+            if (timestamp - lastTime >= 1000) {
+                fps = Math.round((frameCount * 1000) / (timestamp - lastTime));
+                frameCount = 0;
+                lastTime = timestamp;
+                fpsElement.textContent = fps;
+            }
+            
+            // Mettre à jour les compteurs
+            iterationElement.textContent = iterationCount;
+            
+            // Exécuter plusieurs itérations de simulation par frame pour la vitesse
+            for (let i = 0; i < 10; i++) {
+                simulateLBM();
+            }
+            
+            // Rendu
+            render();
+            
+            // Prochaine frame
+            requestAnimationFrame(animate);
         }
         
         function setupEventListeners() {
-            // Écouteurs pour les contrôles de rotation
-            document.getElementById('rotation-x').addEventListener('input', function() {
-                cube.rotation.x = this.value * Math.PI / 180;
-                document.getElementById('rot-x-value').textContent = this.value;
+            // Écouteurs pour les contrôles
+            document.getElementById('angle').addEventListener('input', function() {
+                params.angle = parseFloat(this.value);
+                document.getElementById('angle-value').textContent = this.value;
+                createAirfoil();
             });
             
-            document.getElementById('rotation-y').addEventListener('input', function() {
-                cube.rotation.y = this.value * Math.PI / 180;
-                document.getElementById('rot-y-value').textContent = this.value;
+            document.getElementById('camber').addEventListener('input', function() {
+                params.camber = parseFloat(this.value);
+                document.getElementById('camber-value').textContent = this.value;
+                createAirfoil();
             });
             
-            document.getElementById('rotation-z').addEventListener('input', function() {
-                cube.rotation.z = this.value * Math.PI / 180;
-                document.getElementById('rot-z-value').textContent = this.value;
+            document.getElementById('thickness').addEventListener('input', function() {
+                params.thickness = parseFloat(this.value);
+                document.getElementById('thickness-value').textContent = this.value;
+                createAirfoil();
             });
             
-            // Écouteurs pour les contrôles de dimension
-            document.getElementById('width').addEventListener('input', function() {
-                cube.scale.x = this.value;
-                document.getElementById('width-value').textContent = this.value;
+            document.getElementById('viscosity').addEventListener('input', function() {
+                params.viscosity = parseFloat(this.value);
+                document.getElementById('viscosity-value').textContent = this.value;
             });
             
-            document.getElementById('height').addEventListener('input', function() {
-                cube.scale.y = this.value;
-                document.getElementById('height-value').textContent = this.value;
+            document.getElementById('velocity').addEventListener('input', function() {
+                params.velocity = parseFloat(this.value);
+                document.getElementById('velocity-value').textContent = this.value;
             });
             
-            document.getElementById('depth').addEventListener('input', function() {
-                cube.scale.z = this.value;
-                document.getElementById('depth-value').textContent = this.value;
-            });
-            
-            // Écouteurs pour les boutons
             document.getElementById('reset-btn').addEventListener('click', function() {
-                // Réinitialiser toutes les valeurs
-                cube.rotation.set(0, 0, 0);
-                cube.scale.set(1, 1, 1);
-                
-                document.getElementById('rotation-x').value = 0;
-                document.getElementById('rotation-y').value = 0;
-                document.getElementById('rotation-z').value = 0;
-                
-                document.getElementById('width').value = 1;
-                document.getElementById('height').value = 1;
-                document.getElementById('depth').value = 1;
-                
-                document.getElementById('rot-x-value').textContent = '0';
-                document.getElementById('rot-y-value').textContent = '0';
-                document.getElementById('rot-z-value').textContent = '0';
-                
-                document.getElementById('width-value').textContent = '1.0';
-                document.getElementById('height-value').textContent = '1.0';
-                document.getElementById('depth-value').textContent = '1.0';
-                
-                if (isWireframe) {
-                    toggleWireframe();
-                }
+                resetSimulation();
             });
             
-            document.getElementById('color-btn').addEventListener('click', function() {
-                // Changer la couleur de façon aléatoire
-                cubeColor = Math.random() * 0xffffff;
-                cube.material.color.setHex(cubeColor);
+            document.getElementById('toggle-visualization').addEventListener('click', function() {
+                visualizationMode = (visualizationMode + 1) % 3;
+                const modes = ["Vitesse", "Vorticité", "Pression"];
+                visTypeElement.textContent = modes[visualizationMode];
             });
-            
-            document.getElementById('wireframe-btn').addEventListener('click', function() {
-                toggleWireframe();
-            });
-        }
-        
-        function toggleWireframe() {
-            isWireframe = !isWireframe;
-            cube.material.wireframe = isWireframe;
         }
         
         // Démarrer l'initialisation
