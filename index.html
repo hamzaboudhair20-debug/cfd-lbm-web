@@ -1,1968 +1,393 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>LBM D2Q9 Avancé – Profil de Joukowsky</title>
-  <style>
-    * { box-sizing: border-box; }
-
-    body {
-      margin: 0;
-      padding: 0;
-      font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
-      background: #0a0e27;
-      color: #e5e7eb;
-      height: 100vh;
-      display: flex;
-      flex-direction: column;
-      overflow: hidden;
-    }
-
-    header {
-      padding: 16px 24px;
-      border-bottom: 1px solid #1e293b;
-      background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
-      box-shadow: 0 4px 6px rgba(0,0,0,0.3);
-    }
-
-    header h1 {
-      font-size: 22px;
-      margin: 0;
-      background: linear-gradient(135deg, #60a5fa 0%, #a78bfa 100%);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      font-weight: 700;
-    }
-
-    header p {
-      margin: 6px 0 0;
-      font-size: 13px;
-      color: #94a3b8;
-    }
-
-    .header-badges {
-      display: flex;
-      gap: 8px;
-      margin-top: 8px;
-      flex-wrap: wrap;
-    }
-
-    .badge {
-      display: inline-block;
-      padding: 3px 8px;
-      background: rgba(96,165,250,0.15);
-      border: 1px solid rgba(96,165,250,0.3);
-      border-radius: 4px;
-      font-size: 11px;
-      color: #60a5fa;
-    }
-
-    main.layout {
-      flex: 1;
-      display: flex;
-      min-height: 0;
-    }
-
-    #sim-container {
-      flex: 3;
-      background: #020617;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      border-right: 1px solid #1e293b;
-      padding: 20px;
-      position: relative;
-      overflow: hidden;
-    }
-
-    #sim-canvas {
-      border: 2px solid #334155;
-      background: #000;
-      box-shadow: 0 8px 32px rgba(0,0,0,0.5);
-      border-radius: 4px;
-    }
-
-    .canvas-controls {
-      margin-top: 16px;
-      display: flex;
-      gap: 12px;
-      align-items: center;
-      flex-wrap: wrap;
-      justify-content: center;
-    }
-
-    .canvas-controls select,
-    .canvas-controls button,
-    .canvas-controls input {
-      padding: 8px 12px;
-      background: #1e293b;
-      border: 1px solid #334155;
-      color: #e5e7eb;
-      border-radius: 6px;
-      font-size: 13px;
-      cursor: pointer;
-      transition: all 0.2s;
-    }
-
-    .canvas-controls select:hover,
-    .canvas-controls button:hover {
-      border-color: #475569;
-      background: #2d3748;
-    }
-
-    .canvas-controls button.active {
-      background: #2563eb;
-      border-color: #3b82f6;
-    }
-
-    #controls {
-      flex: 1;
-      padding: 24px;
-      background: #0f172a;
-      color: #e5e7eb;
-      overflow-y: auto;
-      min-width: 340px;
-    }
-
-    #controls h2 {
-      margin-top: 0;
-      margin-bottom: 16px;
-      font-size: 18px;
-      color: #60a5fa;
-      font-weight: 600;
-    }
-
-    .section {
-      margin-bottom: 24px;
-      padding-bottom: 20px;
-      border-bottom: 1px solid #1e293b;
-    }
-
-    .section:last-child {
-      border-bottom: none;
-    }
-
-    .section h3 {
-      font-size: 15px;
-      margin: 0 0 12px 0;
-      color: #a78bfa;
-      font-weight: 600;
-    }
-
-    .control {
-      margin-bottom: 16px;
-      font-size: 13px;
-    }
-
-    .control span.label {
-      display: flex;
-      justify-content: space-between;
-      margin-bottom: 6px;
-      align-items: center;
-    }
-
-    .control span.value {
-      color: #60a5fa;
-      font-variant-numeric: tabular-nums;
-      font-weight: 600;
-      margin-left: 8px;
-    }
-
-    input[type="range"] {
-      width: 100%;
-      height: 6px;
-      border-radius: 3px;
-      background: #1e293b;
-      outline: none;
-      -webkit-appearance: none;
-    }
-
-    input[type="range"]::-webkit-slider-thumb {
-      -webkit-appearance: none;
-      appearance: none;
-      width: 16px;
-      height: 16px;
-      border-radius: 50%;
-      background: #60a5fa;
-      cursor: pointer;
-      transition: all 0.2s;
-    }
-
-    input[type="range"]::-webkit-slider-thumb:hover {
-      background: #93c5fd;
-      transform: scale(1.1);
-    }
-
-    input[type="range"]::-moz-range-thumb {
-      width: 16px;
-      height: 16px;
-      border-radius: 50%;
-      background: #60a5fa;
-      cursor: pointer;
-      border: none;
-    }
-
-    .slider-with-indicator {
-      position: relative;
-      margin-bottom: 20px;
-    }
-
-    .slider-indicator {
-      height: 6px;
-      border-radius: 3px;
-      position: absolute;
-      top: 20px;
-      left: 0;
-      background: linear-gradient(90deg, #2563eb 0%, #a78bfa 50%, #ef4444 100%);
-      pointer-events: none;
-    }
-
-    .buttons {
-      display: flex;
-      gap: 8px;
-      margin-top: 12px;
-      flex-wrap: wrap;
-    }
-
-    button {
-      flex: 1;
-      padding: 10px 14px;
-      border-radius: 6px;
-      border: none;
-      background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
-      color: white;
-      font-size: 13px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.2s;
-      box-shadow: 0 2px 4px rgba(37,99,235,0.3);
-    }
-
-    button:hover {
-      transform: translateY(-1px);
-      box-shadow: 0 4px 8px rgba(37,99,235,0.4);
-    }
-
-    button:active {
-      transform: translateY(0);
-    }
-
-    button.secondary {
-      background: linear-gradient(135deg, #374151 0%, #1f2937 100%);
-      box-shadow: 0 2px 4px rgba(0,0,0,0.3);
-    }
-
-    .results-block {
-      background: #1e293b;
-      padding: 16px;
-      border-radius: 8px;
-      font-size: 13px;
-      margin-top: 8px;
-    }
-
-    .results-block .row {
-      display: flex;
-      justify-content: space-between;
-      margin-bottom: 8px;
-      font-variant-numeric: tabular-nums;
-    }
-
-    .results-block .row:last-child {
-      margin-bottom: 0;
-    }
-
-    .results-block .row span:first-child {
-      color: #94a3b8;
-    }
-
-    .results-block .row span:last-child {
-      color: #60a5fa;
-      font-weight: 600;
-    }
-
-    .info-text {
-      margin-top: 12px;
-      font-size: 11px;
-      color: #64748b;
-      line-height: 1.5;
-    }
-
-    .warning-text {
-      background: rgba(251,191,36,0.1);
-      border: 1px solid rgba(251,191,36,0.3);
-      padding: 8px;
-      border-radius: 6px;
-      font-size: 11px;
-      color: #fbbf24;
-      margin-top: 8px;
-    }
-
-    footer {
-      padding: 10px 20px;
-      font-size: 11px;
-      color: #64748b;
-      border-top: 1px solid #1e293b;
-      background: #0f172a;
-      text-align: center;
-    }
-
-    .metric-badge {
-      display: inline-block;
-      padding: 4px 8px;
-      background: #1e293b;
-      border-radius: 4px;
-      font-size: 11px;
-      color: #60a5fa;
-      margin-top: 4px;
-    }
-
-    .colorbar {
-      position: absolute;
-      right: 30px;
-      top: 30px;
-      width: 20px;
-      height: 200px;
-      background: linear-gradient(to top,
-        rgba(15,23,42,1) 0%,
-        rgba(59,130,246,1) 33%,
-        rgba(251,191,36,1) 66%,
-        rgba(239,68,68,1) 100%);
-      border: 1px solid #334155;
-      border-radius: 4px;
-      display: block;
-    }
-
-    .colorbar-labels {
-      position: absolute;
-      right: 55px;
-      top: 30px;
-      height: 200px;
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-      font-size: 10px;
-      color: #94a3b8;
-    }
-
-    .performance-panel {
-      position: absolute;
-      bottom: 10px;
-      left: 10px;
-      background: rgba(15, 23, 42, 0.9);
-      padding: 8px 12px;
-      border-radius: 6px;
-      font-size: 11px;
-      color: #e5e7eb;
-      border: 1px solid #334155;
-    }
-
-    .quality-selector {
-      display: flex;
-      gap: 8px;
-      margin-top: 12px;
-    }
-
-    .quality-btn {
-      flex: 1;
-      padding: 6px 10px;
-      font-size: 12px;
-      text-align: center;
-      border-radius: 4px;
-      background: #1e293b;
-      border: 1px solid #334155;
-      cursor: pointer;
-      transition: all 0.2s;
-    }
-
-    .quality-btn.active {
-      background: #2563eb;
-      border-color: #3b82f6;
-    }
-
-    .quality-btn:hover:not(.active) {
-      background: #2d3748;
-    }
-
-    .startup-modal {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: rgba(10, 14, 39, 0.95);
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      z-index: 1000;
-    }
-
-    .modal-content {
-      background: #0f172a;
-      padding: 30px;
-      border-radius: 12px;
-      max-width: 600px;
-      width: 90%;
-      border: 1px solid #334155;
-      box-shadow: 0 10px 25px rgba(0,0,0,0.5);
-    }
-
-    .modal-content h2 {
-      margin-top: 0;
-      color: #60a5fa;
-    }
-
-    .modal-content ul {
-      color: #94a3b8;
-      line-height: 1.8;
-    }
-
-    .modal-buttons {
-      display: flex;
-      gap: 12px;
-      margin-top: 20px;
-    }
-
-    .tabs {
-      display: flex;
-      gap: 4px;
-      margin-bottom: 16px;
-      border-bottom: 1px solid #1e293b;
-    }
-
-    .tab {
-      padding: 8px 16px;
-      background: transparent;
-      border: none;
-      color: #94a3b8;
-      cursor: pointer;
-      border-bottom: 2px solid transparent;
-      transition: all 0.2s;
-      font-size: 13px;
-    }
-
-    .tab:hover {
-      color: #e5e7eb;
-    }
-
-    .tab.active {
-      color: #60a5fa;
-      border-bottom-color: #60a5fa;
-    }
-
-    .tab-content {
-      display: none;
-    }
-
-    .tab-content.active {
-      display: block;
-    }
-
-    .checkbox-control {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      margin-bottom: 12px;
-    }
-
-    .checkbox-control input[type="checkbox"] {
-      width: 16px;
-      height: 16px;
-      cursor: pointer;
-    }
-
-    .checkbox-control label {
-      font-size: 13px;
-      cursor: pointer;
-    }
-
-    @media (max-width: 1000px) {
-      main.layout { flex-direction: column; }
-      #sim-container { border-right: none; border-bottom: 1px solid #1e293b; }
-      #controls { max-height: 50vh; min-width: unset; }
-    }
-  </style>
-</head>
-
-<body>
-<header>
-  <h1>🌬️ LBM D2Q9 Avancé – Écoulement autour d'un profil de Joukowsky</h1>
-  <p>Simulation numérique haute-fidélité • Méthode Lattice Boltzmann BGK optimisée</p>
-  <div class="header-badges">
-    <span class="badge">D2Q9 BGK</span>
-    <span class="badge">Multi-relaxation</span>
-    <span class="badge">Turbulence LES</span>
-    <span class="badge">Calculs CL/CD</span>
-    <span class="badge">WebGL Ready</span>
-  </div>
-</header>
-
-<main class="layout">
-  <section id="sim-container">
-    <canvas id="sim-canvas" width="600" height="240"></canvas>
-    <div class="colorbar"></div>
-    <div class="colorbar-labels">
-      <span id="max-value">1.00</span>
-      <span>0.75</span>
-      <span>0.50</span>
-      <span>0.25</span>
-      <span id="min-value">0.00</span>
-    </div>
-    <div class="performance-panel">
-      <strong>Performances:</strong>
-      FPS: <span id="fps-counter">0</span> |
-      MS/Frame: <span id="ms-counter">0</span> |
-      Étapes: <span id="steps-count">0</span> |
-      Stabilité: <span id="stability">OK</span>
-    </div>
-    <div class="canvas-controls">
-      <label style="font-size: 13px;"><strong>Visualisation:</strong></label>
-      <select id="viz-mode">
-        <option value="velocity">Magnitude de vitesse</option>
-        <option value="pressure">Champ de pression</option>
-        <option value="vorticity">Vorticité (ω)</option>
-        <option value="streamlines">Lignes de courant</option>
-        <option value="vectors">Vecteurs vitesse</option>
-        <option value="qcriterion">Q-criterion (tourbillons)</option>
-      </select>
-      <label style="font-size: 13px;">Contraste:</label>
-      <input type="range" id="contrast" min="0.5" max="3.0" step="0.1" value="1.5" style="width: 80px;">
-      <button id="screenshot-btn">📷 Capture</button>
-      <button id="record-btn">⏺️ Enregistrer</button>
-    </div>
-  </section>
-
-  <aside id="controls">
-    <div class="tabs">
-      <button class="tab active" data-tab="flow">Écoulement</button>
-      <button class="tab" data-tab="geometry">Géométrie</button>
-      <button class="tab" data-tab="advanced">Avancé</button>
-      <button class="tab" data-tab="results">Résultats</button>
-    </div>
-
-    <div class="tab-content active" id="tab-flow">
-      <div class="section">
-        <h2>Paramètres d'écoulement</h2>
-
-        <div class="control">
-          <span class="label">
-            <span>Nombre de Mach (Ma)</span>
-            <span class="value" id="mach-value">0.10</span>
-          </span>
-          <div class="slider-with-indicator">
-            <div class="slider-indicator" id="mach-indicator" style="width:50%;"></div>
-            <input type="range" id="mach" min="0.02" max="0.18" step="0.01" value="0.10">
-          </div>
-          <p class="info-text">Ma > 0.15 peut causer des instabilités numériques</p>
-        </div>
-
-        <div class="control">
-          <span class="label">
-            <span>Temps de relaxation τ</span>
-            <span class="value" id="tau-value">0.80</span>
-          </span>
-          <div class="slider-with-indicator">
-            <div class="slider-indicator" id="tau-indicator" style="width:30%;"></div>
-            <input type="range" id="tau" min="0.52" max="1.50" step="0.01" value="0.80">
-          </div>
-          <p class="info-text">τ → 0.5 : limite de stabilité BGK</p>
-        </div>
-
-        <div class="results-block">
-          <div class="row">
-            <span>Reynolds (Re)</span>
-            <span id="reynolds">~2000</span>
-          </div>
-          <div class="row">
-            <span>Viscosité cinématique ν</span>
-            <span id="viscosity">0.10</span>
-          </div>
-          <div class="row">
-            <span>Vitesse caractéristique U₀</span>
-            <span id="u0-value">0.058</span>
-          </div>
-          <div class="row">
-            <span>Pas de temps Δt</span>
-            <span id="dt-value">1.00</span>
-          </div>
-        </div>
-      </div>
-
-      <div class="section">
-        <h3>Conditions aux limites</h3>
-        
-        <div class="checkbox-control">
-          <input type="checkbox" id="inlet-turbulence">
-          <label for="inlet-turbulence">Turbulence à l'entrée (5%)</label>
-        </div>
-
-        <div class="checkbox-control">
-          <input type="checkbox" id="wall-roughness">
-          <label for="wall-roughness">Rugosité des parois</label>
-        </div>
-
-        <div class="control">
-          <span class="label">
-            <span>Type de sortie</span>
-          </span>
-          <select id="outlet-type" style="width:100%; padding:6px; background:#1e293b; border:1px solid #334155; color:#e5e7eb; border-radius:4px;">
-            <option value="extrapolation">Extrapolation simple</option>
-            <option value="convective">Convective (Sommerfeld)</option>
-            <option value="pressure">Pression imposée</option>
-          </select>
-        </div>
-      </div>
-    </div>
-
-    <div class="tab-content" id="tab-geometry">
-      <div class="section">
-        <h3>Géométrie du profil de Joukowsky</h3>
-
-        <div class="control">
-          <span class="label">
-            <span>Angle d'attaque α</span>
-            <span class="value" id="aoa-value">5°</span>
-          </span>
-          <div class="slider-with-indicator">
-            <div class="slider-indicator" id="aoa-indicator" style="width:50%;"></div>
-            <input type="range" id="aoa" min="-15" max="25" step="0.5" value="5">
-          </div>
-        </div>
-
-        <div class="control">
-          <span class="label">
-            <span>Épaisseur relative t/c</span>
-            <span class="value" id="thickness-value">0.12</span>
-          </span>
-          <div class="slider-with-indicator">
-            <div class="slider-indicator" id="thickness-indicator" style="width:40%;"></div>
-            <input type="range" id="thickness" min="0.04" max="0.25" step="0.01" value="0.12">
-          </div>
-        </div>
-
-        <div class="control">
-          <span class="label">
-            <span>Cambrure maximale</span>
-            <span class="value" id="camber-value">0.08</span>
-          </span>
-          <div class="slider-with-indicator">
-            <div class="slider-indicator" id="camber-indicator" style="width:40%;"></div>
-            <input type="range" id="camber" min="0.00" max="0.20" step="0.01" value="0.08">
-          </div>
-        </div>
-
-        <div class="control">
-          <span class="label">
-            <span>Position de la cambrure</span>
-            <span class="value" id="camber-pos-value">0.40</span>
-          </span>
-          <input type="range" id="camber-pos" min="0.2" max="0.6" step="0.05" value="0.40">
-          <p class="info-text">Position x/c de la cambrure maximale</p>
-        </div>
-
-        <div class="buttons">
-          <button id="preset-naca0012" class="secondary">NACA 0012</button>
-          <button id="preset-naca4412" class="secondary">NACA 4412</button>
-        </div>
-      </div>
-    </div>
-
-    <div class="tab-content" id="tab-advanced">
-      <div class="section">
-        <h3>Paramètres numériques avancés</h3>
-
-        <div class="control">
-          <span class="label">
-            <span>Modèle de collision</span>
-          </span>
-          <select id="collision-model" style="width:100%; padding:6px; background:#1e293b; border:1px solid #334155; color:#e5e7eb; border-radius:4px;">
-            <option value="bgk" selected>BGK (Single Relaxation)</option>
-            <option value="mrt">MRT (Multi-Relaxation)</option>
-            <option value="trt">TRT (Two-Relaxation)</option>
-          </select>
-          <p class="info-text">MRT offre une meilleure stabilité à haut Re</p>
-        </div>
-
-        <div class="checkbox-control">
-          <input type="checkbox" id="smagorinsky">
-          <label for="smagorinsky">Modèle de Smagorinsky (LES)</label>
-        </div>
-
-        <div class="control" id="smagorinsky-const-ctrl" style="display:none;">
-          <span class="label">
-            <span>Constante Cs</span>
-            <span class="value" id="smagorinsky-value">0.10</span>
-          </span>
-          <input type="range" id="smagorinsky-const" min="0.05" max="0.25" step="0.01" value="0.10">
-        </div>
-
-        <div class="control">
-          <span class="label">
-            <span>Résolution de grille</span>
-            <span class="value" id="resolution-value">Moyenne</span>
-          </span>
-          <div class="quality-selector">
-            <div class="quality-btn" data-res="low">Basse</div>
-            <div class="quality-btn active" data-res="medium">Moyenne</div>
-            <div class="quality-btn" data-res="high">Haute</div>
-            <div class="quality-btn" data-res="ultra">Ultra</div>
-          </div>
-        </div>
-
-        <div class="control">
-          <span class="label">
-            <span>Itérations/frame</span>
-            <span class="value" id="iterations-value">2</span>
-          </span>
-          <input type="range" id="iterations" min="1" max="15" step="1" value="2">
-        </div>
-
-        <div class="warning-text" id="stability-warning" style="display:none;">
-          ⚠️ Attention: combinaison de paramètres instable détectée!
-        </div>
-      </div>
-    </div>
-
-    <div class="tab-content" id="tab-results">
-      <div class="section">
-        <h3>Coefficients aérodynamiques</h3>
-        <div class="results-block">
-          <div class="row">
-            <span>Coefficient de portance CL</span>
-            <span id="res-cl">0.000</span>
-          </div>
-          <div class="row">
-            <span>Coefficient de traînée CD</span>
-            <span id="res-cd">0.000</span>
-          </div>
-          <div class="row">
-            <span>Traînée de pression CDp</span>
-            <span id="res-cdp">0.000</span>
-          </div>
-          <div class="row">
-            <span>Traînée visqueuse CDf</span>
-            <span id="res-cdf">0.000</span>
-          </div>
-          <div class="row">
-            <span>Finesse L/D</span>
-            <span id="res-ld">0.0</span>
-          </div>
-          <div class="row">
-            <span>Moment de tangage CM</span>
-            <span id="res-cm">0.000</span>
-          </div>
-        </div>
-
-        <p class="info-text">
-          <strong>Théorie du profil mince:</strong><br>
-          CL ≈ 2π·α pour petits angles<br>
-          CD = CD₀ + CL²/(π·AR·e)<br>
-          CM ≈ -CL·(xcp - 0.25)
-        </p>
-      </div>
-
-      <div class="section">
-        <h3>Analyse de l'écoulement</h3>
-        <div class="results-block">
-          <div class="row">
-            <span>Point de décollement</span>
-            <span id="separation-point">Aucun</span>
-          </div>
-          <div class="row">
-            <span>Intensité turbulente</span>
-            <span id="turbulence-intensity">0.0%</span>
-          </div>
-          <div class="row">
-            <span>Fréquence de Strouhal</span>
-            <span id="strouhal">-</span>
-          </div>
-        </div>
-      </div>
-
-      <div class="buttons">
-        <button id="export-csv-btn">📊 Exporter CSV</button>
-        <button id="export-json-btn">💾 Exporter JSON</button>
-      </div>
-    </div>
-
-    <div class="buttons" style="margin-top: 20px;">
-      <button id="reset-btn" class="secondary">🔄 Réinitialiser</button>
-      <button id="pause-btn">⏸️ Pause</button>
-    </div>
-
-    <p class="info-text" style="margin-top: 16px;">
-      Grille: <span id="grid-size">600×240</span> nœuds • Schéma: <span id="scheme-name">D2Q9 BGK</span>
-      <br><br>
-      <span class="metric-badge">Version optimisée v2.0</span>
-    </p>
-  </aside>
-</main>
-
-<footer>
-  LBM Advanced Platform • Développé par Hamza Boudhair • JavaScript + Canvas 2D • 2024
-</footer>
-
-<div id="startup-modal" class="startup-modal">
-  <div class="modal-content">
-    <h2>🌀 Simulation LBM D2Q9 Avancée</h2>
-    <p>Plateforme de simulation CFD interactive utilisant la méthode Lattice Boltzmann pour l'analyse d'écoulements autour de profils aérodynamiques.</p>
-    
-    <h3>✨ Nouvelles fonctionnalités:</h3>
-    <ul>
-      <li><strong>Modèles de turbulence:</strong> Smagorinsky LES pour écoulements turbulents</li>
-      <li><strong>Multi-relaxation:</strong> Schémas BGK, MRT, TRT</li>
-      <li><strong>Calculs précis:</strong> CL, CD (pression + friction), CM</li>
-      <li><strong>Analyse avancée:</strong> Q-criterion, détection de décollement</li>
-      <li><strong>Export de données:</strong> CSV et JSON pour post-traitement</li>
-      <li><strong>Résolution ultra:</strong> Jusqu'à 1000×400 nœuds</li>
-    </ul>
-
-    <h3>🎯 Mode d'emploi:</h3>
-    <ul>
-      <li>Onglet <strong>Écoulement:</strong> Ajustez Ma, Re, conditions limites</li>
-      <li>Onglet <strong>Géométrie:</strong> Configurez le profil de Joukowsky</li>
-      <li>Onglet <strong>Avancé:</strong> Modèles numériques et turbulence</li>
-      <li>Onglet <strong>Résultats:</strong> Coefficients aérodynamiques et export</li>
-    </ul>
-
-    <div class="modal-buttons">
-      <button id="start-btn" style="flex:2;">🚀 Démarrer la simulation</button>
-      <button id="quality-low-btn" class="secondary">⚡ Mode rapide</button>
-    </div>
-  </div>
-</div>
-
-<script>
-  // ============================================
-  // CONFIGURATION GLOBALE ET VARIABLES D'ÉTAT
-  // ============================================
-  let canvas = document.getElementById("sim-canvas");
-  let ctx = canvas.getContext("2d");
-
-  let Nx = canvas.width;
-  let Ny = canvas.height;
-  let size = Nx * Ny;
-
-  // Paramètres LBM D2Q9
-  const Q = 9;
-  const w = [4/9, 1/9, 1/9, 1/9, 1/9, 1/36, 1/36, 1/36, 1/36];
-  const cx = [0, 1, 0, -1, 0, 1, -1, -1, 1];
-  const cy = [0, 0, 1, 0, -1, 1, 1, -1, -1];
-  const opp = [0, 3, 4, 1, 2, 7, 8, 5, 6];
-  const cs2 = 1/3;
-
-  // Tableaux de données
-  let f, fTmp, rho, ux, uy, mask, vort, qcrit, nuT;
-  
-  // Variables physiques
-  let mach = 0.10;
-  let tau = 0.80;
-  let smagorinskyConst = 0.10;
-  
-  // Variables de simulation
-  let paused = false;
-  let steps = 0;
-  let vizMode = "velocity";
-  let contrastVal = 1.5;
-  let iterationsPerFrame = 2;
-  let resolutionMode = "medium";
-  let collisionModel = "bgk";
-  let outletType = "extrapolation";
-  
-  // Options avancées
-  let useSmagorinsky = false;
-  let useInletTurbulence = false;
-  let useWallRoughness = false;
-  
-  // Performance et stabilité
-  let lastTime = performance.now();
-  let frames = 0;
-  let maxDivergence = 0;
-  let isStable = true;
-  
-  // Enregistrement vidéo
-  let isRecording = false;
-  let recordedFrames = [];
-
-  let imgData = ctx.createImageData(Nx, Ny);
-  let pixels = imgData.data;
-
-  let airfoilPoly = [];
-
-  // Colorbar avec limites adaptatives
-  let displayMax = 1.0;
-  let displayMin = 0.0;
-  const MAX_CAP = {
-    velocity: 1.0,
-    pressure: 0.5,
-    vorticity: 10.0,
-    qcriterion: 5.0
-  };
-
-  // ============================================
-  // ALLOCATION ET INITIALISATION DES TABLEAUX
-  // ============================================
-  function initDataArrays() {
-    f    = new Float32Array(Q * size);
-    fTmp = new Float32Array(Q * size);
-    rho  = new Float32Array(size);
-    ux   = new Float32Array(size);
-    uy   = new Float32Array(size);
-    mask = new Uint8Array(size);
-    vort = new Float32Array(size);
-    qcrit = new Float32Array(size);
-    nuT  = new Float32Array(size);
-  }
-
-  // ============================================
-  // GESTION DE LA RÉSOLUTION DE GRILLE
-  // ============================================
-  function updateGridSize() {
-    const resMap = {
-      low: [400, 160],
-      medium: [600, 240],
-      high: [800, 320],
-      ultra: [1000, 400]
-    };
-    
-    [Nx, Ny] = resMap[resolutionMode] || resMap.medium;
-    canvas.width = Nx;
-    canvas.height = Ny;
-    size = Nx * Ny;
-
-    imgData = ctx.createImageData(Nx, Ny);
-    pixels = imgData.data;
-
-    document.getElementById("grid-size").textContent = `${Nx}×${Ny}`;
-
-    initDataArrays();
-    initLBM();
-  }
-
-  // ============================================
-  // GÉNÉRATION DU PROFIL DE JOUKOWSKY
-  // ============================================
-  function buildAirfoilMask() {
-    mask.fill(0);
-
-    // Murs haut et bas (conditions no-slip)
-    for (let x = 0; x < Nx; x++) {
-      mask[x] = 1;
-      mask[x + (Ny - 1) * Nx] = 1;
-    }
-
-    const aoaDeg   = parseFloat(document.getElementById("aoa").value);
-    const thickness = parseFloat(document.getElementById("thickness").value);
-    const camber    = parseFloat(document.getElementById("camber").value);
-
-    const angle = aoaDeg * Math.PI / 180;
-    const cosA = Math.cos(angle), sinA = Math.sin(angle);
-
-    const Npts = 600;
-    const circleOffset = 0.08 + camber * 0.35;
-    let radius = 1.0 - thickness * 0.6;
-    if (radius < 0.25) radius = 0.25;
-
-    const pts = [];
-    for (let k = 0; k < Npts; k++) {
-      const theta = 2 * Math.PI * k / Npts;
-      const zx = circleOffset + radius * Math.cos(theta);
-      const zy = radius * Math.sin(theta);
-
-      // Transformation de Joukowsky: w = z + 1/z
-      const denom = zx*zx + zy*zy;
-      const invx = zx / denom;
-      const invy = -zy / denom;
-
-      let x = zx + invx;
-      let y = zy + invy;
-
-      // Rotation selon angle d'attaque
-      const xr = x * cosA - y * sinA;
-      const yr = x * sinA + y * cosA;
-      pts.push({x: xr, y: yr});
-    }
-
-    // Normalisation et centrage
-    let minX = Infinity, maxX = -Infinity;
-    let minY = Infinity, maxY = -Infinity;
-    for (const p of pts) {
-      if (p.x < minX) minX = p.x;
-      if (p.x > maxX) maxX = p.x;
-      if (p.y < minY) minY = p.y;
-      if (p.y > maxY) maxY = p.y;
-    }
-    const spanX = maxX - minX, spanY = maxY - minY;
-    const midX  = 0.5 * (maxX + minX), midY = 0.5 * (maxY + minY);
-
-    const scale   = 0.4 * Math.min(Nx/spanX, Ny/spanY);
-    const centerX = Nx * 0.28;
-    const centerY = Ny * 0.5;
-
-    airfoilPoly = pts.map(p => ({
-      x: centerX + (p.x - midX) * scale,
-      y: centerY - (p.y - midY) * scale
-    }));
-
-    // Remplissage du masque par ray-casting
-    function inside(px, py) {
-      let inPoly = false;
-      for (let i = 0, j = airfoilPoly.length-1; i < airfoilPoly.length; j = i++) {
-        const xi = airfoilPoly[i].x, yi = airfoilPoly[i].y;
-        const xj = airfoilPoly[j].x, yj = airfoilPoly[j].y;
-        const inter = ((yi > py) !== (yj > py)) &&
-                      (px < (xj-xi)*(py-yi)/(yj-yi+1e-9)+xi);
-        if (inter) inPoly = !inPoly;
-      }
-      return inPoly;
-    }
-
-    for (let y = 1; y < Ny-1; y++) {
-      for (let x = 0; x < Nx; x++) {
-        const idx = x + y*Nx;
-        if (inside(x+0.5, y+0.5)) mask[idx] = 1;
-      }
-    }
-  }
-
-  // ============================================
-  // INITIALISATION LBM AVEC CONDITIONS INITIALES
-  // ============================================
-  function initLBM() {
-    buildAirfoilMask();
-    const u0 = mach * Math.sqrt(cs2);
-
-    for (let y = 0; y < Ny; y++) {
-      for (let x = 0; x < Nx; x++) {
-        const idx = x + y*Nx;
-        rho[idx] = 1.0;
-        
-        // Profil de vitesse parabolique à l'entrée (optionnel)
-        if (mask[idx]) {
-          ux[idx] = 0;
-          uy[idx] = 0;
-        } else {
-          ux[idx] = u0;
-          uy[idx] = 0;
-          
-          // Turbulence synthétique à l'entrée
-          if (useInletTurbulence && x < Nx * 0.1) {
-            ux[idx] += u0 * 0.05 * (Math.random() - 0.5);
-            uy[idx] += u0 * 0.05 * (Math.random() - 0.5);
-          }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulation de Cube 3D</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
         }
         
-        const u2 = ux[idx]*ux[idx] + uy[idx]*uy[idx];
-
-        // Initialisation des fonctions de distribution
-        for (let k = 0; k < Q; k++) {
-          const cu = 3*(cx[k]*ux[idx] + cy[k]*uy[idx]);
-          f[k*size + idx] = w[k]*rho[idx]*(1 + cu + 0.5*cu*cu - 1.5*u2);
-        }
-      }
-    }
-    
-    nuT.fill(0);
-    steps = 0;
-    maxDivergence = 0;
-  }
-
-  // ============================================
-  // GESTION DES SLIDERS ET LABELS
-  // ============================================
-  function bindSlider(id, labelId, fmt, cb) {
-    const s   = document.getElementById(id);
-    const lab = labelId ? document.getElementById(labelId) : null;
-
-    function upd() {
-      const v = parseFloat(s.value);
-      if (lab) lab.textContent = fmt(v);
-
-      const min = parseFloat(s.min);
-      const max = parseFloat(s.max);
-      const percent = ((v-min)/(max-min))*100;
-      const ind = document.getElementById(id+"-indicator");
-      if (ind) ind.style.width = percent + "%";
-
-      if (cb) cb(v);
-    }
-    s.addEventListener("input", upd);
-    upd();
-  }
-
-  // ============================================
-  // CALCUL DES COEFFICIENTS AÉRODYNAMIQUES
-  // ============================================
-  function updateAero() {
-    const aoaDeg = parseFloat(document.getElementById("aoa").value);
-    const alpha  = aoaDeg * Math.PI/180;
-
-    const nu = (tau - 0.5)/3;
-    const u0 = mach * Math.sqrt(cs2);
-    const L  = Nx * 0.15;
-    const Re = u0 * L / nu;
-    
-    document.getElementById("reynolds").textContent  = `~${Math.round(Re)}`;
-    document.getElementById("viscosity").textContent = nu.toFixed(5);
-    document.getElementById("u0-value").textContent = u0.toFixed(4);
-    document.getElementById("dt-value").textContent = "1.00";
-
-    // Théorie du profil mince
-    let CL = 2*Math.PI*alpha;
-    
-    // Correction de Prandtl-Glauert (effets de compressibilité)
-    const beta = Math.sqrt(1 - mach*mach);
-    if (beta > 0.5) {
-      CL = CL / beta;
-    }
-    
-    // Saturation pour angles élevés
-    if (CL > 2.5)  CL = 2.5;
-    if (CL < -2.5) CL = -2.5;
-
-    // Traînée totale
-    const CD0 = 0.008 + 0.003 * (thickness * 100 - 12)**2 / 100;
-    const AR  = 6.0;
-    const e   = 0.92;
-    const CDi = CL*CL/(Math.PI*AR*e);
-    const CD  = CD0 + CDi;
-    
-    // Décomposition traînée de pression/friction
-    const CDp = CD0 * 0.3 + CDi;
-    const CDf = CD0 * 0.7;
-    
-    // Moment de tangage (centre de pression)
-    const xcp = 0.25 - 0.05 * (alpha / 0.2);
-    const CM = -CL * (xcp - 0.25);
-    
-    const LD  = CD !== 0 ? CL/CD : 0;
-
-    document.getElementById("res-cl").textContent = CL.toFixed(4);
-    document.getElementById("res-cd").textContent = CD.toFixed(4);
-    document.getElementById("res-cdp").textContent = CDp.toFixed(4);
-    document.getElementById("res-cdf").textContent = CDf.toFixed(4);
-    document.getElementById("res-ld").textContent = LD.toFixed(2);
-    document.getElementById("res-cm").textContent = CM.toFixed(4);
-    
-    // Vérification stabilité
-    checkStability();
-  }
-
-  // ============================================
-  // VÉRIFICATION DE LA STABILITÉ NUMÉRIQUE
-  // ============================================
-  function checkStability() {
-    const nu = (tau - 0.5)/3;
-    const u0 = mach * Math.sqrt(cs2);
-    
-    // Conditions de stabilité
-    const cflNumber = u0 * iterationsPerFrame;
-    const viscousLimit = tau > 0.52;
-    const machLimit = mach < 0.18;
-    
-    isStable = viscousLimit && machLimit && cflNumber < 1.5;
-    
-    const warning = document.getElementById("stability-warning");
-    if (!isStable) {
-      warning.style.display = "block";
-      warning.textContent = "⚠️ Paramètres instables: ";
-      if (!viscousLimit) warning.textContent += "τ trop faible • ";
-      if (!machLimit) warning.textContent += "Ma trop élevé • ";
-      if (cflNumber >= 1.5) warning.textContent += "CFL > 1.5 • ";
-    } else {
-      warning.style.display = "none";
-    }
-    
-    document.getElementById("stability").textContent = isStable ? "✓ OK" : "⚠ Instable";
-    document.getElementById("stability").style.color = isStable ? "#10b981" : "#f59e0b";
-  }
-
-  // ============================================
-  // CALCUL DE LA VORTICITÉ
-  // ============================================
-  function computeVorticity() {
-    for (let y = 1; y < Ny-1; y++) {
-      for (let x = 1; x < Nx-1; x++) {
-        const idx  = x + y*Nx;
-        if (mask[idx]) {
-          vort[idx] = 0;
-          continue;
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a2a6c, #b21f1f, #fdbb2d);
+            color: #fff;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            overflow-x: hidden;
         }
         
-        const idxL = (x-1) + y*Nx;
-        const idxR = (x+1) + y*Nx;
-        const idxD = x + (y-1)*Nx;
-        const idxU = x + (y+1)*Nx;
-        
-        const dvy_dx = 0.5*(uy[idxR] - uy[idxL]);
-        const dux_dy = 0.5*(ux[idxU] - ux[idxD]);
-        vort[idx] = dvy_dx - dux_dy;
-      }
-    }
-  }
-
-  // ============================================
-  // CALCUL DU Q-CRITERION (DÉTECTION TOURBILLONS)
-  // ============================================
-  function computeQCriterion() {
-    for (let y = 1; y < Ny-1; y++) {
-      for (let x = 1; x < Nx-1; x++) {
-        const idx = x + y*Nx;
-        if (mask[idx]) {
-          qcrit[idx] = 0;
-          continue;
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            width: 100%;
         }
         
-        const idxL = (x-1) + y*Nx;
-        const idxR = (x+1) + y*Nx;
-        const idxD = x + (y-1)*Nx;
-        const idxU = x + (y+1)*Nx;
-        
-        // Gradient de vitesse
-        const dux_dx = 0.5*(ux[idxR] - ux[idxL]);
-        const dux_dy = 0.5*(ux[idxU] - ux[idxD]);
-        const duy_dx = 0.5*(uy[idxR] - uy[idxL]);
-        const duy_dy = 0.5*(uy[idxU] - uy[idxD]);
-        
-        // Tenseur de déformation et rotation
-        const S11 = dux_dx;
-        const S12 = 0.5*(dux_dy + duy_dx);
-        const S22 = duy_dy;
-        
-        const W12 = 0.5*(duy_dx - dux_dy);
-        
-        // Q = 0.5*(||Ω||² - ||S||²)
-        const normS2 = S11*S11 + 2*S12*S12 + S22*S22;
-        const normW2 = 2*W12*W12;
-        
-        qcrit[idx] = 0.5*(normW2 - normS2);
-      }
-    }
-  }
-
-  // ============================================
-  // MODÈLE DE SMAGORINSKY (LES)
-  // ============================================
-  function computeTurbulentViscosity() {
-    if (!useSmagorinsky) {
-      nuT.fill(0);
-      return;
-    }
-    
-    const Cs = smagorinskyConst;
-    const Delta = Math.sqrt(1.0); // Taille de maille
-    
-    for (let y = 1; y < Ny-1; y++) {
-      for (let x = 1; x < Nx-1; x++) {
-        const idx = x + y*Nx;
-        if (mask[idx]) {
-          nuT[idx] = 0;
-          continue;
+        h1 {
+            font-size: 2.8rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
         }
         
-        const idxL = (x-1) + y*Nx;
-        const idxR = (x+1) + y*Nx;
-        const idxD = x + (y-1)*Nx;
-        const idxU = x + (y+1)*Nx;
-        
-        // Tenseur de déformation
-        const dux_dx = 0.5*(ux[idxR] - ux[idxL]);
-        const dux_dy = 0.5*(ux[idxU] - ux[idxD]);
-        const duy_dx = 0.5*(uy[idxR] - uy[idxL]);
-        const duy_dy = 0.5*(uy[idxU] - uy[idxD]);
-        
-        const S11 = dux_dx;
-        const S12 = 0.5*(dux_dy + duy_dx);
-        const S22 = duy_dy;
-        
-        // |S| = sqrt(2*Sij*Sij)
-        const Smag = Math.sqrt(2*(S11*S11 + 2*S12*S12 + S22*S22));
-        
-        // νt = (Cs*Δ)²*|S|
-        nuT[idx] = (Cs*Delta)*(Cs*Delta)*Smag;
-      }
-    }
-  }
-
-  // ============================================
-  // STEP LBM - COLLISION ET STREAMING
-  // ============================================
-  function lbmStep() {
-    // 1. Calcul des quantités macroscopiques
-    for (let y = 0; y < Ny; y++) {
-      for (let x = 0; x < Nx; x++) {
-        const idx = x + y*Nx;
-        let r = 0, uxLoc = 0, uyLoc = 0;
-        
-        for (let k = 0; k < Q; k++) {
-          const fi = f[k*size + idx];
-          r     += fi;
-          uxLoc += fi*cx[k];
-          uyLoc += fi*cy[k];
+        .subtitle {
+            font-size: 1.2rem;
+            opacity: 0.9;
+            max-width: 800px;
+            margin: 0 auto;
         }
         
-        rho[idx] = r;
+        .container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 30px;
+            width: 100%;
+            max-width: 1200px;
+        }
         
-        if (mask[idx]) {
-          ux[idx] = 0;
-          uy[idx] = 0;
-        } else {
-          ux[idx] = uxLoc/r;
-          uy[idx] = uyLoc/r;
+        .simulation-container {
+            flex: 1;
+            min-width: 300px;
+            max-width: 600px;
+            height: 400px;
+            background-color: rgba(0, 0, 0, 0.4);
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
         }
-
-        // Conditions aux limites entrée
-        if (x === 0 && !mask[idx]) {
-          const uIn = mach * Math.sqrt(cs2);
-          ux[idx] = uIn;
-          uy[idx] = 0;
-          
-          if (useInletTurbulence) {
-            ux[idx] += uIn * 0.05 * (Math.random() - 0.5);
-            uy[idx] += uIn * 0.05 * (Math.random() - 0.5);
-          }
+        
+        .controls {
+            flex: 1;
+            min-width: 300px;
+            max-width: 500px;
+            background-color: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
         }
-
-        // Conditions aux limites sortie
-        if (x === Nx-1 && !mask[idx]) {
-          if (outletType === "extrapolation") {
-            const idxL = (x-1) + y*Nx;
-            ux[idx] = ux[idxL];
-            uy[idx] = uy[idxL];
-          } else if (outletType === "convective") {
-            // Condition de Sommerfeld
-            const idxL = (x-1) + y*Nx;
-            const c = Math.hypot(ux[idxL], uy[idxL]);
-            if (c > 0.01) {
-              ux[idx] = ux[idxL];
-              uy[idx] = uy[idxL];
+        
+        .control-group {
+            margin-bottom: 20px;
+        }
+        
+        h2 {
+            font-size: 1.5rem;
+            margin-bottom: 15px;
+            border-bottom: 2px solid rgba(255, 255, 255, 0.3);
+            padding-bottom: 5px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+        
+        input[type="range"] {
+            width: 100%;
+            margin-bottom: 15px;
+            -webkit-appearance: none;
+            height: 10px;
+            border-radius: 5px;
+            background: rgba(255, 255, 255, 0.2);
+            outline: none;
+        }
+        
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #fdbb2d;
+            cursor: pointer;
+        }
+        
+        .btn {
+            background: linear-gradient(to right, #1a2a6c, #b21f1f);
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 50px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-right: 10px;
+            margin-bottom: 10px;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+        
+        .value-display {
+            display: inline-block;
+            width: 40px;
+            text-align: center;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 3px 8px;
+            border-radius: 5px;
+            margin-left: 10px;
+        }
+        
+        .button-group {
+            display: flex;
+            flex-wrap: wrap;
+            margin-top: 20px;
+        }
+        
+        footer {
+            margin-top: 40px;
+            text-align: center;
+            font-size: 0.9rem;
+            opacity: 0.7;
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                flex-direction: column;
+                align-items: center;
             }
-          }
-        }
-      }
-    }
-
-    // 2. Calcul vorticité et Q-criterion
-    computeVorticity();
-    computeQCriterion();
-    
-    // 3. Viscosité turbulente (si Smagorinsky activé)
-    computeTurbulentViscosity();
-
-    // 4. Collision
-    if (collisionModel === "bgk") {
-      collisionBGK();
-    } else if (collisionModel === "mrt") {
-      collisionMRT();
-    } else if (collisionModel === "trt") {
-      collisionTRT();
-    }
-
-    // 5. Streaming avec bounce-back
-    streaming();
-
-    steps++;
-  }
-
-  // ============================================
-  // COLLISION BGK (SINGLE RELAXATION TIME)
-  // ============================================
-  function collisionBGK() {
-    for (let y = 0; y < Ny; y++) {
-      for (let x = 0; x < Nx; x++) {
-        const idx = x + y*Nx;
-        if (mask[idx]) {
-          for (let k = 0; k < Q; k++) {
-            fTmp[k*size + idx] = f[k*size + idx];
-          }
-          continue;
-        }
-
-        const r   = rho[idx];
-        const uxL = ux[idx];
-        const uyL = uy[idx];
-        const u2  = uxL*uxL + uyL*uyL;
-        
-        // Temps de relaxation effectif (avec turbulence)
-        const nu0 = (tau - 0.5)/3;
-        const nuEff = nu0 + nuT[idx];
-        const tauEff = 3*nuEff + 0.5;
-
-        for (let k = 0; k < Q; k++) {
-          const cu  = (cx[k]*uxL + cy[k]*uyL)/cs2;
-          const feq = w[k]*r*(1 + cu + 0.5*cu*cu - 1.5*u2/cs2);
-          const idF = k*size + idx;
-          fTmp[idF] = f[idF] - (f[idF] - feq)/tauEff;
-        }
-      }
-    }
-  }
-
-  // ============================================
-  // COLLISION MRT (MULTI-RELAXATION TIME)
-  // ============================================
-  function collisionMRT() {
-    // Matrice de transformation M (D2Q9)
-    const M = [
-      [1,1,1,1,1,1,1,1,1],
-      [-4,-1,-1,-1,-1,2,2,2,2],
-      [4,-2,-2,-2,-2,1,1,1,1],
-      [0,1,0,-1,0,1,-1,-1,1],
-      [0,-2,0,2,0,1,-1,-1,1],
-      [0,0,1,0,-1,1,1,-1,-1],
-      [0,0,-2,0,2,1,1,-1,-1],
-      [0,1,-1,1,-1,0,0,0,0],
-      [0,0,0,0,0,1,-1,1,-1]
-    ];
-    
-    // Temps de relaxation pour différents moments
-    const s = new Array(9);
-    s[0] = 0; // densité conservée
-    s[1] = 1.4;
-    s[2] = 1.4;
-    s[3] = 0; // quantité de mouvement conservée
-    s[4] = 1.2;
-    s[5] = 0; // quantité de mouvement conservée
-    s[6] = 1.2;
-    s[7] = 1/tau;
-    s[8] = 1/tau;
-    
-    for (let y = 0; y < Ny; y++) {
-      for (let x = 0; x < Nx; x++) {
-        const idx = x + y*Nx;
-        if (mask[idx]) {
-          for (let k = 0; k < Q; k++) {
-            fTmp[k*size + idx] = f[k*size + idx];
-          }
-          continue;
-        }
-        
-        // Transformation f → m
-        const fLoc = new Array(Q);
-        for (let k = 0; k < Q; k++) {
-          fLoc[k] = f[k*size + idx];
-        }
-        
-        const m = new Array(Q);
-        for (let i = 0; i < Q; i++) {
-          m[i] = 0;
-          for (let k = 0; k < Q; k++) {
-            m[i] += M[i][k] * fLoc[k];
-          }
-        }
-        
-        // Moments d'équilibre
-        const r = rho[idx];
-        const uxL = ux[idx];
-        const uyL = uy[idx];
-        const u2 = uxL*uxL + uyL*uyL;
-        
-        const meq = new Array(Q);
-        meq[0] = r;
-        meq[1] = -2*r + 3*r*u2;
-        meq[2] = r - 3*r*u2;
-        meq[3] = r*uxL;
-        meq[4] = -r*uxL;
-        meq[5] = r*uyL;
-        meq[6] = -r*uyL;
-        meq[7] = r*(uxL*uxL - uyL*uyL);
-        meq[8] = r*uxL*uyL;
-        
-        // Collision dans l'espace des moments
-        for (let i = 0; i < Q; i++) {
-          m[i] = m[i] - s[i]*(m[i] - meq[i]);
-        }
-        
-        // Inverse: m → f (simplifiée)
-        for (let k = 0; k < Q; k++) {
-          fTmp[k*size + idx] = fLoc[k] - (fLoc[k] - w[k]*r*(1 + 3*(cx[k]*uxL + cy[k]*uyL) + 4.5*(cx[k]*uxL + cy[k]*uyL)*(cx[k]*uxL + cy[k]*uyL) - 1.5*u2))/tau;
-        }
-      }
-    }
-  }
-
-  // ============================================
-  // COLLISION TRT (TWO-RELAXATION TIME)
-  // ============================================
-  function collisionTRT() {
-    const tauP = tau; // Temps de relaxation symétrique
-    const tauM = 0.8; // Temps de relaxation antisymétrique
-    
-    for (let y = 0; y < Ny; y++) {
-      for (let x = 0; x < Nx; x++) {
-        const idx = x + y*Nx;
-        if (mask[idx]) {
-          for (let k = 0; k < Q; k++) {
-            fTmp[k*size + idx] = f[k*size + idx];
-          }
-          continue;
-        }
-
-        const r = rho[idx];
-        const uxL = ux[idx];
-        const uyL = uy[idx];
-        const u2 = uxL*uxL + uyL*uyL;
-
-        for (let k = 0; k < Q; k++) {
-          const cu = (cx[k]*uxL + cy[k]*uyL)/cs2;
-          const feq = w[k]*r*(1 + cu + 0.5*cu*cu - 1.5*u2/cs2);
-          
-          const ko = opp[k];
-          const fk = f[k*size + idx];
-          const fko = f[ko*size + idx];
-          const feqko = w[ko]*r*(1 + (-cx[k]*uxL - cy[k]*uyL)/cs2 + 0.5*(-cx[k]*uxL - cy[k]*uyL)*(-cx[k]*uxL - cy[k]*uyL)/(cs2*cs2) - 1.5*u2/cs2);
-          
-          const fP = 0.5*(fk + fko);
-          const fM = 0.5*(fk - fko);
-          const feqP = 0.5*(feq + feqko);
-          const feqM = 0.5*(feq - feqko);
-          
-          const fPnew = fP - (fP - feqP)/tauP;
-          const fMnew = fM - (fM - feqM)/tauM;
-          
-          fTmp[k*size + idx] = fPnew + fMnew;
-        }
-      }
-    }
-  }
-
-  // ============================================
-  // STREAMING AVEC BOUNCE-BACK
-  // ============================================
-  function streaming() {
-    for (let y = 0; y < Ny; y++) {
-      for (let x = 0; x < Nx; x++) {
-        const idx = x + y*Nx;
-        
-        for (let k = 0; k < Q; k++) {
-          const xn = x + cx[k];
-          const yn = y + cy[k];
-          const src = k*size + idx;
-
-          // Hors domaine → bounce-back
-          if (xn < 0 || xn >= Nx || yn < 0 || yn >= Ny) {
-            const dest = opp[k]*size + idx;
-            f[dest] = fTmp[src];
-          } else {
-            const nIdx = xn + yn*Nx;
             
-            // Obstacle → bounce-back
-            if (mask[nIdx]) {
-              const dest = opp[k]*size + idx;
-              f[dest] = fTmp[src];
-            } else {
-              const dest = k*size + nIdx;
-              f[dest] = fTmp[src];
+            .simulation-container, .controls {
+                width: 100%;
+                max-width: 100%;
             }
-          }
         }
-      }
-    }
-  }
-
-  // ============================================
-  // COLORMAPS ET VISUALISATION
-  // ============================================
-  function colormap(v) {
-    v = Math.max(0, Math.min(1, v));
-    const c1 = [15,23,42];
-    const c2 = [59,130,246];
-    const c3 = [251,191,36];
-    const c4 = [239,68,68];
-    let r,g,b;
-    if (v < 0.33) {
-      const t = v/0.33;
-      r = c1[0] + t*(c2[0]-c1[0]);
-      g = c1[1] + t*(c2[1]-c1[1]);
-      b = c1[2] + t*(c2[2]-c1[2]);
-    } else if (v < 0.66) {
-      const t = (v-0.33)/0.33;
-      r = c2[0] + t*(c3[0]-c2[0]);
-      g = c2[1] + t*(c3[1]-c2[1]);
-      b = c2[2] + t*(c3[2]-c2[2]);
-    } else {
-      const t = (v-0.66)/0.34;
-      r = c3[0] + t*(c4[0]-c3[0]);
-      g = c3[1] + t*(c4[1]-c3[1]);
-      b = c3[2] + t*(c4[2]-c3[2]);
-    }
-    return [r|0, g|0, b|0];
-  }
-
-  function colormapDiverging(v) {
-    v = Math.max(-1, Math.min(1, v));
-    const c1 = [59,130,246];
-    const c2 = [241,245,249];
-    const c3 = [239,68,68];
-    let r,g,b;
-    if (v < 0) {
-      const t = v + 1.0;
-      r = c1[0] + t*(c2[0]-c1[0]);
-      g = c1[1] + t*(c2[1]-c1[1]);
-      b = c1[2] + t*(c2[2]-c1[2]);
-    } else {
-      const t = v;
-      r = c2[0] + t*(c3[0]-c2[0]);
-      g = c2[1] + t*(c3[1]-c2[1]);
-      b = c2[2] + t*(c3[2]-c2[2]);
-    }
-    return [r|0, g|0, b|0];
-  }
-
-  // ============================================
-  // RENDU ET VISUALISATION
-  // ============================================
-  function render() {
-    const now = performance.now();
-    frames++;
-    if (now - lastTime >= 1000) {
-      const dt = now - lastTime;
-      const fps = (frames*1000/dt);
-      const ms  = dt/frames;
-      document.getElementById("fps-counter").textContent = fps.toFixed(0);
-      document.getElementById("ms-counter").textContent  = ms.toFixed(1);
-      frames = 0;
-      lastTime = now;
-    }
-
-    let maxVal = 0;
-    let minVal = Infinity;
-
-    // Calcul des bornes selon le mode de visualisation
-    if (vizMode === "velocity" || vizMode === "streamlines" || vizMode === "vectors") {
-      for (let i = 0; i < size; i++) {
-        if (!mask[i]) {
-          const uMag = Math.hypot(ux[i], uy[i]);
-          if (uMag > maxVal) maxVal = uMag;
-          if (uMag < minVal) minVal = uMag;
-        }
-      }
-    } else if (vizMode === "pressure") {
-      for (let i = 0; i < size; i++) {
-        if (!mask[i]) {
-          const p = Math.abs((rho[i]-1)*cs2);
-          if (p > maxVal) maxVal = p;
-          if (p < minVal) minVal = p;
-        }
-      }
-    } else if (vizMode === "vorticity") {
-      for (let i = 0; i < size; i++) {
-        if (!mask[i]) {
-          const v = Math.abs(vort[i]);
-          if (v > maxVal) maxVal = v;
-          if (v < minVal) minVal = v;
-        }
-      }
-    } else if (vizMode === "qcriterion") {
-      for (let i = 0; i < size; i++) {
-        if (!mask[i] && qcrit[i] > 0) {
-          if (qcrit[i] > maxVal) maxVal = qcrit[i];
-        }
-      }
-      minVal = 0;
-    }
-
-    // Limitation et lissage
-    if (!isFinite(maxVal) || maxVal <= 0) maxVal = 1.0;
-    if (!isFinite(minVal) || minVal < 0) minVal = 0.0;
-
-    if (vizMode === "velocity" || vizMode === "streamlines" || vizMode === "vectors") {
-      maxVal = Math.min(maxVal, MAX_CAP.velocity);
-    } else if (vizMode === "pressure") {
-      maxVal = Math.min(maxVal, MAX_CAP.pressure);
-    } else if (vizMode === "vorticity") {
-      maxVal = Math.min(maxVal, MAX_CAP.vorticity);
-    } else if (vizMode === "qcriterion") {
-      maxVal = Math.min(maxVal, MAX_CAP.qcriterion);
-    }
-
-    const alpha = 0.15;
-    displayMax = (1-alpha)*displayMax + alpha*maxVal;
-    displayMin = (1-alpha)*displayMin + alpha*minVal;
-
-    document.getElementById("max-value").textContent = displayMax.toFixed(3);
-    document.getElementById("min-value").textContent = displayMin.toFixed(3);
-
-    const scale = displayMax > 0 ? contrastVal/displayMax : 1.0;
-
-    // Rendu des champs
-    for (let y = 0; y < Ny; y++) {
-      for (let x = 0; x < Nx; x++) {
-        const idx = x + y*Nx;
-        const di  = 4*idx;
-
-        if (mask[idx]) {
-          pixels[di]   = 241;
-          pixels[di+1] = 245;
-          pixels[di+2] = 249;
-          pixels[di+3] = 255;
-        } else {
-          let val, rgb;
-
-          if (vizMode === "velocity" || vizMode === "streamlines" || vizMode === "vectors") {
-            const uMag = Math.hypot(ux[idx], uy[idx]);
-            val = uMag * scale;
-            rgb = colormap(val);
-          } else if (vizMode === "pressure") {
-            const p = (rho[idx]-1)*cs2;
-            val = p * scale * 5;
-            rgb = colormapDiverging(val);
-          } else if (vizMode === "vorticity") {
-            val = vort[idx] * scale * 0.5;
-            rgb = colormapDiverging(val);
-          } else if (vizMode === "qcriterion") {
-            val = Math.max(0, qcrit[idx]) * scale;
-            rgb = colormap(val);
-          }
-
-          pixels[di]   = rgb[0];
-          pixels[di+1] = rgb[1];
-          pixels[di+2] = rgb[2];
-          pixels[di+3] = 255;
-        }
-      }
-    }
-
-    ctx.putImageData(imgData, 0, 0);
-
-    // Surcouches graphiques
-    if (vizMode === "streamlines") {
-      drawStreamlines();
-    } else if (vizMode === "vectors") {
-      drawVectors();
-    }
-
-    document.getElementById("steps-count").textContent = steps;
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Simulation de Cube 3D</h1>
+        <p class="subtitle">Interagissez avec le cube en 3D en ajustant les paramètres ci-dessous. Vous pouvez le faire pivoter, modifier sa taille et changer ses couleurs.</p>
+    </header>
     
-    // Enregistrement vidéo
-    if (isRecording) {
-      recordedFrames.push(canvas.toDataURL());
-    }
-  }
-
-  // ============================================
-  // LIGNES DE COURANT
-  // ============================================
-  function drawStreamlines() {
-    ctx.strokeStyle = "rgba(255,255,255,0.7)";
-    ctx.lineWidth = 1.2;
-    const step = Math.max(12, Math.floor(Ny/16));
-    const maxLen = 100;
-    const dtLine = 0.6;
-
-    for (let sy = step; sy < Ny-step; sy += step) {
-      for (let sx = step; sx < Nx-step; sx += step) {
-        if (mask[sx + sy*Nx]) continue;
-
-        let px = sx, py = sy;
-        ctx.beginPath();
-        ctx.moveTo(px, py);
-
-        for (let n = 0; n < maxLen; n++) {
-          const ix = px|0, iy = py|0;
-          if (ix < 0 || ix >= Nx || iy < 0 || iy >= Ny) break;
-          const idx = ix + iy*Nx;
-          if (mask[idx]) break;
-
-          const vx = ux[idx], vy = uy[idx];
-          const vmag = Math.hypot(vx, vy);
-          if (vmag < 1e-3) break;
-
-          px += vx * dtLine / vmag;
-          py += vy * dtLine / vmag;
-          ctx.lineTo(px, py);
-        }
-        ctx.stroke();
-      }
-    }
-  }
-
-  // ============================================
-  // VECTEURS VITESSE
-  // ============================================
-  function drawVectors() {
-    ctx.strokeStyle = "rgba(255,255,255,0.9)";
-    ctx.lineWidth = 1;
-    const step = Math.max(15, Math.floor(Ny/12));
-    const scaleVec = 8;
-
-    for (let y = step; y < Ny-step; y += step) {
-      for (let x = step; x < Nx-step; x += step) {
-        const idx = x + y*Nx;
-        if (mask[idx]) continue;
+    <div class="container">
+        <div class="simulation-container" id="cube-container">
+            <!-- La simulation 3D sera affichée ici -->
+        </div>
         
-        const vx = ux[idx], vy = uy[idx];
-        const vmag = Math.hypot(vx, vy);
-        if (vmag < 0.005) continue;
+        <div class="controls">
+            <div class="control-group">
+                <h2>Rotation</h2>
+                <label>
+                    Rotation X: 
+                    <span class="value-display" id="rot-x-value">0</span>°
+                </label>
+                <input type="range" id="rotation-x" min="0" max="360" value="0">
+                
+                <label>
+                    Rotation Y: 
+                    <span class="value-display" id="rot-y-value">0</span>°
+                </label>
+                <input type="range" id="rotation-y" min="0" max="360" value="0">
+                
+                <label>
+                    Rotation Z: 
+                    <span class="value-display" id="rot-z-value">0</span>°
+                </label>
+                <input type="range" id="rotation-z" min="0" max="360" value="0">
+            </div>
+            
+            <div class="control-group">
+                <h2>Dimensions</h2>
+                <label>
+                    Largeur: 
+                    <span class="value-display" id="width-value">1.0</span>
+                </label>
+                <input type="range" id="width" min="0.5" max="2" step="0.1" value="1.0">
+                
+                <label>
+                    Hauteur: 
+                    <span class="value-display" id="height-value">1.0</span>
+                </label>
+                <input type="range" id="height" min="0.5" max="2" step="0.1" value="1.0">
+                
+                <label>
+                    Profondeur: 
+                    <span class="value-display" id="depth-value">1.0</span>
+                </label>
+                <input type="range" id="depth" min="0.5" max="2" step="0.1" value="1.0">
+            </div>
+            
+            <div class="button-group">
+                <button class="btn" id="reset-btn">Réinitialiser</button>
+                <button class="btn" id="color-btn">Changer Couleur</button>
+                <button class="btn" id="wireframe-btn">Basculer Fil de Fer</button>
+            </div>
+        </div>
+    </div>
+    
+    <footer>
+        <p>Simulation 3D créée avec Three.js | Inspiré par les visualisations CFD</p>
+    </footer>
 
-        const ex = vx*scaleVec;
-        const ey = vy*scaleVec;
-        const ang = Math.atan2(ey, ex);
-
-        // Flèche
-        ctx.beginPath();
-        ctx.moveTo(x, y);
-        ctx.lineTo(x+ex, y+ey);
-        ctx.stroke();
-
-        // Pointe
-        ctx.beginPath();
-        ctx.moveTo(x+ex, y+ey);
-        ctx.lineTo(x+ex-5*Math.cos(ang-Math.PI/6), y+ey-5*Math.sin(ang-Math.PI/6));
-        ctx.moveTo(x+ex, y+ey);
-        ctx.lineTo(x+ex-5*Math.cos(ang+Math.PI/6), y+ey-5*Math.sin(ang+Math.PI/6));
-        ctx.stroke();
-      }
-    }
-  }
-
-  // ============================================
-  // BOUCLE PRINCIPALE
-  // ============================================
-  function loop() {
-    if (!paused) {
-      for (let i = 0; i < iterationsPerFrame; i++) {
-        lbmStep();
-      }
-    }
-    render();
-    requestAnimationFrame(loop);
-  }
-
-  // ============================================
-  // EXPORT DES DONNÉES
-  // ============================================
-  function exportJSON() {
-    const aoaDeg = parseFloat(document.getElementById("aoa").value);
-    const data = {
-      metadata: {
-        simulation: "LBM D2Q9 Joukowsky",
-        date: new Date().toISOString(),
-        grid: { Nx, Ny },
-        steps: steps
-      },
-      parameters: {
-        flow: {
-          mach, tau,
-          reynolds: parseFloat(document.getElementById("reynolds").textContent.replace("~", "")),
-          viscosity: (tau - 0.5)/3
-        },
-        geometry: {
-          angleOfAttack: aoaDeg,
-          thickness: parseFloat(document.getElementById("thickness").value),
-          camber: parseFloat(document.getElementById("camber").value)
-        },
-        numerical: {
-          collisionModel,
-          smagorinsky: useSmagorinsky,
-          smagorinskyConstant: smagorinskyConst,
-          resolution: resolutionMode,
-          iterationsPerFrame
+    <!-- Chargement des bibliothèques Three.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script>
+        // Initialisation de la scène Three.js
+        let scene, camera, renderer, cube;
+        let isWireframe = false;
+        let cubeColor = 0x00aaff;
+        
+        function init() {
+            // Création de la scène
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x111111);
+            
+            // Création de la caméra
+            camera = new THREE.PerspectiveCamera(75, 
+                document.getElementById('cube-container').clientWidth / 
+                document.getElementById('cube-container').clientHeight, 
+                0.1, 1000
+            );
+            camera.position.z = 5;
+            
+            // Création du renderer
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(
+                document.getElementById('cube-container').clientWidth,
+                document.getElementById('cube-container').clientHeight
+            );
+            document.getElementById('cube-container').appendChild(renderer.domElement);
+            
+            // Création du cube avec la géométrie et le matériau
+            const geometry = new THREE.BoxGeometry(1, 1, 1);
+            const material = new THREE.MeshPhongMaterial({ 
+                color: cubeColor,
+                shininess: 100
+            });
+            
+            cube = new THREE.Mesh(geometry, material);
+            scene.add(cube);
+            
+            // Ajout de lumières
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+            scene.add(ambientLight);
+            
+            const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+            directionalLight.position.set(5, 5, 5);
+            scene.add(directionalLight);
+            
+            // Gestion du redimensionnement de la fenêtre
+            window.addEventListener('resize', onWindowResize, false);
+            
+            // Configuration des écouteurs d'événements pour les contrôles
+            setupEventListeners();
+            
+            // Démarrage de l'animation
+            animate();
         }
-      },
-      results: {
-        aerodynamics: {
-          CL: parseFloat(document.getElementById("res-cl").textContent),
-          CD: parseFloat(document.getElementById("res-cd").textContent),
-          CDp: parseFloat(document.getElementById("res-cdp").textContent),
-          CDf: parseFloat(document.getElementById("res-cdf").textContent),
-          CM: parseFloat(document.getElementById("res-cm").textContent),
-          LD: parseFloat(document.getElementById("res-ld").textContent)
-        },
-        flow: {
-          turbulenceIntensity: document.getElementById("turbulence-intensity").textContent,
-          separationPoint: document.getElementById("separation-point").textContent
+        
+        function animate() {
+            requestAnimationFrame(animate);
+            
+            // Animation de rotation automatique douce
+            cube.rotation.x += 0.005;
+            cube.rotation.y += 0.005;
+            
+            // Mise à jour des valeurs d'affichage
+            document.getElementById('rot-x-value').textContent = Math.round(cube.rotation.x * 180 / Math.PI % 360);
+            document.getElementById('rot-y-value').textContent = Math.round(cube.rotation.y * 180 / Math.PI % 360);
+            
+            renderer.render(scene, camera);
         }
-      }
-    };
-    
-    const blob = new Blob([JSON.stringify(data, null, 2)], {type: "application/json"});
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `lbm-joukowsky-${new Date().toISOString().slice(0,19)}.json`;
-    a.click();
-    URL.revokeObjectURL(url);
-  }
-
-  function exportCSV() {
-    let csv = "x,y,ux,uy,rho,vort,qcrit\n";
-    
-    for (let y = 0; y < Ny; y += 2) {
-      for (let x = 0; x < Nx; x += 2) {
-        const idx = x + y*Nx;
-        if (!mask[idx]) {
-          csv += `${x},${y},${ux[idx]},${uy[idx]},${rho[idx]},${vort[idx]},${qcrit[idx]}\n`;
+        
+        function onWindowResize() {
+            camera.aspect = document.getElementById('cube-container').clientWidth / 
+                            document.getElementById('cube-container').clientHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(
+                document.getElementById('cube-container').clientWidth,
+                document.getElementById('cube-container').clientHeight
+            );
         }
-      }
-    }
-    
-    const blob = new Blob([csv], {type: "text/csv"});
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `lbm-field-data-${new Date().toISOString().slice(0,19)}.csv`;
-    a.click();
-    URL.revokeObjectURL(url);
-  }
-
-  // ============================================
-  // GESTION DES ÉVÉNEMENTS UI
-  // ============================================
-  function setupEventListeners() {
-    // Sliders écoulement
-    bindSlider("mach","mach-value",v=>v.toFixed(2), v=>{
-      mach = v; initLBM(); updateAero();
-    });
-    bindSlider("tau","tau-value",v=>v.toFixed(2), v=>{
-      tau = v; updateAero();
-    });
-    
-    // Sliders géométrie
-    bindSlider("aoa","aoa-value",v=>v.toFixed(1)+"°", ()=>{
-      initLBM(); updateAero();
-    });
-    bindSlider("thickness","thickness-value",v=>v.toFixed(2), ()=>{ initLBM(); updateAero(); });
-    bindSlider("camber","camber-value",v=>v.toFixed(2), ()=>{ initLBM(); });
-    bindSlider("camber-pos","camber-pos-value",v=>v.toFixed(2), ()=>{ initLBM(); });
-    
-    // Sliders avancés
-    bindSlider("contrast",null,v=>v.toFixed(1), v=>{ contrastVal = v; });
-    bindSlider("iterations","iterations-value",v=>v.toFixed(0), v=>{ iterationsPerFrame = v; checkStability(); });
-    bindSlider("smagorinsky-const","smagorinsky-value",v=>v.toFixed(2), v=>{ smagorinskyConst = v; });
-
-    // Mode de visualisation
-    document.getElementById("viz-mode").addEventListener("change", e=>{
-      vizMode = e.target.value;
-    });
-        // Modal de démarrage
-    document.getElementById("start-btn").addEventListener("click", ()=>{
-      document.getElementById("startup-modal").style.display = "none";
-      initLBM();
-      loop();
-    });
-    document.getElementById("quality-low-btn").addEventListener("click", ()=>{
-      document.getElementById("startup-modal").style.display = "none";
-      resolutionMode = "low";
-      updateGridSize();
-      initLBM();
-      loop();
-    });
-  }
-  // ============================================
-  // INITIALISATION ET DÉMARRAGE
-  // ============================================
-  function init() {
-    initDataArrays();
-    setupEventListeners();
-    updateAero();
-    
-    // Afficher le modal de démarrage
-    document.getElementById("startup-modal").style.display = "flex";
-  }
-  // Démarrer l'application
-  init();
-</script>
+        
+        function setupEventListeners() {
+            // Écouteurs pour les contrôles de rotation
+            document.getElementById('rotation-x').addEventListener('input', function() {
+                cube.rotation.x = this.value * Math.PI / 180;
+                document.getElementById('rot-x-value').textContent = this.value;
+            });
+            
+            document.getElementById('rotation-y').addEventListener('input', function() {
+                cube.rotation.y = this.value * Math.PI / 180;
+                document.getElementById('rot-y-value').textContent = this.value;
+            });
+            
+            document.getElementById('rotation-z').addEventListener('input', function() {
+                cube.rotation.z = this.value * Math.PI / 180;
+                document.getElementById('rot-z-value').textContent = this.value;
+            });
+            
+            // Écouteurs pour les contrôles de dimension
+            document.getElementById('width').addEventListener('input', function() {
+                cube.scale.x = this.value;
+                document.getElementById('width-value').textContent = this.value;
+            });
+            
+            document.getElementById('height').addEventListener('input', function() {
+                cube.scale.y = this.value;
+                document.getElementById('height-value').textContent = this.value;
+            });
+            
+            document.getElementById('depth').addEventListener('input', function() {
+                cube.scale.z = this.value;
+                document.getElementById('depth-value').textContent = this.value;
+            });
+            
+            // Écouteurs pour les boutons
+            document.getElementById('reset-btn').addEventListener('click', function() {
+                // Réinitialiser toutes les valeurs
+                cube.rotation.set(0, 0, 0);
+                cube.scale.set(1, 1, 1);
+                
+                document.getElementById('rotation-x').value = 0;
+                document.getElementById('rotation-y').value = 0;
+                document.getElementById('rotation-z').value = 0;
+                
+                document.getElementById('width').value = 1;
+                document.getElementById('height').value = 1;
+                document.getElementById('depth').value = 1;
+                
+                document.getElementById('rot-x-value').textContent = '0';
+                document.getElementById('rot-y-value').textContent = '0';
+                document.getElementById('rot-z-value').textContent = '0';
+                
+                document.getElementById('width-value').textContent = '1.0';
+                document.getElementById('height-value').textContent = '1.0';
+                document.getElementById('depth-value').textContent = '1.0';
+                
+                if (isWireframe) {
+                    toggleWireframe();
+                }
+            });
+            
+            document.getElementById('color-btn').addEventListener('click', function() {
+                // Changer la couleur de façon aléatoire
+                cubeColor = Math.random() * 0xffffff;
+                cube.material.color.setHex(cubeColor);
+            });
+            
+            document.getElementById('wireframe-btn').addEventListener('click', function() {
+                toggleWireframe();
+            });
+        }
+        
+        function toggleWireframe() {
+            isWireframe = !isWireframe;
+            cube.material.wireframe = isWireframe;
+        }
+        
+        // Démarrer l'initialisation
+        window.onload = init;
+    </script>
 </body>
 </html>
